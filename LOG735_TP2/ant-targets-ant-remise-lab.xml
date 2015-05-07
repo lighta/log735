@@ -1,0 +1,149 @@
+<?xml version="1.0"?>
+<!--
+Ce script ant a ete cree pour facilter la tache de preparation des archives
+contenant les remises de laboratoires pour les cours LOG720 - Architecture
+distribuee orientee objet - a l'ETS. Le script assure que les contraintes
+specifiees pour ce cours (structure, nommage des elements contenus dans 
+l'archive de sortie) sont respectees. 
+
+Les proprietes en debut de script doivent etre ajustees selon votre situation.
+Tel que livre, ce script utilise les hypotheses suivantes (qui sont toutes
+faciles a changer si vous conaissez minimalement ant):
+
+  - le script est place un niveau au-dessus d'un projet maven qui contient le
+    laboratoire a archiver;
+    
+  - le projet maven utilise des modules et contient des scripts pour le
+    demarrage des applications livrees;
+    
+  - les fichiers pertinents sont copies dans un repertoire temporaire en-dehors
+    du projet maven avant la creation de l'archive;
+
+  - le projet maven contient a sa racine un fichier LISEZMOI.html faisant office
+    de directives pour le correcteur;
+    
+  - le projet maven contient a sa racine un fichier pdf avec le meme nom que
+    l'archive et faisant office de rapport de laboratoire pour l'equipe.
+
+  - ce script produit une archive de type ZIP avec une extension modifiee, qui
+    permet a ladite archive de passer sans probleme les serveurs courriels qui
+    filtrent les pieces jointes contenant des executables (*.exe, *.bat,...);
+    
+  - l'archive produite est deposee dans le meme repertoire que le present
+    script.
+
+UTILISATION:
+
+   1 - Ajustez toutes les proprietes pour refleter votre realite;
+   2 - A la ligne de commande de votre plate-forme preferee, lancez simplement:
+   
+      ant -f ant-remise-lab.xml
+      
+   La cible par defaut et les dependances sont reglees de telle sorte que
+   l'archive est creee.
+   
+Par Roger Champagne, ing., Ph. D.
+MAJ: 2011-Oct-07
+MAJ: 2014-Oct-08 (Rajout de mvn clean, Moreau Max)
+MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
+-->
+<project name="ant-remise-lab" default="zip" basedir=".">
+  <property name="no.lab" value="2"/> <!-- Numero du lab -->
+  <property name="equipe" value="onsaitpas"/> <!-- Numero d'equipe -->
+  <property name="racine.projet.mvn" value="."/>
+  <!--
+     modules.a.inclure: les "/" apres chaque repertoire sont importants.
+     
+     Si votre projet maven n'utilise pas les modules, inclure simplement "src".
+  -->
+  <property name="modules.a.inclure"
+    value="doc/,src/"/>
+  <property name="cours" value="log735"/> <!-- Sigle du cours -->
+  <property name="session" value="E15"/>  <!-- Acronyme ETS pour sessions -->
+
+  <!-- Endroit ou sont copies les fichiers pour creer l'archive de remise -->
+  <property name="racine.temp" value="./remise"/>
+  <property name="nom.archive"
+    value="${cours}-${session}-lab${no.lab}-equipe${equipe}"/>
+  <property name="fichier.directives"
+    value="${racine.projet.mvn}/LISEZMOI.*"/>
+  <property name="fichier.rapport"
+    value="${racine.projet.mvn}/${nom.archive}.pdf"/>
+  <property name="fichier.pom"
+    value="${racine.projet.mvn}/pom.xml"/>
+  <property name="dest.temp" value="${racine.temp}/${nom.archive}"/>
+  
+  <!-- Comment this if you don't want to check files at the end of archive  
+	<condition property="checkfiles"> 
+  -->
+       
+
+  <!--
+       Le suffixe "_" apres l'extension zip permet d'empecher les fournisseurs
+       de service courriel de refuser l'archive en piece jointe a un courriel
+       sous pretexte qu'elle contient des fichiers executables
+       (*.bat dans ce cas-ci)
+  -->
+  <property name="archive" value="./${nom.archive}.zip_"/>
+
+  <!-- Efface le repertoire de destination et l'archive pour avoir une
+       copie propre -->
+  <target name="prepare">
+    <delete dir="${dest.temp}"/>
+    <delete dir="${archive}"/>
+  </target>
+
+  <!-- Copie des fichiers pertinents dans un lieu temporaire qui sert a
+       construire l'archive finale. -->
+  <target name="copie" depends="checkfile, prepare">
+    <copy todir="${dest.temp}" includeEmptyDirs="false"
+      preservelastmodified="true">
+
+      <!-- Les repertoires a inclure. excludes = fichiers eclipse -->
+      <fileset dir="${racine.projet.mvn}" includes="${modules.a.inclure}">
+        <!-- Ajoutez dans cette liste tout fichier qui se trouve dans votre
+             projet et qui n'est pas souhaite dans la remise -->
+        <exclude name="**/.settings/**"/> 
+        <exclude name="**/.classpath"/> 
+        <exclude name="**/.project"/>
+      </fileset>
+      
+      <!-- Les fichiers individuels a inclure -->
+      <fileset file="${fichier.pom}"/>
+      <fileset file="${fichier.directives}"/>
+      <fileset file="${fichier.rapport}"/>
+    </copy>
+  </target>
+	
+	<!-- Creation de l'archive -->
+	<target name="zip" depends="copie, mvn_clean">
+		<zip destfile="${archive}" basedir="${dest.temp}" includes="**/*" />
+	</target>
+
+	<!-- Nettoyage dir remise avant package archive -->
+	<target name="mvn_clean">
+		<exec dir="." executable="cmd" osfamily="windows">
+			<arg line="/c mvn -f ${dest.temp}/pom.xml clean" />
+		</exec>
+		<exec dir="." executable="sh" osfamily="unix">
+			<arg line="-c 'mvn -f ${dest.temp}/pom.xml clean'" />
+		</exec>
+	</target>
+
+	<!-- Verification de certain fichier requis -->
+	<target name="checkfile" if="checkfiles">
+		<fail message="${fichier.rapport} manquant !!">
+			<condition><not><available file="${fichier.rapport}" property="rapportfound"/></not></condition>
+		</fail>
+		<fail message="${fichier.pom} manquant !!">
+			<condition><not><available file="${fichier.pom}" property="pomfound"/></not></condition>
+		</fail>
+		<fail message="${fichier.directives} manquant !!">
+			<condition>
+				<not><resourcecount count="1">
+					<fileset id="fs" dir="${racine.projet.mvn}" includes="LISEZMOI.*"/>
+				</resourcecount></not>
+			</condition>
+		</fail>
+	</target>
+</project>

@@ -1,4 +1,5 @@
-package Q3;
+package ens.etsmtl.ca.Q2;
+
 
 import java.net.*;
 import java.io.*;
@@ -58,43 +59,27 @@ public class Server {
 	}
 
 	public static void main(String[] args) throws IOException {
-		
 		Socket clientSocket = null;
 		ServerSocket serverSocket = null;
-		InetAddress ipAddress;
-		String inputLine = "";
-		
-		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
-		System.out.println("Entrez l'ip de bind du serveur");
-		inputLine = stdIn.readLine();
-		//check ip
-		ipAddress= InetAddress.getByName(inputLine);
+
 		try {
-			
-			
-			serverSocket = new ServerSocket(10118,0, ipAddress);
-			
+			serverSocket = new ServerSocket(10118);
+			System.out.println("Le serveur est en marche, Attente de la connexion...");
+			while (run == true) {
+				try {
+					clientSocket = serverSocket.accept();
+				} catch (IOException e) {
+					System.err.println("Accept a échoué... next");
+					//System.exit(1);
+				}
+				HandlerTCP clientjob = new HandlerTCP(clientSocket);
+				clientjob.start();
+			}
 		} catch (IOException e) {
 			System.err.println("On ne peut pas écouter au  port: 10118.");
 			System.exit(1);
 		}
 		finally {
-			System.out.println("Le serveur est en marche, Attente de la connexion...");
-			
-	
-			while (run == true) {
-	
-				try {
-					clientSocket = serverSocket.accept();
-				} catch (IOException e) {
-					System.err.println("Accept a échoué.");
-					System.exit(1);
-				}
-	
-				HandlerTCP clientjob = new HandlerTCP(clientSocket);
-				clientjob.start();
-	
-			}
 			serverSocket.close();
 		}
 

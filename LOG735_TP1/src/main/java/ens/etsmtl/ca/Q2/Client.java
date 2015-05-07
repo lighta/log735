@@ -1,4 +1,4 @@
-package Q2;
+package ens.etsmtl.ca.Q2;
 
 import java.io.*;
 import java.net.*;

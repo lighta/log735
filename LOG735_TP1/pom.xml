@@ -1,0 +1,65 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	 
+
+	<groupId>ens.etsmtl.ca</groupId>
+	<artifactId>LOG735_TP1</artifactId>
+	<version>1.0</version>
+	<packaging>jar</packaging>
+	<properties>
+		<question>Q1</question>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>server</id>
+			<build>
+				<plugins>
+					<plugin>
+					    <!-- https://maven.apache.org/plugins/maven-jar-plugin/jar-mojo.html -->
+						<artifactId>maven-jar-plugin</artifactId>
+						<configuration>
+						    <finalName>server</finalName> <!-- nom de notre archive -->
+							<archive>
+								<manifest>
+									<addClasspath>true</addClasspath>
+									<classpathPrefix>lib/</classpathPrefix>
+									<mainClass>${groupId}.${question}.${id}</mainClass>
+								</manifest>
+							</archive>
+							<classifier>${question}</classifier>
+							<includes>
+								<include>**/${question}/${id}*</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>client</id>
+			<build>
+				<plugins>
+					<plugin>
+						<artifactId>maven-jar-plugin</artifactId>
+						<configuration>
+						    <finalName>client</finalName> <!-- nom de notre archive -->
+							<archive>
+								<manifest>
+									<addClasspath>true</addClasspath>
+									<classpathPrefix>lib/</classpathPrefix>
+									<mainClass>${groupId}.${question}.${id}</mainClass>
+								</manifest>
+							</archive>
+							<classifier>${question}</classifier>
+							<includes>
+								<include>**/${question}/${id}*</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+</project>

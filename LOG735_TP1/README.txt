@@ -1,0 +1,1 @@
+Voir le dossier /doc pour plus d'information
