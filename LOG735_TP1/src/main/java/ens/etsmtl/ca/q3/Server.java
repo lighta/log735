@@ -20,8 +20,10 @@ public class Server {
 			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
 			
-			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
+			String inputLine = null;
+			while (true) {
+				while(inputLine == null || inputLine.isEmpty())
+					inputLine = in.readLine();
 				System.out.println("Serveur waiting for : " + second);
 				Thread.sleep(1000*second);
 				System.out.println("Sleep ended");
@@ -63,7 +65,55 @@ public class Server {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
+	
+	/**
+	 * 
+	 * @param args[0] programm inputStream (null for standard input)
+	 * @param args[1] programm outputStream (null for standard output)
+	 * @param args[2] programm errOutputStream (null for standard output)
+	 * 
+	 * @throws IOException
+	 */
+	public static void main(String[] args) throws IOException { 
+		
+		BufferedInputStream input;
+		PrintStream output;
+		PrintStream errOutput;
+		
+		//set programm inputStream
+		if (args.length >= 1 && args[0] != null){
+			FileInputStream fis = new FileInputStream (args [0]);
+			input = new BufferedInputStream(fis);
+		}
+		else{
+			input = new BufferedInputStream(System.in);
+		}
+		
+		
+		//set programm outputStream
+		if (args.length >= 2 && args[1] != null){
+			FileOutputStream fos = new FileOutputStream (args [1]);
+			output = new PrintStream(fos);
+		}
+		else{
+			output = new PrintStream(System.out);
+		}
+		
+		//set programm outputStream
+		if (args.length >= 3 && args[2] != null){
+			FileOutputStream fos = new FileOutputStream (args [2]);
+			errOutput = new PrintStream(fos);
+		}
+		else{
+			errOutput = new PrintStream(System.err);
+		}
+		
+		System.setIn(input);
+		System.setOut(output);
+		System.setErr(errOutput);
+		
+		
+		
 		
 		Socket clientSocket = null;
 		ServerSocket serverSocket = null;
@@ -73,12 +123,16 @@ public class Server {
 		
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Entrez l'ip de bind du serveur");
-		inputLine = stdIn.readLine();
+		while(inputLine == null || inputLine.isEmpty())
+			inputLine = stdIn.readLine();
+		
+		System.out.println(inputLine);
 		//check ip
 		ipAddress= InetAddress.getByName(inputLine);
 		
 		System.out.println("Entrez le nb de second");
-		inputLine = stdIn.readLine();
+		while(inputLine == null || inputLine.isEmpty())
+			inputLine = stdIn.readLine();
 		second = Integer.parseInt(inputLine);
 		
 		try {
