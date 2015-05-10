@@ -48,6 +48,8 @@ public class Server {
 	public class ServerTCP extends Thread {
 		boolean run = true; //start/stop server variable
 		Socket clientSocket = null;
+		HandlerTCP clientjob;
+		
 		ServerSocket serverSocket = null;
 		InetAddress ipAddress;
 		
@@ -94,7 +96,7 @@ public class Server {
 						continue;
 					}
 					
-					HandlerTCP clientjob;
+					
 					try {
 						clientjob = new HandlerTCP(clientSocket,nbsleep,port,hostname);
 						clientjob.start();
@@ -110,6 +112,7 @@ public class Server {
 		public void stoping() {
 			run = false;
 			try {
+				clientjob.stoping();
 				serverSocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -128,18 +131,23 @@ public class Server {
 		int second=0;
 		int serv_port=0;
 		String serv_host;
+		
+		BufferedReader in;
+		PrintWriter out;
 
 		public HandlerTCP(Socket clientSocket, int second, int serv_port, String serv_host) throws IOException {
 			this.clientSocket = clientSocket;
 			this.second = second;
 			this.serv_port = serv_port;
 			this.serv_host = "";
+			
+			out = new PrintWriter(clientSocket.getOutputStream(), true);
+			in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 		}
 
 		public void SyncServer() {
 			final int list_size = servs_dico.servers_dico.size();
 			ServerDef cur_serv;
-			Socket tmp_Socket;
 			PrintWriter out;
 			
 			int i;
@@ -147,12 +155,12 @@ public class Server {
 				cur_serv = servs_dico.servers_dico.get(i);
 				
 				if(cur_serv.port==this.serv_port && cur_serv.host_name.equals(serv_host)){
+					System.out.println("skip sync ourself");
 					continue; //skip ourself
 				}
-				tmp_Socket = new Socket();
-				try {
-					tmp_Socket.connect(new InetSocketAddress(cur_serv.host_name,cur_serv.port), TIMEOUT_CONNECT);
-					out = new PrintWriter(tmp_Socket.getOutputStream(), true);
+				try (Socket tmp_socket= new Socket()) {
+					tmp_socket.connect(new InetSocketAddress(cur_serv.host_name,cur_serv.port), TIMEOUT_CONNECT);
+					out = new PrintWriter(tmp_socket.getOutputStream(), true);
 					out.println("SYNC:"+nb_req);
 				} catch (IOException e) {
 					System.err.println("Couldn't sync with "+cur_serv.toString());
@@ -162,19 +170,16 @@ public class Server {
 		}
 		
 		private void reply() throws IOException, InterruptedException {
-			PrintWriter out;
-			out = new PrintWriter(clientSocket.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
 			
 			String inputLine;
 			while ((inputLine = in.readLine()) != null) {
+				
 				//simulation long traitement
 				System.out.println("Serveur waiting for : " + second);
 				Thread.sleep(1000*second);
 				System.out.println("Sleep ended");
 				//end simulation
-			
+				
 				//echo + bye
 				if (inputLine.equalsIgnoreCase("BYE")){
 					out.println(inputLine+" : Connection closed");
@@ -186,7 +191,7 @@ public class Server {
 					String parse[] = inputLine.split(":");
 					nb_req=Integer.parseInt(parse[1]);
 					break; //no reply
-				}	
+				}
 				nb_req++;
 				SyncServer();
 				inputLine = "nb_req:"+nb_req+" "+inputLine.toUpperCase();
@@ -219,6 +224,14 @@ public class Server {
 				// e.printStackTrace();
 			}
 		}
+		
+		public void stoping() {
+			System.out.println("Stopping HandlerTCP");
+			out.println("BYE");
+			System.out.println("Stopped HandlerTCP");
+
+		}
+		
 	}
 	//end HandlerTCP class
 	
