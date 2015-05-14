@@ -3,8 +3,8 @@ package ens.etsmtl.ca.q5;
 import java.net.*;
 import java.io.*;
 
-import ens.etsmtl.ca.q6.ServDico;
-import ens.etsmtl.ca.q6.ServDico.ServerDef;
+import ens.etsmtl.ca.q5.ServDico;
+import ens.etsmtl.ca.q5.ServDico.ServerDef;
 
 public class Server {
 	static int nb_req=0; //hold the number of request performed
@@ -134,32 +134,7 @@ public class Server {
 			this.second = second;
 			this.serv_port = serv_port;
 			this.serv_host = "";
-		}
-
-		public void SyncServer() {
-			final int list_size = servs_dico.servers_dico.size();
-			ServerDef cur_serv;
-			Socket tmp_Socket;
-			PrintWriter out;
-			
-			int i;
-			for(i=0; i<list_size; i++ ){
-				cur_serv = servs_dico.servers_dico.get(i);
-				
-				if(cur_serv.port==this.serv_port && cur_serv.host_name.equals(serv_host)){
-					continue; //skip ourself
-				}
-				tmp_Socket = new Socket();
-				try {
-					tmp_Socket.connect(new InetSocketAddress(cur_serv.host_name,cur_serv.port), TIMEOUT_CONNECT);
-					out = new PrintWriter(tmp_Socket.getOutputStream(), true);
-					out.println("SYNC:"+nb_req);
-				} catch (IOException e) {
-					System.err.println("Couldn't sync with "+cur_serv.toString());
-					continue;
-				}
-			}
-		}
+		}	
 		
 		private void reply() throws IOException, InterruptedException {
 			PrintWriter out;
@@ -181,14 +156,7 @@ public class Server {
 					System.out.println("Serveur: Connection client closed" );
 					break;
 				}
-				else if (inputLine.contains("SYNC")){
-					System.out.println("Syncing serv");
-					String parse[] = inputLine.split(":");
-					nb_req=Integer.parseInt(parse[1]);
-					break; //no reply
-				}	
 				nb_req++;
-				SyncServer();
 				inputLine = "nb_req:"+nb_req+" "+inputLine.toUpperCase();
 				//echo standard
 				System.out.println("Serveur: " + inputLine);
@@ -221,10 +189,6 @@ public class Server {
 		}
 	}
 	//end HandlerTCP class
-	
-	
-	
-	
 
 	public static void main(String[] args) throws IOException {
 		new Server();

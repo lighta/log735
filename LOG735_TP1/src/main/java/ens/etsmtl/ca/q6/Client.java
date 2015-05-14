@@ -18,8 +18,8 @@ public class Client {
 	private Socket echoSocket = null;
 	private PrintWriter out = null;
 	private BufferedReader in;
-	int current = -1;
-	ServDico servs_dico;
+	private int current = -1;
+	private ServDico servs_dico;
 	
 	private enum state_echo {
 		END,  //fin de connection par server
@@ -29,8 +29,6 @@ public class Client {
 	
 	final int TIMEOUT = 3000; // 3 seconds
 	private ScheduledExecutorService executor;
-	
-	
 
 	private ServerDef getNext_host() {
 		current++;
