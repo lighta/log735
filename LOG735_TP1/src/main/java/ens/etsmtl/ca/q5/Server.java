@@ -3,12 +3,8 @@ package ens.etsmtl.ca.q5;
 import java.net.*;
 import java.io.*;
 
-import ens.etsmtl.ca.q5.ServDico;
-import ens.etsmtl.ca.q5.ServDico.ServerDef;
-
 public class Server {
-	static int nb_req=0; //hold the number of request performed
-	ServDico servs_dico;
+	static int nb_req=0;
 
 	
 	public Server() throws IOException {
@@ -16,9 +12,6 @@ public class Server {
 		int second=5; //time to sleep before serving client (for simulate issue)
 		String hostname;
 		String inputLine = "";
-
-		
-		servs_dico = new ServDico();
 		
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Entrez l'ip de bind du serveur");
@@ -54,21 +47,13 @@ public class Server {
 		InetAddress ipAddress;
 		
 		String hostname;
+		static final String DEF_HOST="127.0.0.1";
+		
 		int port=10118;
 		int nbsleep=0;
 		
-		public ServerTCP(String hostname, int nbsleep) {
-			this.init(hostname,nbsleep);
-		}
 		
-		public ServerTCP(String hostname)  {
-			this.init(hostname,0);
-		}
-
-		public ServerTCP()  {
-			this.init("127.0.0.1",0);
-		}
-		private void init(String hostname, int nbsleep) {
+		public ServerTCP(String hostname, int nbsleep) {
 			this.hostname=hostname;
 			this.nbsleep=nbsleep;	
 			try {
@@ -78,11 +63,19 @@ public class Server {
 				System.exit(1);
 			}
 			try {
-				serverSocket = new ServerSocket(10118,0, ipAddress);
+				serverSocket = new ServerSocket(port,0, ipAddress);
 			} catch (IOException e) {
-				System.err.println("On ne peut pas ecouter au  port: 10118.");
+				System.err.println("On ne peut pas ecouter au  port: "+port);
 				System.exit(1);
 			}
+		}
+		
+		public ServerTCP(String hostname)  {
+			this(hostname,0);
+		}
+
+		public ServerTCP()  {
+			this(DEF_HOST,0);
 		}
 		
 		@Override
@@ -112,7 +105,7 @@ public class Server {
 		public void stoping() {
 			run = false;
 			try {
-				clientjob.stoping();
+			//	clientjob.stoping();
 				serverSocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -126,34 +119,36 @@ public class Server {
 	
 	
 	public class HandlerTCP extends Thread {
-		private static final int TIMEOUT_CONNECT = 3000;
 		Socket clientSocket = null;
 		int second=0;
 		int serv_port=0;
 		String serv_host;
-		
-		BufferedReader in;
-		PrintWriter out;
 
 		public HandlerTCP(Socket clientSocket, int second, int serv_port, String serv_host) throws IOException {
 			this.clientSocket = clientSocket;
 			this.second = second;
 			this.serv_port = serv_port;
 			this.serv_host = "";
-
 		}	
 		
 		private void reply() throws IOException, InterruptedException {
+			PrintWriter out;
+			out = new PrintWriter(clientSocket.getOutputStream(), true);
+			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+
 			
-			String inputLine;
-			while ((inputLine = in.readLine()) != null) {
+
+			String inputLine = null;
+			while (true) {
+				while(inputLine == null || inputLine.isEmpty()) //attente blocante pour fichier
+					inputLine = in.readLine();
 				
 				//simulation long traitement
 				System.out.println("Serveur waiting for : " + second);
 				Thread.sleep(1000*second);
 				System.out.println("Sleep ended");
 				//end simulation
-				
+			
 				//echo + bye
 				if (inputLine.equalsIgnoreCase("BYE")){
 					out.println(inputLine+" : Connection closed");
@@ -166,6 +161,8 @@ public class Server {
 				//echo standard
 				System.out.println("Serveur: " + inputLine);
 				out.println(inputLine);
+				
+				inputLine = null; //raz pour fichier
 			}
 			
 			out.close();
@@ -192,19 +189,63 @@ public class Server {
 				// e.printStackTrace();
 			}
 		}
-		
-		public void stoping() {
-			System.out.println("Stopping HandlerTCP");
-			out.println("BYE");
-			System.out.println("Stopped HandlerTCP");
-
-		}
-		
 	}
 	//end HandlerTCP class
 
-	public static void main(String[] args) throws IOException {
+	
+	/**
+	 * 
+	 * @param args[0] programm inputStream (null for standard input)
+	 * @param args[1] programm outputStream (null for standard output)
+	 * @param args[2] programm errOutputStream (null for standard output)
+	 * @throws IOException 
+	 * 
+	 * @throws IOException
+	 */
+	private static void initIO(String[] streams) throws IOException
+	{
+		BufferedInputStream input;
+		PrintStream output;
+		PrintStream errOutput;
+		
+		//set programm inputStream
+		if (streams.length >= 1 && streams[0] != null){
+			FileInputStream fis = new FileInputStream (streams [0]);
+			input = new BufferedInputStream(fis);
+		}
+		else{
+			input = new BufferedInputStream(System.in);
+		}
+		
+		
+		//set programm outputStream
+		if (streams.length >= 2 && streams[1] != null){
+			FileOutputStream fos = new FileOutputStream (streams [1]);
+			output = new PrintStream(fos);
+		}
+		else{
+			output = new PrintStream(System.out);
+		}
+		
+		//set programm outputStream
+		if (streams.length >= 3 && streams[2] != null){
+			FileOutputStream fos = new FileOutputStream (streams [2]);
+			errOutput = new PrintStream(fos);
+		}
+		else{
+			errOutput = new PrintStream(System.err);
+		}
+		
+		System.setIn(input);
+		System.setOut(output);
+		System.setErr(errOutput);
+		
+	}
+	
+	public static void main(String[] args) throws IOException {				
+		initIO(args);
 		new Server();
+		
 	}
 	
 }

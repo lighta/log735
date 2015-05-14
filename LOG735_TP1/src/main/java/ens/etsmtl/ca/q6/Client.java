@@ -27,7 +27,8 @@ public class Client {
 		TIMEOUT; //timeout atteint, faire strat
 	};
 	
-	final int TIMEOUT = 3000; // 3 seconds
+	final int TIMEOUT_REPONSE = 3*1000; // 10 seconds
+	final int TIMEOUT_CONNECT = 3000; // 3s ot connect
 	private ScheduledExecutorService executor;
 
 	private ServerDef getNext_host() {
@@ -79,7 +80,7 @@ public class Client {
 		String serverHostname = "";
 		int server_port = 10118;
 		ServerDef hostserv;
-		final int TIMEOUT_CONNECT = 3000; // 3s ot connect
+		
 
 		
 		System.out.println("current="+current);
@@ -154,7 +155,7 @@ public class Client {
 			        executor.shutdown();
 			        //state_echo.TIMEOUT;
 			    }      
-			}, TIMEOUT, TimeUnit.MILLISECONDS);
+			}, TIMEOUT_REPONSE, TimeUnit.MILLISECONDS);
 		}
 		catch (RejectedExecutionException rj){
 			if(handler.isDone() == false ){
@@ -192,13 +193,13 @@ public class Client {
 		
 		String userInput="";
 		boolean getinput = true;
-		System.out.print("Entree: ");
 
 		while (true) {
-			if(getinput==true)
+			if(getinput==true){
+				System.out.print("Entree: ");
 				userInput = stdIn.readLine();
+			}
 			getinput=true;
-			
 			out.println(userInput); 
 			executor = Executors.newScheduledThreadPool(2);
 			final state_echo res = launch(in);
@@ -208,9 +209,8 @@ public class Client {
 				if(init_sock(null,null,true)==false)
 					System.exit(2);
 				getinput=false;
-				//ok mais est-ce qu'on refait cette putin de requete ??
+				//ok mais est-ce qu'on refait cette p** de requete ??
 			}
-			System.out.print("Entree: ");
 		}
 		stdIn.close();
 		

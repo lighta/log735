@@ -3,11 +3,7 @@ package ens.etsmtl.ca.q3;
 import java.net.*;
 import java.io.*;
 
-import ens.etsmtl.ca.q3.ServDico;
-import ens.etsmtl.ca.q3.ServDico.ServerDef;
-
 public class Server {
-	ServDico servs_dico;
 
 	
 	public Server() throws IOException {
@@ -15,9 +11,6 @@ public class Server {
 		int second=5; //time to sleep before serving client (for simulate issue)
 		String hostname;
 		String inputLine = "";
-
-		
-		servs_dico = new ServDico();
 		
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Entrez l'ip de bind du serveur");
@@ -47,25 +40,19 @@ public class Server {
 	public class ServerTCP extends Thread {
 		boolean run = true; //start/stop server variable
 		Socket clientSocket = null;
+		HandlerTCP clientjob;
+		
 		ServerSocket serverSocket = null;
 		InetAddress ipAddress;
 		
 		String hostname;
+		static final String DEF_HOST="127.0.0.1";
+		
 		int port=10118;
 		int nbsleep=0;
 		
-		public ServerTCP(String hostname, int nbsleep) {
-			this.init(hostname,nbsleep);
-		}
 		
-		public ServerTCP(String hostname)  {
-			this.init(hostname,0);
-		}
-
-		public ServerTCP()  {
-			this.init("127.0.0.1",0);
-		}
-		private void init(String hostname, int nbsleep) {
+		public ServerTCP(String hostname, int nbsleep) {
 			this.hostname=hostname;
 			this.nbsleep=nbsleep;	
 			try {
@@ -75,11 +62,19 @@ public class Server {
 				System.exit(1);
 			}
 			try {
-				serverSocket = new ServerSocket(10118,0, ipAddress);
+				serverSocket = new ServerSocket(port,0, ipAddress);
 			} catch (IOException e) {
-				System.err.println("On ne peut pas ecouter au  port: 10118.");
+				System.err.println("On ne peut pas ecouter au  port: "+port);
 				System.exit(1);
 			}
+		}
+		
+		public ServerTCP(String hostname)  {
+			this(hostname,0);
+		}
+
+		public ServerTCP()  {
+			this(DEF_HOST,0);
 		}
 		
 		@Override
@@ -93,7 +88,7 @@ public class Server {
 						continue;
 					}
 					
-					HandlerTCP clientjob;
+					
 					try {
 						clientjob = new HandlerTCP(clientSocket,nbsleep,port,hostname);
 						clientjob.start();
@@ -109,6 +104,7 @@ public class Server {
 		public void stoping() {
 			run = false;
 			try {
+			//	clientjob.stoping();
 				serverSocket.close();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -143,8 +139,9 @@ public class Server {
 
 			String inputLine = null;
 			while (true) {
-				while(inputLine == null || inputLine.isEmpty())
+				while(inputLine == null || inputLine.isEmpty()) //attente blocante pour fichier
 					inputLine = in.readLine();
+				
 				//simulation long traitement
 				System.out.println("Serveur waiting for : " + second);
 				Thread.sleep(1000*second);
@@ -161,6 +158,8 @@ public class Server {
 				//echo standard
 				System.out.println("Serveur: " + inputLine);
 				out.println(inputLine);
+				
+				inputLine = null; //raz pour fichier
 			}
 			
 			out.close();
@@ -240,10 +239,8 @@ public class Server {
 		
 	}
 	
-	public static void main(String[] args) throws IOException {
-				
+	public static void main(String[] args) throws IOException {				
 		initIO(args);
-		
 		new Server();
 		
 	}
