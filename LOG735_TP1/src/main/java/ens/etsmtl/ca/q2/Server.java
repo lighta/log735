@@ -1,35 +1,153 @@
 package ens.etsmtl.ca.q2;
 
-
 import java.net.*;
 import java.io.*;
 
 public class Server {
 
-	static boolean run = true;
+	
+	public Server() throws IOException {
+		super();
+		int second=5; //time to sleep before serving client (for simulate issue)
+		String hostname;
+		String inputLine = "";
+		
+		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+		System.out.println("Entrez l'ip de bind du serveur");
+		hostname = stdIn.readLine();
+		//check ip
+		
+		
+		System.out.println("Entrez le nb de second");
+		inputLine = stdIn.readLine();
+		second = Integer.parseInt(inputLine);
+		
+		ServerTCP serv_th = new ServerTCP(hostname,second);
+		serv_th.start();
+		
+		while (inputLine.equalsIgnoreCase("Q")==false ) {
+			System.out.println("Press Q to end server");
+			inputLine = stdIn.readLine();
+		} //waiting request stop
+		System.out.println("Closing server");
+		serv_th.stoping();
+		while(serv_th.isAlive()); //waiting gracefully closed
+		System.out.println("Server closed");
+	}
 
-	public static class HandlerTCP extends Thread {
+
+
+	public class ServerTCP extends Thread {
+		boolean run = true; //start/stop server variable
 		Socket clientSocket = null;
-
-		public HandlerTCP(Socket clientSocket) throws IOException {
-			this.clientSocket = clientSocket;
+		ServerSocket serverSocket = null;
+		InetAddress ipAddress;
+		
+		String hostname;
+		int port=10118;
+		int nbsleep=0;
+		
+		public ServerTCP(String hostname, int nbsleep) {
+			this.init(hostname,nbsleep);
+		}
+		
+		public ServerTCP(String hostname)  {
+			this.init(hostname,0);
 		}
 
-		private void reply() throws IOException {
+		public ServerTCP()  {
+			this.init("127.0.0.1",0);
+		}
+		private void init(String hostname, int nbsleep) {
+			this.hostname=hostname;
+			this.nbsleep=nbsleep;	
+			try {
+				ipAddress= InetAddress.getByName(hostname);
+			} catch (UnknownHostException e1) {
+				System.err.println("On ne peut pas se binder sur : "+hostname+ " invalide");
+				System.exit(1);
+			}
+			try {
+				serverSocket = new ServerSocket(10118,0, ipAddress);
+			} catch (IOException e) {
+				System.err.println("On ne peut pas ecouter au  port: 10118.");
+				System.exit(1);
+			}
+		}
+		
+		@Override
+		public void run() {
+				System.out.println("Le serveur est en marche, Attente de la connexion...");
+				while (run == true) {
+					try {
+						clientSocket = serverSocket.accept();
+					} catch (IOException e) {
+						System.err.println("Accept a echoue.");
+						continue;
+					}
+					
+					HandlerTCP clientjob;
+					try {
+						clientjob = new HandlerTCP(clientSocket,nbsleep,port,hostname);
+						clientjob.start();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					if(Thread.interrupted())
+						run = false;
+				}
+		}
+		
+		public void stoping() {
+			run = false;
+			try {
+				serverSocket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		
+	}
+	//end ServerTCP class
+	
+	
+	public class HandlerTCP extends Thread {
+		Socket clientSocket = null;
+		int second=0;
+		int serv_port=0;
+		String serv_host;
+
+		public HandlerTCP(Socket clientSocket, int second, int serv_port, String serv_host) throws IOException {
+			this.clientSocket = clientSocket;
+			this.second = second;
+			this.serv_port = serv_port;
+			this.serv_host = "";
+		}	
+		
+		private void reply() throws IOException, InterruptedException {
 			PrintWriter out;
 			out = new PrintWriter(clientSocket.getOutputStream(), true);
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					clientSocket.getInputStream()));
+			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
+			
 			String inputLine;
 			while ((inputLine = in.readLine()) != null) {
-				inputLine = inputLine.toUpperCase();
+				//simulation long traitement
+				System.out.println("Serveur waiting for : " + second);
+				Thread.sleep(1000*second);
+				System.out.println("Sleep ended");
+				//end simulation
+			
 				//echo + bye
-				if (inputLine.equalsIgnoreCase("Bye")){
+				if (inputLine.equalsIgnoreCase("BYE")){
 					out.println(inputLine+" : Connection closed");
 					System.out.println("Serveur: Connection client closed" );
 					break;
 				}
+				inputLine = inputLine.toUpperCase();
 				//echo standard
 				System.out.println("Serveur: " + inputLine);
 				out.println(inputLine);
@@ -41,13 +159,16 @@ public class Server {
 
 		@Override
 		public void run() {
-			System.out.println("connexion réussie");
-			System.out.println("Attente de l'entrée.....");
+			System.out.println("connexion reussie");
+			System.out.println("Attente de l'entree.....");
 			try {
 				reply();
 			} catch (IOException e) {
 				System.err.println("Reply failed");
 				// e.printStackTrace();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 			try {
 				clientSocket.close();
@@ -57,31 +178,10 @@ public class Server {
 			}
 		}
 	}
+	//end HandlerTCP class
 
 	public static void main(String[] args) throws IOException {
-		Socket clientSocket = null;
-		ServerSocket serverSocket = null;
-
-		try {
-			serverSocket = new ServerSocket(10118);
-			System.out.println("Le serveur est en marche, Attente de la connexion...");
-			while (run == true) {
-				try {
-					clientSocket = serverSocket.accept();
-				} catch (IOException e) {
-					System.err.println("Accept a échoué... next");
-					//System.exit(1);
-				}
-				HandlerTCP clientjob = new HandlerTCP(clientSocket);
-				clientjob.start();
-			}
-		} catch (IOException e) {
-			System.err.println("On ne peut pas écouter au  port: 10118.");
-			System.exit(1);
-		}
-		finally {
-			serverSocket.close();
-		}
-
+		new Server();
 	}
+	
 }

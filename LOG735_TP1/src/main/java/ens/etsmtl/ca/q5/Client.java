@@ -2,8 +2,6 @@ package ens.etsmtl.ca.q5;
 
 import java.io.*;
 import java.net.*;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -12,13 +10,16 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import ens.etsmtl.ca.q5.ServDico.ServerDef;
+
 
 
 public class Client {
 	private Socket echoSocket = null;
 	private PrintWriter out = null;
 	private BufferedReader in;
-	int current = -1;
+	private int current = -1;
+	private ServDico servs_dico;
 	
 	private enum state_echo {
 		END,  //fin de connection par server
@@ -28,70 +29,16 @@ public class Client {
 	
 	final int TIMEOUT = 3000; // 3 seconds
 	private ScheduledExecutorService executor;
-	
-	private class EchoHandler extends Thread
-	{
-		
-		private BufferedReader in;
 
-		public EchoHandler(BufferedReader in) {
-			this. in = in;
-		}
-		
-		@Override
-		public void run() {
-			try {
-				String echo = in.readLine();
-				System.out.println("echo: " + echo);
-				if (echo.contains("BYE")) {
-						
-				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-		}
-	}
-	
-	
-	private class ServerDico {
-
-		@SuppressWarnings("unused")
-		protected String host_name = "";
-		@SuppressWarnings("unused")
-		protected int port = 10118;
-
-		@SuppressWarnings("unused")
-		public ServerDico(String host_name, int port) {
-			this(host_name);
-			this.port = port;
-		}
-
-		public ServerDico(String host_name) {
-			this.host_name = host_name;
-		}
-	}
-
-	private final Map<Integer, ServerDico> servers_dico = new HashMap<>();
-
-	private final void FillServerDico() {
-		servers_dico.put(0, new ServerDico("127.0.0.1"));
-		servers_dico.put(1, new ServerDico("127.0.0.2"));
-	}
-
-	private ServerDico getNext_host() {
+	private ServerDef getNext_host() {
 		current++;
-		if (current >= servers_dico.size() ) {
+		if (current >= servs_dico.servers_dico.size() ) {
 			System.err.println("Plus de serveur disponible pour switch");
 			System.exit(1);
 		}
-		return servers_dico.get(current);
+		return servs_dico.servers_dico.get(current);
 	}
 
-	private Socket attempt_to_connect() {
-		return attempt_to_connect(null, null);
-	}
 
 	private boolean init_sock(String hostname, Integer port, boolean switch_host) {
 		if(switch_host){
@@ -131,7 +78,7 @@ public class Client {
 		Socket tmp_Socket = null;
 		String serverHostname = "";
 		int server_port = 10118;
-		ServerDico hostserv;
+		ServerDef hostserv;
 		final int TIMEOUT_CONNECT = 3000; // 3s ot connect
 
 		
@@ -181,9 +128,6 @@ public class Client {
 	//@TODO, faire le retrun du call return de la fonction lauch
 	private state_echo launch(BufferedReader in) throws IOException {	
 		final BufferedReader tmp_in = in;
-		state_echo res = state_echo.NEXT;
-
-		
 		final Future<state_echo> handler = executor.submit(new Callable<state_echo>() {
 		    @Override
 		    public state_echo call() throws Exception {
@@ -237,7 +181,7 @@ public class Client {
 	
 	//@TODO gere les IOexcept
 	public Client() throws IOException {
-		FillServerDico();
+		servs_dico = new ServDico();
 
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 		System.out.println("Entrez l'ip du serveur");
