@@ -24,7 +24,7 @@ public class Client {
             System.err.println("Hôte inconnu: " + serverHostname);
             System.exit(1);
         } catch (IOException e) {
-            System.err.println("Ne pas se connecter au serveur: " + serverHostname);
+            System.err.println("Ne peut pas se connecter au serveur: " + serverHostname);
             System.exit(1);
         }
 
