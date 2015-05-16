@@ -58,7 +58,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
      Si votre projet maven n'utilise pas les modules, inclure simplement "src".
   -->
   <property name="modules.a.inclure"
-    value="doc/,src/"/>
+    value="doc/,src/,script/"/>
   <property name="cours" value="LOG735"/> <!-- Sigle du cours -->
   <property name="session" value="E15"/>  <!-- Acronyme ETS pour sessions -->
   <property name="session" value="E15"/>  <!-- Acronyme ETS pour sessions -->
@@ -75,10 +75,9 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
     value="${racine.projet.mvn}/pom.xml"/>
   <property name="dest.temp" value="${racine.temp}/${nom.archive}"/>
   
-  <!-- Comment this if you don't want to check files at the end of archive  
-	<condition property="checkfiles"> 
-  -->
-       
+  <!-- Comment this if you don't want to check files at the end of archive  -->
+  <property name="checkfiles" value="foo"/> 
+
 
   <!--
        Le suffixe "_" apres l'extension zip permet d'empecher les fournisseurs

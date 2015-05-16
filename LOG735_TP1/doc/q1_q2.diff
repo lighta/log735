@@ -1,10 +1,12 @@
 diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsmtl/ca/q2/Client.java
---- ../src/main/java/ens/etsmtl/ca/q1/Client.java	2015-05-12 19:02:33.954809637 -0400
-+++ ../src/main/java/ens/etsmtl/ca/q2/Client.java	2015-05-12 19:02:33.955809659 -0400
-@@ -1,46 +1,54 @@
+--- ../src/main/java/ens/etsmtl/ca/q1/Client.java	2015-05-16 09:31:26.838877980 -0400
++++ ../src/main/java/ens/etsmtl/ca/q2/Client.java	2015-05-16 09:32:41.351545226 -0400
+@@ -15,49 +15,56 @@
+ Simple client TCP se connectant a un serveur quelquonque.
+ ******************************************************/
+ 
 -package ens.etsmtl.ca.q1;
 +package ens.etsmtl.ca.q2;
-+
  import java.io.*;
  import java.net.*;
  
@@ -16,7 +18,7 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
  
 -        if (args.length > 0)
 -        	serverHostname = args[0];
--        System.out.println ("Essai de se connecter à l'hôte " +
+-        System.out.println ("Essai de se connecter a l'hote " +
 -		serverHostname + " au port 10118.");
 -
 -        Socket echoSocket = null;
@@ -28,20 +30,20 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
 -            out = new PrintWriter(echoSocket.getOutputStream(), true);
 -            in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
 -        } catch (UnknownHostException e) {
--            System.err.println("Hôte inconnu: " + serverHostname);
+-            System.err.println("Hote inconnu: " + serverHostname);
 -            System.exit(1);
 -        } catch (IOException e) {
--            System.err.println("Ne pas se connecter au serveur: " + serverHostname);
+-            System.err.println("Ne peut pas se connecter au serveur: " + serverHostname);
 -            System.exit(1);
 -        }
 -
 -        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
 -        String userInput;
--        System.out.print ("Entrée: ");
+-        System.out.print ("Entree: ");
 -        while ((userInput = stdIn.readLine()) != null) {
 -        	out.println(userInput);
 -        	System.out.println("echo: " + in.readLine());
--            System.out.print ("Entrée: ");
+-            System.out.print ("Entree: ");
 -        }
 -
 -        out.close();
@@ -51,7 +53,7 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
 -    }
 +		if (args.length > 0)
 +			serverHostname = args[0];
-+		System.out.println("Essai de se connecter à l'hôte " + serverHostname
++		System.out.println("Essai de se connecter a l'hote " + serverHostname
 +				+ " au port 10118.");
 +
 +		Socket echoSocket = null;
@@ -64,7 +66,7 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
 +			in = new BufferedReader(new InputStreamReader(
 +					echoSocket.getInputStream()));
 +		} catch (UnknownHostException e) {
-+			System.err.println("Hôte inconnu: " + serverHostname);
++			System.err.println("Hote inconnu: " + serverHostname);
 +			System.exit(1);
 +		} catch (IOException e) {
 +			System.err.println("Ne pas se connecter au serveur: "
@@ -75,7 +77,7 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
 +		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
 +				System.in));
 +		String userInput;
-+		System.out.print("Entrée: ");
++		System.out.print("Entree: ");
 +		while ((userInput = stdIn.readLine()) != null) {
 +			out.println(userInput);
 +			String echo = in.readLine();
@@ -84,7 +86,7 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
 +				break;
 +			}
 +
-+			System.out.print("Entrée: ");
++			System.out.print("Entree: ");
 +		}
 +
 +		out.close();
@@ -95,13 +97,44 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsm
  }
 -
 diff -ur ../src/main/java/ens/etsmtl/ca/q1/Server.java ../src/main/java/ens/etsmtl/ca/q2/Server.java
---- ../src/main/java/ens/etsmtl/ca/q1/Server.java	2015-05-12 19:02:33.956809680 -0400
-+++ ../src/main/java/ens/etsmtl/ca/q2/Server.java	2015-05-12 19:02:33.956809680 -0400
-@@ -1,53 +1,87 @@
+--- ../src/main/java/ens/etsmtl/ca/q1/Server.java	2015-05-16 09:32:08.291805503 -0400
++++ ../src/main/java/ens/etsmtl/ca/q2/Server.java	2015-05-16 09:53:18.431225286 -0400
+@@ -1,70 +1,315 @@
+ /******************************************************
+-Cours : LOG735
+-Session : Ã‰tÃ© 2015
+-Groupe : 01
+-Projet : Laboratoire 1
+-Ã‰tudiants : 
+-	Max Moreau
+-	Charly Simon
+-Code(s) perm. : 
++ Cours : LOG735
++ Session : Ã‰tÃ© 2015
++ Groupe : 01
++ Projet : Laboratoire 1
++ Ã‰tudiants : 
++ 	Max Moreau
++ 	Charly Simon
++ Code(s) perm. : 
+ 	MORM30038905
+-	SIMC28069108
+-Date crÃ©ation : 7/05/2015
+-Date dern. modif. : 16/05/2015
++ 	SIMC28069108
++ Date crÃ©ation : 7/05/2015
++ Date dern. modif. : 16/05/2015
+ ******************************************************
+-Simple Serveur echo TCP
++Server echo Multithread TCP 
+ ******************************************************/
+ 
 -package ens.etsmtl.ca.q1;
 -import java.net.*; 
--import java.io.*; 
--
++package ens.etsmtl.ca.q2;
++import java.net.*;
+ import java.io.*;
+ 
 -public class Server { 
 -	public static void main(String[] args) throws IOException { 
 -    
@@ -112,7 +145,7 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Server.java ../src/main/java/ens/etsm
 -        } 
 -		catch (IOException e) 
 -        { 
--			System.err.println("On ne peut pas écouter au  port: 10118."); 
+-			System.err.println("On ne peut pas ecouter au  port: 10118."); 
 -			System.exit(1); 
 -        } 
 -
@@ -124,12 +157,12 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Server.java ../src/main/java/ens/etsm
 -        } 
 -		catch (IOException e) 
 -        { 
--			System.err.println("Accept a échoué."); 
+-			System.err.println("Accept a echoue."); 
 -			System.exit(1); 
 -        } 
 -
--		System.out.println ("connexion réussie");
--		System.out.println ("Attente de l'entrée.....");
+-		System.out.println ("connexion reussie");
+-		System.out.println ("Attente de l'entree.....");
 -
 -		PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true); 
 -		BufferedReader in = new BufferedReader(new InputStreamReader( clientSocket.getInputStream())); 
@@ -151,56 +184,234 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Server.java ../src/main/java/ens/etsm
 -		serverSocket.close(); 
 -	} 
 -} 
-+package ens.etsmtl.ca.q2;
-+
-+
-+import java.net.*;
-+import java.io.*;
-+
++/**
++ * Objet server general servant a definir la creation d'un serveur TCP specific
++ * @author lighta
++ */
 +public class Server {
 +
-+	static boolean run = true;
++	/**
++	 * Constructor
++	 * Demandea l'usager un ensemble d'information pour la creation du serveur
++	 * @throws IOException
++	 */
++	public Server() throws IOException {
++		super();
++		int second=5; //time to sleep before serving client (for simulate issue)
++		String hostname;
++		String inputLine = "";
++		
++		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
++		System.out.println("Entrez l'ip de bind du serveur");
++		hostname = stdIn.readLine();
++		//check ip
++		
++		
++		System.out.println("Entrez le nb de second");
++		inputLine = stdIn.readLine();
++		second = Integer.parseInt(inputLine);
++		
++		ServerTCP serv_th = new ServerTCP(hostname,second);
++		serv_th.start();
++		
++		while (inputLine.equalsIgnoreCase("Q")==false ) {
++			System.out.println("Press Q to end server");
++			inputLine = stdIn.readLine();
++		} //waiting request stop
++		System.out.println("Closing server");
++		serv_th.stoping();
++		while(serv_th.isAlive()); //waiting gracefully closed
++		System.out.println("Server closed");
++	}
 +
-+	public static class HandlerTCP extends Thread {
-+		Socket clientSocket = null;
 +
-+		public HandlerTCP(Socket clientSocket) throws IOException {
-+			this.clientSocket = clientSocket;
++	/**
++	 * Serveur Echo Multithread
++	 * Ecoute et repond au connexion des clients
++	 * @author lighta
++	 */
++	public class ServerTCP extends Thread {
++		boolean run = true; 						//start/stop server variable
++		Socket clientSocket = null;					//socket des clients
++		HandlerTCP clientjob;						//thread des client
++		
++		ServerSocket serverSocket = null;			//endpoint du servuer
++		InetAddress ipAddress;						//adr d'ecoute du serveur
++		
++		String hostname;							//adr d'ecoute du serveur (forme string)
++		static final String DEF_HOST="127.0.0.1";   //adr d'ecoute par defaut
++		
++		int port=10118;								//port d'ecoute
++		int nbsleep=0;								//tps d'attente
++		
++		/**
++		 * Constructeur
++		 * Cree un serveur en ecoute a l'adresse hostname avec un temps d'attente nbsleep
++		 * @param hostname : Adresse ou le serveur doit ecouter
++		 * @param nbsleep : Temps d'attente en second
++		 */
++		public ServerTCP(String hostname, int nbsleep) {
++			this.hostname=hostname;
++			this.nbsleep=nbsleep;	
++			try {
++				ipAddress= InetAddress.getByName(hostname);
++			} catch (UnknownHostException e1) {
++				System.err.println("On ne peut pas se binder sur : "+hostname+ " invalide");
++				System.exit(1);
++			}
++			try {
++				serverSocket = new ServerSocket(port,0, ipAddress);
++			} catch (IOException e) {
++				System.err.println("On ne peut pas ecouter au  port: "+port);
++				System.exit(1);
++			}
++		}
++		
++		/**
++		 * Constructeur
++		 * Cree un serveur en ecoute a l'adresse hostname sans temps d'attente
++		 * @param hostname : Adresse ou le serveur doit ecouter
++		 */
++		public ServerTCP(String hostname)  {
++			this(hostname,0);
 +		}
 +
-+		private void reply() throws IOException {
++		/**
++		 * Constructeur
++		 * Cree un serveur en ecoute a l'adresse DEF_HOST et sans temps d'attente
++		 */
++		public ServerTCP()  {
++			this(DEF_HOST,0);
++		}
++		
++		
++		/**
++		 * Methode servant a rendre le serveur en mode actif
++		 * Ecoute infiniment en attente d'une connection puis transmet a HandlerTCP
++		 */
++		@Override
++		public void run() {
++				System.out.println("Le serveur est en marche, Attente de la connexion...");
++				while (run == true) {
++					try {
++						clientSocket = serverSocket.accept();
++					} catch (IOException e) {
++						System.err.println("Accept a echoue.");
++						continue;
++					}
++					
++					
++					try {
++						clientjob = new HandlerTCP(clientSocket,nbsleep,port,hostname);
++						clientjob.start();
++					} catch (IOException e) {
++						// TODO Auto-generated catch block
++						e.printStackTrace();
++					}
++					if(Thread.interrupted())
++						run = false;
++				}
++		}
++		
++		/**
++		 * Fonction pour arreter l'ecoute infinie du serveur.
++		 * Marque la fin de la boucle 
++		 * puis force une exeption pour quitter les IO blocants.
++		 */
++		public void stoping() {
++			run = false;
++			try {
++			//	clientjob.stoping();
++				serverSocket.close();
++			} catch (IOException e) {
++				// TODO Auto-generated catch block
++				e.printStackTrace();
++			}
++		}
++	}
++	//end ServerTCP class
++	
++	/**
++	 * Class de traitement du serveur pour chaque connection client
++	 * (Ici un simple wait + echo)
++	 * @author lighta
++	 */
++	public class HandlerTCP extends Thread {
++		Socket clientSocket = null;			//socket de connection au client
++		int second=0;						//nb de seconded'attente avant reponse
++		int serv_port=0;					//port du serveur
++		String serv_host;					//adr du serveur
++
++		/**
++		 * Constructeur
++		 * Creer un objet de reponse pour le serveur qui sera envoyer au client du socket
++		 * @param clientSocket : Socket du client (pour repondre)
++		 * @param second : Temps d'attente avant reponse
++		 * @param serv_port : Port du serveur lie
++		 * @param serv_host : Adresse du serveur lie
++		 * @throws IOException
++		 */
++		public HandlerTCP(Socket clientSocket, int second, int serv_port, String serv_host) throws IOException {
++			this.clientSocket = clientSocket;
++			this.second = second;
++			this.serv_port = serv_port;
++			this.serv_host = "";
++		}	
++		
++		/**
++		 * Fonction de reponse, traitement propre sans notions des containers
++		 * @throws IOException
++		 * @throws InterruptedException
++		 */
++		private void reply() throws IOException, InterruptedException {
 +			PrintWriter out;
 +			out = new PrintWriter(clientSocket.getOutputStream(), true);
-+			BufferedReader in = new BufferedReader(new InputStreamReader(
-+					clientSocket.getInputStream()));
++			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 +
-+			String inputLine;
-+			while ((inputLine = in.readLine()) != null) {
-+				inputLine = inputLine.toUpperCase();
++			String inputLine = null;
++			while (true) {
++				while(inputLine == null || inputLine.isEmpty()) //attente blocante pour fichier
++					inputLine = in.readLine();
++				
++				//simulation long traitement
++				System.out.println("Serveur waiting for : " + second);
++				Thread.sleep(1000*second);
++				System.out.println("Sleep ended");
++				//end simulation
++			
 +				//echo + bye
-+				if (inputLine.equalsIgnoreCase("Bye")){
++				if (inputLine.equalsIgnoreCase("BYE")){
 +					out.println(inputLine+" : Connection closed");
 +					System.out.println("Serveur: Connection client closed" );
 +					break;
 +				}
++				inputLine = inputLine.toUpperCase();
 +				//echo standard
 +				System.out.println("Serveur: " + inputLine);
 +				out.println(inputLine);
-+			}
-+			
++				
++				inputLine = null; //raz pour fichier
++			}	
 +			out.close();
 +			in.close();
 +		}
 +
++		/**
++		 * Debut de traitement de requete.
++		 * Container pour gestions des sockets et autres IO
++		 */
 +		@Override
 +		public void run() {
-+			System.out.println("connexion réussie");
-+			System.out.println("Attente de l'entrée.....");
++			System.out.println("connexion reussie");
++			System.out.println("Attente de l'entree.....");
 +			try {
 +				reply();
 +			} catch (IOException e) {
 +				System.err.println("Reply failed");
 +				// e.printStackTrace();
++			} catch (InterruptedException e) {
++				// TODO Auto-generated catch block
++				e.printStackTrace();
 +			}
 +			try {
 +				clientSocket.close();
@@ -210,31 +421,60 @@ diff -ur ../src/main/java/ens/etsmtl/ca/q1/Server.java ../src/main/java/ens/etsm
 +			}
 +		}
 +	}
++	//end HandlerTCP class
 +
-+	public static void main(String[] args) throws IOException {
-+		Socket clientSocket = null;
-+		ServerSocket serverSocket = null;
-+
-+		try {
-+			serverSocket = new ServerSocket(10118);
-+			System.out.println("Le serveur est en marche, Attente de la connexion...");
-+			while (run == true) {
-+				try {
-+					clientSocket = serverSocket.accept();
-+				} catch (IOException e) {
-+					System.err.println("Accept a échoué... next");
-+					//System.exit(1);
-+				}
-+				HandlerTCP clientjob = new HandlerTCP(clientSocket);
-+				clientjob.start();
-+			}
-+		} catch (IOException e) {
-+			System.err.println("On ne peut pas écouter au  port: 10118.");
-+			System.exit(1);
++	/**
++	 * Fonction servant a definir les stream de defaut pour les entree et sortie standard
++	 * @param args[0] programm inputStream (null for standard input)
++	 * @param args[1] programm outputStream (null for standard output)
++	 * @param args[2] programm errOutputStream (null for standard output)
++	 * @throws IOException 
++	 * 
++	 * @throws IOException
++	 */
++	private static void initIO(String[] streams) throws IOException
++	{
++		BufferedInputStream input;
++		PrintStream output;
++		PrintStream errOutput;
++		
++		//set programm inputStream
++		if (streams.length >= 1 && streams[0] != null){
++			FileInputStream fis = new FileInputStream (streams [0]);
++			input = new BufferedInputStream(fis);
 +		}
-+		finally {
-+			serverSocket.close();
++		else{
++			input = new BufferedInputStream(System.in);
 +		}
-+
++		
++		
++		//set programm outputStream
++		if (streams.length >= 2 && streams[1] != null){
++			FileOutputStream fos = new FileOutputStream (streams [1]);
++			output = new PrintStream(fos);
++		}
++		else{
++			output = new PrintStream(System.out);
++		}
++		
++		//set programm outputStream
++		if (streams.length >= 3 && streams[2] != null){
++			FileOutputStream fos = new FileOutputStream (streams [2]);
++			errOutput = new PrintStream(fos);
++		}
++		else{
++			errOutput = new PrintStream(System.err);
++		}
++		
++		System.setIn(input);
++		System.setOut(output);
++		System.setErr(errOutput);
++		
++	}
++	
++	public static void main(String[] args) throws IOException {				
++		initIO(args);
++		new Server();
++		
 +	}
 +}
