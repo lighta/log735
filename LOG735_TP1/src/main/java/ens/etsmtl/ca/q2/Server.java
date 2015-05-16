@@ -1,5 +1,21 @@
-package ens.etsmtl.ca.q2;
+/******************************************************
+ Cours : LOG735
+ Session : Été 2015
+ Groupe : 01
+ Projet : Laboratoire 1
+ Étudiants : 
+ 	Max Moreau
+ 	Charly Simon
+ Code(s) perm. : 
+	MORM30038905
+ 	SIMC28069108
+ Date création : 7/05/2015
+ Date dern. modif. : 16/05/2015
+******************************************************
+[Résumé des fonctionnalités et de la raison d’être de la classe]
+******************************************************/
 
+package ens.etsmtl.ca.q2;
 import java.net.*;
 import java.io.*;
 
@@ -168,8 +184,13 @@ public class Server {
 
 		@Override
 		public void run() {
+<<<<<<< Updated upstream
 			System.out.println("connexion reussie");
 			System.out.println("Attente de l'entree.....");
+=======
+			System.out.println("connexion r�ussie");
+			System.out.println("Attente de l'entr�e.....");
+>>>>>>> Stashed changes
 			try {
 				reply();
 			} catch (IOException e) {
@@ -189,6 +210,7 @@ public class Server {
 	}
 	//end HandlerTCP class
 
+<<<<<<< Updated upstream
 	
 	/**
 	 * 
@@ -209,6 +231,28 @@ public class Server {
 		if (streams.length >= 1 && streams[0] != null){
 			FileInputStream fis = new FileInputStream (streams [0]);
 			input = new BufferedInputStream(fis);
+=======
+	public static void main(String[] args) throws IOException {
+		Socket clientSocket = null;
+		ServerSocket serverSocket = null;
+
+		try {
+			serverSocket = new ServerSocket(10118);
+			System.out.println("Le serveur est en marche, Attente de la connexion...");
+			while (run == true) {
+				try {
+					clientSocket = serverSocket.accept();
+				} catch (IOException e) {
+					System.err.println("Accept a �chou�... next");
+					//System.exit(1);
+				}
+				HandlerTCP clientjob = new HandlerTCP(clientSocket);
+				clientjob.start();
+			}
+		} catch (IOException e) {
+			System.err.println("On ne peut pas �couter au  port: 10118.");
+			System.exit(1);
+>>>>>>> Stashed changes
 		}
 		else{
 			input = new BufferedInputStream(System.in);

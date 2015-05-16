@@ -1,6 +1,23 @@
+/******************************************************
+Cours : LOG735
+Session : Ã‰tÃ© 2015
+Groupe : 01
+Projet : Laboratoire 1
+Ã‰tudiants : 
+	Max Moreau
+	Charly Simon
+Code(s) perm. : 
+	MORM30038905
+	SIMC28069108
+Date crÃ©ation : 7/05/2015
+Date dern. modif. : 16/05/2015
+******************************************************
+[RÃ©sumÃ© des fonctionnalitÃ©s et de la raison dâ€™Ãªtre de la classe]
+******************************************************/
+
 package ens.etsmtl.ca.q1;
 import java.net.*; 
-import java.io.*; 
+import java.io.*;
 
 public class Server { 
 	public static void main(String[] args) throws IOException { 
@@ -12,7 +29,7 @@ public class Server {
         } 
 		catch (IOException e) 
         { 
-			System.err.println("On ne peut pas écouter au  port: 10118."); 
+			System.err.println("On ne peut pas ï¿½couter au  port: 10118."); 
 			System.exit(1); 
         } 
 
@@ -24,12 +41,12 @@ public class Server {
         } 
 		catch (IOException e) 
         { 
-			System.err.println("Accept a échoué."); 
+			System.err.println("Accept a ï¿½chouï¿½."); 
 			System.exit(1); 
         } 
 
-		System.out.println ("connexion réussie");
-		System.out.println ("Attente de l'entrée.....");
+		System.out.println ("connexion rï¿½ussie");
+		System.out.println ("Attente de l'entrï¿½e.....");
 
 		PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true); 
 		BufferedReader in = new BufferedReader(new InputStreamReader( clientSocket.getInputStream())); 

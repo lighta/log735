@@ -1,3 +1,20 @@
+/******************************************************
+ Cours : LOG735
+ Session : Ã‰tÃ© 2015
+ Groupe : 01
+ Projet : Laboratoire 1
+ Ã‰tudiants : 
+ 	Max Moreau
+ 	Charly Simon
+ Code(s) perm. : 
+	MORM30038905
+ 	SIMC28069108
+ Date crÃ©ation : 7/05/2015
+ Date dern. modif. : 16/05/2015
+******************************************************
+[RÃ©sumÃ© des fonctionnalitÃ©s et de la raison dâ€™Ãªtre de la classe]
+******************************************************/
+
 package ens.etsmtl.ca.q1;
 import java.io.*;
 import java.net.*;
@@ -9,7 +26,7 @@ public class Client {
 
         if (args.length > 0)
         	serverHostname = args[0];
-        System.out.println ("Essai de se connecter à l'hôte " +
+        System.out.println ("Essai de se connecter a l'hote " +
 		serverHostname + " au port 10118.");
 
         Socket echoSocket = null;
@@ -21,7 +38,7 @@ public class Client {
             out = new PrintWriter(echoSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
         } catch (UnknownHostException e) {
-            System.err.println("Hôte inconnu: " + serverHostname);
+            System.err.println("Hï¿½te inconnu: " + serverHostname);
             System.exit(1);
         } catch (IOException e) {
             System.err.println("Ne peut pas se connecter au serveur: " + serverHostname);
@@ -30,11 +47,11 @@ public class Client {
 
         BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
         String userInput;
-        System.out.print ("Entrée: ");
+        System.out.print ("Entrï¿½e: ");
         while ((userInput = stdIn.readLine()) != null) {
         	out.println(userInput);
         	System.out.println("echo: " + in.readLine());
-            System.out.print ("Entrée: ");
+            System.out.print ("Entrï¿½e: ");
         }
 
         out.close();
