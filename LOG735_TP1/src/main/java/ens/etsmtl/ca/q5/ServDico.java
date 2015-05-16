@@ -12,17 +12,27 @@
  Date création : 7/05/2015
  Date dern. modif. : 16/05/2015
 ******************************************************
-[Résumé des fonctionnalités et de la raison d’être de la classe]
+Class servant a definir un dictionnaire de serveur joignable
 ******************************************************/
 
 package ens.etsmtl.ca.q5;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Dictionnaire regroupant un ensemble des definission de connection
+ * @author lighta
+ */
 public class ServDico {
 	protected String host_name = "";
 	protected int port = 10118;
 	
+	/**
+	 * Objet definissant les information necessaire 
+	 * pour la connection a un serveur
+	 * host,port,pass,.. ?
+	 * @author lighta
+	 */
 	public class ServerDef {
 		public String host_name = "";
 		public int port = 10118;
@@ -40,14 +50,19 @@ public class ServDico {
 		}
 	}
 	
-	public Map<Integer, ServerDef> servers_dico = new HashMap<>();
+	public Map<Integer, ServerDef> servers_dico = new HashMap<>(); //liste reel
 
-
+	/**
+	 * Constructeur
+	 */
 	public ServDico() {
 		super();
 		FillServerDico();
 	}
 
+	/**
+	 * Fonction de remplissage du dictionnaire par defaut
+	 */
 	private void FillServerDico() {
 		servers_dico.put(0, new ServerDef("127.0.0.1"));
 		servers_dico.put(1, new ServerDef("127.0.0.2"));

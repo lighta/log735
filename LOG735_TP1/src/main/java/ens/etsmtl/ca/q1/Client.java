@@ -12,7 +12,7 @@
  Date création : 7/05/2015
  Date dern. modif. : 16/05/2015
 ******************************************************
-[Résumé des fonctionnalités et de la raison d’être de la classe]
+Simple client TCP se connectant a un serveur quelquonque.
 ******************************************************/
 
 package ens.etsmtl.ca.q1;
@@ -38,7 +38,7 @@ public class Client {
             out = new PrintWriter(echoSocket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
         } catch (UnknownHostException e) {
-            System.err.println("H�te inconnu: " + serverHostname);
+            System.err.println("Hote inconnu: " + serverHostname);
             System.exit(1);
         } catch (IOException e) {
             System.err.println("Ne peut pas se connecter au serveur: " + serverHostname);
@@ -47,11 +47,11 @@ public class Client {
 
         BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
         String userInput;
-        System.out.print ("Entr�e: ");
+        System.out.print ("Entree: ");
         while ((userInput = stdIn.readLine()) != null) {
         	out.println(userInput);
         	System.out.println("echo: " + in.readLine());
-            System.out.print ("Entr�e: ");
+            System.out.print ("Entree: ");
         }
 
         out.close();

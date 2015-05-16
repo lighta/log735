@@ -12,16 +12,24 @@
  Date création : 7/05/2015
  Date dern. modif. : 16/05/2015
 ******************************************************
-[Résumé des fonctionnalités et de la raison d’être de la classe]
+Server echo Multithread TCP 
 ******************************************************/
 
 package ens.etsmtl.ca.q3;
 import java.net.*;
 import java.io.*;
 
-
+/**
+ * Objet server general servant a definir la creation d'un serveur TCP specific
+ * @author lighta
+ */
 public class Server {
-	
+
+	/**
+	 * Constructor
+	 * Demandea l'usager un ensemble d'information pour la creation du serveur
+	 * @throws IOException
+	 */
 	public Server() throws IOException {
 		super();
 		int second=5; //time to sleep before serving client (for simulate issue)
@@ -52,22 +60,31 @@ public class Server {
 	}
 
 
-
+	/**
+	 * Serveur Echo Multithread
+	 * Ecoute et repond au connexion des clients
+	 * @author lighta
+	 */
 	public class ServerTCP extends Thread {
-		boolean run = true; //start/stop server variable
-		Socket clientSocket = null;
-		HandlerTCP clientjob;
+		boolean run = true; 						//start/stop server variable
+		Socket clientSocket = null;					//socket des clients
+		HandlerTCP clientjob;						//thread des client
 		
-		ServerSocket serverSocket = null;
-		InetAddress ipAddress;
+		ServerSocket serverSocket = null;			//endpoint du servuer
+		InetAddress ipAddress;						//adr d'ecoute du serveur
 		
-		String hostname;
-		static final String DEF_HOST="127.0.0.1";
+		String hostname;							//adr d'ecoute du serveur (forme string)
+		static final String DEF_HOST="127.0.0.1";   //adr d'ecoute par defaut
 		
-		int port=10118;
-		int nbsleep=0;
+		int port=10118;								//port d'ecoute
+		int nbsleep=0;								//tps d'attente
 		
-		
+		/**
+		 * Constructeur
+		 * Cree un serveur en ecoute a l'adresse hostname avec un temps d'attente nbsleep
+		 * @param hostname : Adresse ou le serveur doit ecouter
+		 * @param nbsleep : Temps d'attente en second
+		 */
 		public ServerTCP(String hostname, int nbsleep) {
 			this.hostname=hostname;
 			this.nbsleep=nbsleep;	
@@ -85,14 +102,28 @@ public class Server {
 			}
 		}
 		
+		/**
+		 * Constructeur
+		 * Cree un serveur en ecoute a l'adresse hostname sans temps d'attente
+		 * @param hostname : Adresse ou le serveur doit ecouter
+		 */
 		public ServerTCP(String hostname)  {
 			this(hostname,0);
 		}
 
+		/**
+		 * Constructeur
+		 * Cree un serveur en ecoute a l'adresse DEF_HOST et sans temps d'attente
+		 */
 		public ServerTCP()  {
 			this(DEF_HOST,0);
 		}
 		
+		
+		/**
+		 * Methode servant a rendre le serveur en mode actif
+		 * Ecoute infiniment en attente d'une connection puis transmet a HandlerTCP
+		 */
 		@Override
 		public void run() {
 				System.out.println("Le serveur est en marche, Attente de la connexion...");
@@ -117,6 +148,11 @@ public class Server {
 				}
 		}
 		
+		/**
+		 * Fonction pour arreter l'ecoute infinie du serveur.
+		 * Marque la fin de la boucle 
+		 * puis force une exeption pour quitter les IO blocants.
+		 */
 		public void stoping() {
 			run = false;
 			try {
@@ -127,18 +163,29 @@ public class Server {
 				e.printStackTrace();
 			}
 		}
-		
-		
 	}
 	//end ServerTCP class
 	
-	
+	/**
+	 * Class de traitement du serveur pour chaque connection client
+	 * (Ici un simple wait + echo)
+	 * @author lighta
+	 */
 	public class HandlerTCP extends Thread {
-		Socket clientSocket = null;
-		int second=0;
-		int serv_port=0;
-		String serv_host;
+		Socket clientSocket = null;			//socket de connection au client
+		int second=0;						//nb de seconded'attente avant reponse
+		int serv_port=0;					//port du serveur
+		String serv_host;					//adr du serveur
 
+		/**
+		 * Constructeur
+		 * Creer un objet de reponse pour le serveur qui sera envoyer au client du socket
+		 * @param clientSocket : Socket du client (pour repondre)
+		 * @param second : Temps d'attente avant reponse
+		 * @param serv_port : Port du serveur lie
+		 * @param serv_host : Adresse du serveur lie
+		 * @throws IOException
+		 */
 		public HandlerTCP(Socket clientSocket, int second, int serv_port, String serv_host) throws IOException {
 			this.clientSocket = clientSocket;
 			this.second = second;
@@ -146,12 +193,15 @@ public class Server {
 			this.serv_host = "";
 		}	
 		
+		/**
+		 * Fonction de reponse, traitement propre sans notions des containers
+		 * @throws IOException
+		 * @throws InterruptedException
+		 */
 		private void reply() throws IOException, InterruptedException {
 			PrintWriter out;
 			out = new PrintWriter(clientSocket.getOutputStream(), true);
 			BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-
-			
 
 			String inputLine = null;
 			while (true) {
@@ -176,12 +226,15 @@ public class Server {
 				out.println(inputLine);
 				
 				inputLine = null; //raz pour fichier
-			}
-			
+			}	
 			out.close();
 			in.close();
 		}
 
+		/**
+		 * Debut de traitement de requete.
+		 * Container pour gestions des sockets et autres IO
+		 */
 		@Override
 		public void run() {
 			System.out.println("connexion reussie");
@@ -205,9 +258,8 @@ public class Server {
 	}
 	//end HandlerTCP class
 
-	
 	/**
-	 * 
+	 * Fonction servant a definir les stream de defaut pour les entree et sortie standard
 	 * @param args[0] programm inputStream (null for standard input)
 	 * @param args[1] programm outputStream (null for standard output)
 	 * @param args[2] programm errOutputStream (null for standard output)
@@ -260,5 +312,4 @@ public class Server {
 		new Server();
 		
 	}
-	
 }

@@ -12,7 +12,7 @@ Code(s) perm. :
 Date création : 7/05/2015
 Date dern. modif. : 16/05/2015
 ******************************************************
-[Résumé des fonctionnalités et de la raison d’être de la classe]
+Simple Serveur echo TCP
 ******************************************************/
 
 package ens.etsmtl.ca.q1;
@@ -29,7 +29,7 @@ public class Server {
         } 
 		catch (IOException e) 
         { 
-			System.err.println("On ne peut pas �couter au  port: 10118."); 
+			System.err.println("On ne peut pas ecouter au  port: 10118."); 
 			System.exit(1); 
         } 
 
@@ -41,12 +41,12 @@ public class Server {
         } 
 		catch (IOException e) 
         { 
-			System.err.println("Accept a �chou�."); 
+			System.err.println("Accept a echoue."); 
 			System.exit(1); 
         } 
 
-		System.out.println ("connexion r�ussie");
-		System.out.println ("Attente de l'entr�e.....");
+		System.out.println ("connexion reussie");
+		System.out.println ("Attente de l'entree.....");
 
 		PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true); 
 		BufferedReader in = new BufferedReader(new InputStreamReader( clientSocket.getInputStream())); 
