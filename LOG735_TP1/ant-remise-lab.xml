@@ -50,7 +50,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 <project name="ant-remise-lab" default="zip" basedir=".">
   <property name="no.lab" value="1"/> <!-- Numero du lab -->
   <property name="equipe" value="onsaitpas"/> <!-- Numero d'equipe -->
-  <property name="codeperms" value="MORM30038905_"/> <!-- Numero d'equipe -->
+  <property name="codeperms" value="MORM30038905_SIMC28069108"/> <!-- Numero d'equipe -->
   <property name="racine.projet.mvn" value="."/>
   <!--
      modules.a.inclure: les "/" apres chaque repertoire sont importants.
@@ -97,7 +97,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 
   <!-- Copie des fichiers pertinents dans un lieu temporaire qui sert a
        construire l'archive finale. -->
-  <target name="copie" depends="checkfile, prepare">
+  <target name="copie" depends="generate_diff, checkfile, prepare">
     <copy todir="${dest.temp}" includeEmptyDirs="false"
       preservelastmodified="true">
 
@@ -122,6 +122,14 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 		<zip destfile="${archive}" basedir="${dest.temp}" includes="**/*" />
 	</target>
 
+	
+	<!-- Regenerationdes diff avant package archive -->
+	<target name="generate_diff">
+		<exec dir="." executable="sh" osfamily="unix">
+			<arg line="-c 'script/generate_diff.sh'" />
+		</exec>
+	</target>
+	
 	<!-- Nettoyage dir remise avant package archive -->
 	<target name="mvn_clean">
 		<exec dir="." executable="cmd" osfamily="windows">

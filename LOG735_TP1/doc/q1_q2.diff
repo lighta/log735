@@ -1,0 +1,240 @@
+diff -ur ../src/main/java/ens/etsmtl/ca/q1/Client.java ../src/main/java/ens/etsmtl/ca/q2/Client.java
+--- ../src/main/java/ens/etsmtl/ca/q1/Client.java	2015-05-12 19:02:33.954809637 -0400
++++ ../src/main/java/ens/etsmtl/ca/q2/Client.java	2015-05-12 19:02:33.955809659 -0400
+@@ -1,46 +1,54 @@
+-package ens.etsmtl.ca.q1;
++package ens.etsmtl.ca.q2;
++
+ import java.io.*;
+ import java.net.*;
+ 
+ public class Client {
+ 	public static void main(String[] args) throws IOException {
+ 
+-		String serverHostname = new String ("127.0.0.1");
++		String serverHostname = new String("127.0.0.1");
+ 
+-        if (args.length > 0)
+-        	serverHostname = args[0];
+-        System.out.println ("Essai de se connecter à l'hôte " +
+-		serverHostname + " au port 10118.");
+-
+-        Socket echoSocket = null;
+-        PrintWriter out = null;
+-        BufferedReader in = null;
+-
+-        try {
+-            echoSocket = new Socket(serverHostname, 10118);
+-            out = new PrintWriter(echoSocket.getOutputStream(), true);
+-            in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
+-        } catch (UnknownHostException e) {
+-            System.err.println("Hôte inconnu: " + serverHostname);
+-            System.exit(1);
+-        } catch (IOException e) {
+-            System.err.println("Ne pas se connecter au serveur: " + serverHostname);
+-            System.exit(1);
+-        }
+-
+-        BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+-        String userInput;
+-        System.out.print ("Entrée: ");
+-        while ((userInput = stdIn.readLine()) != null) {
+-        	out.println(userInput);
+-        	System.out.println("echo: " + in.readLine());
+-            System.out.print ("Entrée: ");
+-        }
+-
+-        out.close();
+-        in.close();
+-        stdIn.close();
+-        echoSocket.close();
+-    }
++		if (args.length > 0)
++			serverHostname = args[0];
++		System.out.println("Essai de se connecter à l'hôte " + serverHostname
++				+ " au port 10118.");
++
++		Socket echoSocket = null;
++		PrintWriter out = null;
++		BufferedReader in = null;
++
++		try {
++			echoSocket = new Socket(serverHostname, 10118);
++			out = new PrintWriter(echoSocket.getOutputStream(), true);
++			in = new BufferedReader(new InputStreamReader(
++					echoSocket.getInputStream()));
++		} catch (UnknownHostException e) {
++			System.err.println("Hôte inconnu: " + serverHostname);
++			System.exit(1);
++		} catch (IOException e) {
++			System.err.println("Ne pas se connecter au serveur: "
++					+ serverHostname);
++			System.exit(1);
++		}
++
++		BufferedReader stdIn = new BufferedReader(new InputStreamReader(
++				System.in));
++		String userInput;
++		System.out.print("Entrée: ");
++		while ((userInput = stdIn.readLine()) != null) {
++			out.println(userInput);
++			String echo = in.readLine();
++			System.out.println("echo: " + echo);
++			if (echo.contains("BYE")) {
++				break;
++			}
++
++			System.out.print("Entrée: ");
++		}
++
++		out.close();
++		in.close();
++		stdIn.close();
++		echoSocket.close();
++	}
+ }
+-
+diff -ur ../src/main/java/ens/etsmtl/ca/q1/Server.java ../src/main/java/ens/etsmtl/ca/q2/Server.java
+--- ../src/main/java/ens/etsmtl/ca/q1/Server.java	2015-05-12 19:02:33.956809680 -0400
++++ ../src/main/java/ens/etsmtl/ca/q2/Server.java	2015-05-12 19:02:33.956809680 -0400
+@@ -1,53 +1,87 @@
+-package ens.etsmtl.ca.q1;
+-import java.net.*; 
+-import java.io.*; 
+-
+-public class Server { 
+-	public static void main(String[] args) throws IOException { 
+-    
+-		ServerSocket serverSocket = null; 
+-
+-		try { 
+-			serverSocket = new ServerSocket(10118); 
+-        } 
+-		catch (IOException e) 
+-        { 
+-			System.err.println("On ne peut pas écouter au  port: 10118."); 
+-			System.exit(1); 
+-        } 
+-
+-		Socket clientSocket = null; 
+-		System.out.println ("Le serveur est en marche, Attente de la connexion.....");
+-
+-		try { 
+-			clientSocket = serverSocket.accept(); 
+-        } 
+-		catch (IOException e) 
+-        { 
+-			System.err.println("Accept a échoué."); 
+-			System.exit(1); 
+-        } 
+-
+-		System.out.println ("connexion réussie");
+-		System.out.println ("Attente de l'entrée.....");
+-
+-		PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true); 
+-		BufferedReader in = new BufferedReader(new InputStreamReader( clientSocket.getInputStream())); 
+-
+-		String inputLine;
+-
+-		while ((inputLine = in.readLine()) != null) 
+-        { 
+-			System.out.println ("Serveur: " + inputLine);
+-			inputLine = inputLine.toUpperCase();
+-        	out.println(inputLine);
+-        	if (inputLine.equals("Bye.")) 
+-        		break; 
+-        } 
+-
+-		out.close(); 
+-		in.close(); 
+-		clientSocket.close(); 
+-		serverSocket.close(); 
+-	} 
+-} 
++package ens.etsmtl.ca.q2;
++
++
++import java.net.*;
++import java.io.*;
++
++public class Server {
++
++	static boolean run = true;
++
++	public static class HandlerTCP extends Thread {
++		Socket clientSocket = null;
++
++		public HandlerTCP(Socket clientSocket) throws IOException {
++			this.clientSocket = clientSocket;
++		}
++
++		private void reply() throws IOException {
++			PrintWriter out;
++			out = new PrintWriter(clientSocket.getOutputStream(), true);
++			BufferedReader in = new BufferedReader(new InputStreamReader(
++					clientSocket.getInputStream()));
++
++			String inputLine;
++			while ((inputLine = in.readLine()) != null) {
++				inputLine = inputLine.toUpperCase();
++				//echo + bye
++				if (inputLine.equalsIgnoreCase("Bye")){
++					out.println(inputLine+" : Connection closed");
++					System.out.println("Serveur: Connection client closed" );
++					break;
++				}
++				//echo standard
++				System.out.println("Serveur: " + inputLine);
++				out.println(inputLine);
++			}
++			
++			out.close();
++			in.close();
++		}
++
++		@Override
++		public void run() {
++			System.out.println("connexion réussie");
++			System.out.println("Attente de l'entrée.....");
++			try {
++				reply();
++			} catch (IOException e) {
++				System.err.println("Reply failed");
++				// e.printStackTrace();
++			}
++			try {
++				clientSocket.close();
++			} catch (IOException e) {
++				System.err.println("Closed failed");
++				// e.printStackTrace();
++			}
++		}
++	}
++
++	public static void main(String[] args) throws IOException {
++		Socket clientSocket = null;
++		ServerSocket serverSocket = null;
++
++		try {
++			serverSocket = new ServerSocket(10118);
++			System.out.println("Le serveur est en marche, Attente de la connexion...");
++			while (run == true) {
++				try {
++					clientSocket = serverSocket.accept();
++				} catch (IOException e) {
++					System.err.println("Accept a échoué... next");
++					//System.exit(1);
++				}
++				HandlerTCP clientjob = new HandlerTCP(clientSocket);
++				clientjob.start();
++			}
++		} catch (IOException e) {
++			System.err.println("On ne peut pas écouter au  port: 10118.");
++			System.exit(1);
++		}
++		finally {
++			serverSocket.close();
++		}
++
++	}
++}

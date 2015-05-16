@@ -1,0 +1,270 @@
+diff -ur ../src/main/java/ens/etsmtl/ca/q3/Client.java ../src/main/java/ens/etsmtl/ca/q5/Client.java
+--- ../src/main/java/ens/etsmtl/ca/q3/Client.java	2015-05-12 19:02:33.952809594 -0400
++++ ../src/main/java/ens/etsmtl/ca/q5/Client.java	2015-05-12 19:02:33.954809637 -0400
+@@ -1,4 +1,4 @@
+-package ens.etsmtl.ca.q3;
++package ens.etsmtl.ca.q5;
+ 
+ import java.io.*;
+ import java.net.*;
+diff -ur ../src/main/java/ens/etsmtl/ca/q3/Server.java ../src/main/java/ens/etsmtl/ca/q5/Server.java
+--- ../src/main/java/ens/etsmtl/ca/q3/Server.java	2015-05-12 19:02:33.955809659 -0400
++++ ../src/main/java/ens/etsmtl/ca/q5/Server.java	2015-05-12 19:02:33.957809702 -0400
+@@ -1,19 +1,166 @@
+-package ens.etsmtl.ca.q3;
++package ens.etsmtl.ca.q5;
+ 
+ import java.net.*;
+ import java.io.*;
+ 
++import ens.etsmtl.ca.q6.ServDico;
++import ens.etsmtl.ca.q6.ServDico.ServerDef;
++
+ public class Server {
+-	static boolean run = true;
+-	static int second=5;
++	static int nb_req=0; //hold the number of request performed
++	ServDico servs_dico;
++
++	
++	public Server() throws IOException {
++		super();
++		int second=5; //time to sleep before serving client (for simulate issue)
++		String hostname;
++		String inputLine = "";
+ 
+-	public static class HandlerTCP extends Thread {
++		
++		servs_dico = new ServDico();
++		
++		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
++		System.out.println("Entrez l'ip de bind du serveur");
++		hostname = stdIn.readLine();
++		//check ip
++		
++		
++		System.out.println("Entrez le nb de second");
++		inputLine = stdIn.readLine();
++		second = Integer.parseInt(inputLine);
++		
++		ServerTCP serv_th = new ServerTCP(hostname,second);
++		serv_th.start();
++		
++		while (inputLine.equalsIgnoreCase("Q")==false ) {
++			System.out.println("Press Q to end server");
++			inputLine = stdIn.readLine();
++		} //waiting request stop
++		System.out.println("Closing server");
++		serv_th.stoping();
++		while(serv_th.isAlive()); //waiting gracefully closed
++		System.out.println("Server closed");
++	}
++
++
++
++	public class ServerTCP extends Thread {
++		boolean run = true; //start/stop server variable
++		Socket clientSocket = null;
++		ServerSocket serverSocket = null;
++		InetAddress ipAddress;
++		
++		String hostname;
++		int port=10118;
++		int nbsleep=0;
++		
++		public ServerTCP(String hostname, int nbsleep) {
++			this.init(hostname,nbsleep);
++		}
++		
++		public ServerTCP(String hostname)  {
++			this.init(hostname,0);
++		}
++
++		public ServerTCP()  {
++			this.init("127.0.0.1",0);
++		}
++		private void init(String hostname, int nbsleep) {
++			this.hostname=hostname;
++			this.nbsleep=nbsleep;	
++			try {
++				ipAddress= InetAddress.getByName(hostname);
++			} catch (UnknownHostException e1) {
++				System.err.println("On ne peut pas se binder sur : "+hostname+ " invalide");
++				System.exit(1);
++			}
++			try {
++				serverSocket = new ServerSocket(10118,0, ipAddress);
++			} catch (IOException e) {
++				System.err.println("On ne peut pas ecouter au  port: 10118.");
++				System.exit(1);
++			}
++		}
++		
++		@Override
++		public void run() {
++				System.out.println("Le serveur est en marche, Attente de la connexion...");
++				while (run == true) {
++					try {
++						clientSocket = serverSocket.accept();
++					} catch (IOException e) {
++						System.err.println("Accept a echoue.");
++						continue;
++					}
++					
++					HandlerTCP clientjob;
++					try {
++						clientjob = new HandlerTCP(clientSocket,nbsleep,port,hostname);
++						clientjob.start();
++					} catch (IOException e) {
++						// TODO Auto-generated catch block
++						e.printStackTrace();
++					}
++					if(Thread.interrupted())
++						run = false;
++				}
++		}
++		
++		public void stoping() {
++			run = false;
++			try {
++				serverSocket.close();
++			} catch (IOException e) {
++				// TODO Auto-generated catch block
++				e.printStackTrace();
++			}
++		}
++		
++		
++	}
++	//end ServerTCP class
++	
++	
++	public class HandlerTCP extends Thread {
++		private static final int TIMEOUT_CONNECT = 3000;
+ 		Socket clientSocket = null;
++		int second=0;
++		int serv_port=0;
++		String serv_host;
+ 
+-		public HandlerTCP(Socket clientSocket) throws IOException {
++		public HandlerTCP(Socket clientSocket, int second, int serv_port, String serv_host) throws IOException {
+ 			this.clientSocket = clientSocket;
++			this.second = second;
++			this.serv_port = serv_port;
++			this.serv_host = "";
+ 		}
+ 
++		public void SyncServer() {
++			final int list_size = servs_dico.servers_dico.size();
++			ServerDef cur_serv;
++			Socket tmp_Socket;
++			PrintWriter out;
++			
++			int i;
++			for(i=0; i<list_size; i++ ){
++				cur_serv = servs_dico.servers_dico.get(i);
++				
++				if(cur_serv.port==this.serv_port && cur_serv.host_name.equals(serv_host)){
++					continue; //skip ourself
++				}
++				tmp_Socket = new Socket();
++				try {
++					tmp_Socket.connect(new InetSocketAddress(cur_serv.host_name,cur_serv.port), TIMEOUT_CONNECT);
++					out = new PrintWriter(tmp_Socket.getOutputStream(), true);
++					out.println("SYNC:"+nb_req);
++				} catch (IOException e) {
++					System.err.println("Couldn't sync with "+cur_serv.toString());
++					continue;
++				}
++			}
++		}
++		
+ 		private void reply() throws IOException, InterruptedException {
+ 			PrintWriter out;
+ 			out = new PrintWriter(clientSocket.getOutputStream(), true);
+@@ -22,16 +169,27 @@
+ 			
+ 			String inputLine;
+ 			while ((inputLine = in.readLine()) != null) {
++				//simulation long traitement
+ 				System.out.println("Serveur waiting for : " + second);
+ 				Thread.sleep(1000*second);
+ 				System.out.println("Sleep ended");
+-				inputLine = inputLine.toUpperCase();
++				//end simulation
++			
+ 				//echo + bye
+-				if (inputLine.equals("BYE")){
++				if (inputLine.equalsIgnoreCase("BYE")){
+ 					out.println(inputLine+" : Connection closed");
+ 					System.out.println("Serveur: Connection client closed" );
+ 					break;
+ 				}
++				else if (inputLine.contains("SYNC")){
++					System.out.println("Syncing serv");
++					String parse[] = inputLine.split(":");
++					nb_req=Integer.parseInt(parse[1]);
++					break; //no reply
++				}	
++				nb_req++;
++				SyncServer();
++				inputLine = "nb_req:"+nb_req+" "+inputLine.toUpperCase();
+ 				//echo standard
+ 				System.out.println("Serveur: " + inputLine);
+ 				out.println(inputLine);
+@@ -62,50 +220,14 @@
+ 			}
+ 		}
+ 	}
+-
+-	public static void main(String[] args) throws IOException {
+-		
+-		Socket clientSocket = null;
+-		ServerSocket serverSocket = null;
+-		InetAddress ipAddress;
+-		String inputLine = "";
+-
+-		
+-		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
+-		System.out.println("Entrez l'ip de bind du serveur");
+-		inputLine = stdIn.readLine();
+-		//check ip
+-		ipAddress= InetAddress.getByName(inputLine);
+-		
+-		System.out.println("Entrez le nb de second");
+-		inputLine = stdIn.readLine();
+-		second = Integer.parseInt(inputLine);
+-		
+-		try {
+-			serverSocket = new ServerSocket(10118,0, ipAddress);
+-		} catch (IOException e) {
+-			System.err.println("On ne peut pas ecouter au  port: 10118.");
+-			System.exit(1);
+-		}
+-		finally {
+-			System.out.println("Le serveur est en marche, Attente de la connexion...");
+-			
++	//end HandlerTCP class
+ 	
+-			while (run == true) {
+ 	
+-				try {
+-					clientSocket = serverSocket.accept();
+-				} catch (IOException e) {
+-					System.err.println("Accept a echoue.");
+-					System.exit(1);
+-				}
+ 	
+-				HandlerTCP clientjob = new HandlerTCP(clientSocket);
+-				clientjob.start();
+ 	
+-			}
+-			serverSocket.close();
+-		}
+ 
++	public static void main(String[] args) throws IOException {
++		new Server();
+ 	}
++	
+ }
+\ No newline at end of file
