@@ -68,7 +68,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
   <property name="nom.archive"
     value="${cours}_LAB${no.lab}_${codeperms}"/>
   <property name="fichier.directives"
-    value="${racine.projet.mvn}/README.*"/>
+    value="${racine.projet.mvn}/README.txt"/>
   <property name="fichier.rapport"
     value="${racine.projet.mvn}/${nom.archive}.pdf"/>
   <property name="fichier.pom"
@@ -148,11 +148,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 			<condition><not><available file="${fichier.pom}" property="pomfound"/></not></condition>
 		</fail>
 		<fail message="${fichier.directives} manquant !!">
-			<condition>
-				<not><resourcecount count="1">
-					<fileset id="fs" dir="${racine.projet.mvn}" includes="LISEZMOI.*"/>
-				</resourcecount></not>
-			</condition>
+			<condition><not><available file="${fichier.directives}" property="readmefound"/></not></condition>
 		</fail>
 	</target>
 </project>
