@@ -1,0 +1,60 @@
+Test Scenario:
+Q1:
+S1,C1,C2
+C1 => bonjour
+C2 => bonjour
+
+res:
+C2 na pas de result
+
+
+Q2:
+S1,C1,C2
+S1,C1,C2
+C1 => bonjour
+C2 => bonjour
+
+res:
+C2 :a un result
+C1: a un result
+
+
+Q3:
+S1,S2,C1
+S1.delay: 10 (D>3s)
+S2.delay: 2
+C1.con(s1)
+C1 => bonjour
+
+res:
+C1.timeout
+C1.switch(s2)
+C1.send
+C1 a result de S2
+S1 repond dans le vide
+C1 new msg
+C1 est respondu par S2
+
+Q5:
+S1,C1,C2
+C1.send
+C1.send
+C2.send
+C1.send
+
+res:
+C1.res (1,2,4)
+c2.res ( 3)
+
+
+Q6:
+S1,S2,C1,C2
+C1.con(S1)
+C2.con(S2)
+C1.send
+C2.send
+C2.send
+
+res:
+C1.res ( 1)
+C2.res ( 2, 3)
