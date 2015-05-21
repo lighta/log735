@@ -284,8 +284,7 @@ public class Server {
 		else{
 			input = new BufferedInputStream(System.in);
 		}
-		
-		
+
 		//set programm outputStream
 		if (streams.length >= 2 && streams[1] != null){
 			FileOutputStream fos = new FileOutputStream (streams [1]);
@@ -316,3 +315,4 @@ public class Server {
 		
 	}
 }
+

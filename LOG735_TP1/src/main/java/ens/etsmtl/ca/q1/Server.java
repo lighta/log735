@@ -58,7 +58,7 @@ public class Server {
 			System.out.println ("Serveur: " + inputLine);
 			inputLine = inputLine.toUpperCase();
         	out.println(inputLine);
-        	if (inputLine.equals("Bye.")) 
+        	if (inputLine.compareToIgnoreCase("Bye.") == 0) 
         		break; 
         } 
 
@@ -68,3 +68,4 @@ public class Server {
 		serverSocket.close(); 
 	} 
 } 
+

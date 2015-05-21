@@ -209,6 +209,7 @@ public class Server {
 					inputLine = in.readLine();
 				
 				//simulation long traitement
+
 				System.out.println("Serveur waiting for : " + second);
 				Thread.sleep(1000*second);
 				System.out.println("Sleep ended");
@@ -307,9 +308,10 @@ public class Server {
 		
 	}
 	
-	public static void main(String[] args) throws IOException {				
+	public static void main(String[] args) throws IOException {
 		initIO(args);
 		new Server();
 		
 	}
 }
+
