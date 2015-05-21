@@ -140,6 +140,8 @@ public class Server {
 			this.second = second;
 			this.serv_port = serv_port;
 			this.serv_host = "";
+			this.in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+			this.out = new PrintWriter(clientSocket.getOutputStream(), true);
 
 		}	
 		

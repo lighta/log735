@@ -173,7 +173,8 @@ public class Client {
 			return state_echo.TIMEOUT;
 		} catch (ExecutionException e) {
 			System.err.println("Erreur quelque part dans le thread.. veuillez recommencez !!");
-			return state_echo.NEXT; //on reeesaye une nouvelle entree de client
+			
+			return state_echo.TIMEOUT; //on reeesaye une nouvelle entree de client
 		}
 	}
 	

@@ -161,6 +161,8 @@ public class Server {
 				//echo standard
 				System.out.println("Serveur: " + inputLine);
 				out.println(inputLine);
+				
+				inputLine = null;
 			}
 			
 			out.close();
