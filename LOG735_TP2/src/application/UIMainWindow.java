@@ -115,10 +115,35 @@ public class UIMainWindow extends JFrame implements IObserver {
 			ie.printStackTrace();
 		}
 		
-		if(event instanceof IEventSynchronized) {
+		if(event instanceof IEventAckFin) {
+			
+			//split
+			//delete id
+			
+		}
+		if(event instanceof IEventAck) {
+			
+			//split
+			//decrement
+			//affiche ou attend
+			//si affiche ack ou ackfin
+			
+			
+			
+		}
+		else if(event instanceof IEventSynchronized) {
+			
+			//split
+			//store id {---;---}
+			//si acknumber affiche et ack
+			//sinon attend
+			
+			
+			
 			model.addElement(syncText);
 		}
 		else {
+						
 			model.addElement(event.toString() + " - " + event.getMessage());
 		}
 	}
