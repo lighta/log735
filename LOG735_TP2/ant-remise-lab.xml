@@ -50,6 +50,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 <project name="ant-remise-lab" default="zip" basedir=".">
   <property name="no.lab" value="2"/> <!-- Numero du lab -->
   <property name="equipe" value="onsaitpas"/> <!-- Numero d'equipe -->
+  <property name="codeperms" value="MORM30038905_SIMC28069108"/> <!-- Numero d'equipe -->
   <property name="racine.projet.mvn" value="."/>
   <!--
      modules.a.inclure: les "/" apres chaque repertoire sont importants.
@@ -57,26 +58,23 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
      Si votre projet maven n'utilise pas les modules, inclure simplement "src".
   -->
   <property name="modules.a.inclure"
-    value="doc/,src/"/>
-  <property name="cours" value="log735"/> <!-- Sigle du cours -->
+    value="doc/,src/,script/"/>
+  <property name="cours" value="LOG735"/> <!-- Sigle du cours -->
   <property name="session" value="E15"/>  <!-- Acronyme ETS pour sessions -->
 
   <!-- Endroit ou sont copies les fichiers pour creer l'archive de remise -->
   <property name="racine.temp" value="./remise"/>
   <property name="nom.archive"
-    value="${cours}-${session}-lab${no.lab}-equipe${equipe}"/>
+    value="${cours}_LAB${no.lab}_${codeperms}"/>
   <property name="fichier.directives"
-    value="${racine.projet.mvn}/LISEZMOI.*"/>
+    value="${racine.projet.mvn}/README.txt"/>
   <property name="fichier.rapport"
     value="${racine.projet.mvn}/${nom.archive}.pdf"/>
-  <property name="fichier.pom"
-    value="${racine.projet.mvn}/pom.xml"/>
   <property name="dest.temp" value="${racine.temp}/${nom.archive}"/>
   
-  <!-- Comment this if you don't want to check files at the end of archive  
-	<condition property="checkfiles"> 
-  -->
-       
+  <!-- Comment this if you don't want to check files at the end of archive  -->
+  <property name="checkfiles" value="foo"/> 
+
 
   <!--
        Le suffixe "_" apres l'extension zip permet d'empecher les fournisseurs
@@ -95,7 +93,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 
   <!-- Copie des fichiers pertinents dans un lieu temporaire qui sert a
        construire l'archive finale. -->
-  <target name="copie" depends="checkfile, prepare">
+  <target name="copie" depends="generate_diff, checkfile, prepare">
     <copy todir="${dest.temp}" includeEmptyDirs="false"
       preservelastmodified="true">
 
@@ -109,24 +107,21 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
       </fileset>
       
       <!-- Les fichiers individuels a inclure -->
-      <fileset file="${fichier.pom}"/>
       <fileset file="${fichier.directives}"/>
       <fileset file="${fichier.rapport}"/>
     </copy>
   </target>
 	
 	<!-- Creation de l'archive -->
-	<target name="zip" depends="copie, mvn_clean">
+	<target name="zip" depends="copie">
 		<zip destfile="${archive}" basedir="${dest.temp}" includes="**/*" />
 	</target>
 
-	<!-- Nettoyage dir remise avant package archive -->
-	<target name="mvn_clean">
-		<exec dir="." executable="cmd" osfamily="windows">
-			<arg line="/c mvn -f ${dest.temp}/pom.xml clean" />
-		</exec>
+	
+	<!-- Regenerationdes diff avant package archive -->
+	<target name="generate_diff">
 		<exec dir="." executable="sh" osfamily="unix">
-			<arg line="-c 'mvn -f ${dest.temp}/pom.xml clean'" />
+			<arg line="-c 'script/generate_diff.sh'" />
 		</exec>
 	</target>
 
@@ -139,11 +134,7 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 			<condition><not><available file="${fichier.pom}" property="pomfound"/></not></condition>
 		</fail>
 		<fail message="${fichier.directives} manquant !!">
-			<condition>
-				<not><resourcecount count="1">
-					<fileset id="fs" dir="${racine.projet.mvn}" includes="LISEZMOI.*"/>
-				</resourcecount></not>
-			</condition>
+			<condition><not><available file="${fichier.directives}" property="readmefound"/></not></condition>
 		</fail>
 	</target>
 </project>

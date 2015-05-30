@@ -1,0 +1,77 @@
+diff --git a/LOG735_TP2/src/application/IEventAck.java b/LOG735_TP2/src/application/IEventAck.java
+new file mode 100644
+index 0000000..375d2c9
+--- /dev/null
++++ b/LOG735_TP2/src/application/IEventAck.java
+@@ -0,0 +1,12 @@
++/**
++ * 
++ */
++package application;
++
++/**
++ * @author csimon1
++ *
++ */
++public interface IEventAck {
++
++}
+diff --git a/LOG735_TP2/src/application/IEventAckFin.java b/LOG735_TP2/src/application/IEventAckFin.java
+new file mode 100644
+index 0000000..0ae0c96
+--- /dev/null
++++ b/LOG735_TP2/src/application/IEventAckFin.java
+@@ -0,0 +1,12 @@
++/**
++ * 
++ */
++package application;
++
++/**
++ * @author csimon1
++ *
++ */
++public interface IEventAckFin {
++
++}
+diff --git a/LOG735_TP2/src/application/UIMainWindow.java b/LOG735_TP2/src/application/UIMainWindow.java
+index 204e0eb..021af36 100644
+--- a/LOG735_TP2/src/application/UIMainWindow.java
++++ b/LOG735_TP2/src/application/UIMainWindow.java
+@@ -115,10 +115,35 @@ public class UIMainWindow extends JFrame implements IObserver {
+ 			ie.printStackTrace();
+ 		}
+ 		
+-		if(event instanceof IEventSynchronized) {
++		if(event instanceof IEventAckFin) {
++			
++			//split
++			//delete id
++			
++		}
++		if(event instanceof IEventAck) {
++			
++			//split
++			//decrement
++			//affiche ou attend
++			//si affiche ack ou ackfin
++			
++			
++			
++		}
++		else if(event instanceof IEventSynchronized) {
++			
++			//split
++			//store id {---;---}
++			//si acknumber affiche et ack
++			//sinon attend
++			
++			
++			
+ 			model.addElement(syncText);
+ 		}
+ 		else {
++						
+ 			model.addElement(event.toString() + " - " + event.getMessage());
+ 		}
+ 	}
