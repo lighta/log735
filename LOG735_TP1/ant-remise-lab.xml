@@ -61,7 +61,6 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
     value="doc/,src/,script/"/>
   <property name="cours" value="LOG735"/> <!-- Sigle du cours -->
   <property name="session" value="E15"/>  <!-- Acronyme ETS pour sessions -->
-  <property name="session" value="E15"/>  <!-- Acronyme ETS pour sessions -->
 
   <!-- Endroit ou sont copies les fichiers pour creer l'archive de remise -->
   <property name="racine.temp" value="./remise"/>

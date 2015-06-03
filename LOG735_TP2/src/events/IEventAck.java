@@ -1,12 +1,12 @@
 /**
  * 
  */
-package application;
+package events;
 
 /**
  * @author csimon1
  *
  */
-public interface IEventAckFin {
+public interface IEventAck {
 
 }

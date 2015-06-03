@@ -1,16 +1,16 @@
 /******************************************************
 	Cours :           LOG730
-	Session :         Été 2010
+	Session :         ï¿½tï¿½ 2010
 	Groupe :          01
 	Projet :          Laboratoire #2
-	Date création :   2010-05-21
+	Date crï¿½ation :   2010-05-21
 ******************************************************
-Exécutable de Application Un. À l'exécution, l'objet
-tente de se connecter à [IP]:12045 pour établir
-un lien avec le bus d'événements.
+Exï¿½cutable de Application Un. ï¿½ l'exï¿½cution, l'objet
+tente de se connecter ï¿½ [IP]:12045 pour ï¿½tablir
+un lien avec le bus d'ï¿½vï¿½nements.
 
-Délai de traitement des événements : 3 secondes.
-Événement synchronisé : affiche le mot "Vous".
+Dï¿½lai de traitement des ï¿½vï¿½nements : 3 secondes.
+ï¿½vï¿½nement synchronisï¿½ : affiche le mot "Vous".
 ******************************************************/ 
 
 package application;
@@ -32,7 +32,7 @@ public class MainPartOne {
 		listenedEvents.add(IPartOneEvent.class);
 		listenedEvents.add(IEventSynchronized.class);
 		EventBusConnector bus = new EventBusConnector(listenedEvents, ip, 12045);
-		UIMainWindow window = new UIMainWindow(bus, "App Un", "Vous", 3);
+		UIMainWindow window = new UIMainWindow(bus, "App Un", "0#2#Vous", 3);
 		bus.addObserver(window);
 		
 		bus.start();
