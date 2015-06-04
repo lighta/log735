@@ -48,20 +48,16 @@ public class UIMainWindow extends JFrame implements IObserver {
 	
 	static int id;
 	private class Sync_ele {
-		int id;				//transaction id
 		String msg;			//message a afficher
 		boolean end;		//si notre message est la fin de la chaine
 		int num_ack;		//numero d'ack, pour eviter les doublon
 		int cur_ack;		//compteur d'ack avant d'afficher notre msg
 		
-		public Sync_ele(int id, String msg, boolean end, int num_ack,
-				int cur_ack) {
+		public Sync_ele(String msg, boolean end, int num_ack) {
 			super();
-			this.id = id;
 			this.msg = msg;
 			this.end = end;
-			this.num_ack = num_ack;
-			this.cur_ack = cur_ack;
+			this.cur_ack = this.num_ack = num_ack;
 		}
 	}
 	private HashMap<Integer, Sync_ele> list_syncMsg = new HashMap();
@@ -140,38 +136,41 @@ public class UIMainWindow extends JFrame implements IObserver {
 		
 		if(event instanceof IEventAckFin) {
 			//split
-			String msg = event.getMessage();
-			String[] parts = syncText.toString().split("#");
+			String ackmsg = event.getMessage();
+			String[] parts = ackmsg.toString().split("#");
 			int id = Integer.parseInt(parts[0]);
 			Sync_ele ele = list_syncMsg.get(id);
 			if(ele == null) //this msg ain't active for us
 				;
 			else {
+				//delete id	
 				list_syncMsg.remove(id);
 				if(list_syncMsg.isEmpty() == false){
 					do { //search mnext
 						ele = list_syncMsg.get(id+1 % list_syncMsg.size());
 					} while(ele == null); 
 					if(ele.num_ack==0){
-						model.addElement(msg);
+						model.addElement(ele.msg);
 						eventBusConn.callEvent(new EventAck(id+"#"+ele.num_ack));
 					}
 				}
 			}
-			//delete id		
 		}
-		if(event instanceof IEventAck) {
+		else if(event instanceof IEventAck) {
 			//split
-			String msg = event.getMessage();
-			String[] parts = syncText.toString().split("#");
+			String ackmsg = event.getMessage();
+			String[] parts = ackmsg.toString().split("#");
 			int id = Integer.parseInt(parts[0]);
+			System.out.println("Reception d'un ACK:"+ackmsg);
 			
 			Sync_ele ele = list_syncMsg.get(id);
 			if(ele == null) //this msg ain't active for us
-				;
+				System.out.println("id="+id+" not found in list");
 			else if (ele.cur_ack > 0) {
 				//decrement
+				System.out.println("cur_ACK="+ele.cur_ack+" num_ACK="+ele.num_ack);
 				ele.cur_ack--;
+				list_syncMsg.replace(id, ele); //update
 				//affiche ou attend
 				if(ele.cur_ack==0)
 					model.addElement(ele.msg);
@@ -192,7 +191,7 @@ public class UIMainWindow extends JFrame implements IObserver {
 			boolean end = (num_ack == tot_ack);
 			
 			//store id {---;---}
-			Sync_ele ele = new Sync_ele(id,msg,end,num_ack,num_ack);
+			Sync_ele ele = new Sync_ele(msg,end,num_ack);
 			list_syncMsg.put(id, ele);
 			
 			//si acknumber affiche et ack
