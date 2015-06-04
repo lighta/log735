@@ -1,13 +1,372 @@
-diff --git a/LOG735_TP2/src/application/IEventAck.java b/LOG735_TP2/src/application/IEventAck.java
+diff --git a/LOG735_TP2/src/application/MainPartOne.java b/LOG735_TP2/src/application/MainPartOne.java
+index ddf9aa3..4dbbcfb 100644
+--- a/LOG735_TP2/src/application/MainPartOne.java
++++ b/LOG735_TP2/src/application/MainPartOne.java
+@@ -1,16 +1,16 @@
+ /******************************************************
+ 	Cours :           LOG730
+-	Session :         Été 2010
++	Session :         ï¿½tï¿½ 2010
+ 	Groupe :          01
+ 	Projet :          Laboratoire #2
+-	Date création :   2010-05-21
++	Date crï¿½ation :   2010-05-21
+ ******************************************************
+-Exécutable de Application Un. À l'exécution, l'objet
+-tente de se connecter à [IP]:12045 pour établir
+-un lien avec le bus d'événements.
++Exï¿½cutable de Application Un. ï¿½ l'exï¿½cution, l'objet
++tente de se connecter ï¿½ [IP]:12045 pour ï¿½tablir
++un lien avec le bus d'ï¿½vï¿½nements.
+ 
+-Délai de traitement des événements : 3 secondes.
+-Événement synchronisé : affiche le mot "Vous".
++Dï¿½lai de traitement des ï¿½vï¿½nements : 3 secondes.
++ï¿½vï¿½nement synchronisï¿½ : affiche le mot "Vous".
+ ******************************************************/ 
+ 
+ package application;
+@@ -32,7 +32,7 @@ public class MainPartOne {
+ 		listenedEvents.add(IPartOneEvent.class);
+ 		listenedEvents.add(IEventSynchronized.class);
+ 		EventBusConnector bus = new EventBusConnector(listenedEvents, ip, 12045);
+-		UIMainWindow window = new UIMainWindow(bus, "App Un", "Vous", 3);
++		UIMainWindow window = new UIMainWindow(bus, "App Un", "0#2#Vous", 3);
+ 		bus.addObserver(window);
+ 		
+ 		bus.start();
+diff --git a/LOG735_TP2/src/application/MainPartThree.java b/LOG735_TP2/src/application/MainPartThree.java
+index 47b72af..75902d6 100644
+--- a/LOG735_TP2/src/application/MainPartThree.java
++++ b/LOG735_TP2/src/application/MainPartThree.java
+@@ -1,16 +1,16 @@
+ /******************************************************
+ 	Cours :           LOG730
+-	Session :         Été 2010
++	Session :         ï¿½tï¿½ 2010
+ 	Groupe :          01
+ 	Projet :          Laboratoire #2
+-	Date création :   2010-05-21
++	Date crï¿½ation :   2010-05-21
+ ******************************************************
+-Exécutable de Application Trois. À l'exécution, l'objet
+-tente de se connecter à [IP]:12045 pour établir
+-un lien avec le bus d'événements.
++Exï¿½cutable de Application Trois. ï¿½ l'exï¿½cution, l'objet
++tente de se connecter ï¿½ [IP]:12045 pour ï¿½tablir
++un lien avec le bus d'ï¿½vï¿½nements.
+ 
+-Délai de traitement des événements : 1 seconde.
+-Événement synchronisé : affiche le mot "Réussi".
++Dï¿½lai de traitement des ï¿½vï¿½nements : 1 seconde.
++ï¿½vï¿½nement synchronisï¿½ : affiche le mot "Rï¿½ussi".
+ ******************************************************/ 
+ package application;
+ 
+@@ -35,7 +35,7 @@ public class MainPartThree {
+ 		listenedEvents.add(IPartThreeEvent.class);
+ 		listenedEvents.add(IEventSynchronized.class);
+ 		EventBusConnector bus = new EventBusConnector(listenedEvents, ip, 12045);
+-		UIMainWindow window = new UIMainWindow(bus, "App Trois", "Reussi!", 1);
++		UIMainWindow window = new UIMainWindow(bus, "App Trois", "2#2#Reussi!", 1);
+ 		bus.addObserver(window);
+ 		
+ 		bus.start();
+diff --git a/LOG735_TP2/src/application/MainPartTwo.java b/LOG735_TP2/src/application/MainPartTwo.java
+index 427756d..83f0bde 100644
+--- a/LOG735_TP2/src/application/MainPartTwo.java
++++ b/LOG735_TP2/src/application/MainPartTwo.java
+@@ -1,16 +1,16 @@
+ /******************************************************
+ 	Cours :           LOG730
+-	Session :         Été 2010
++	Session :         ï¿½tï¿½ 2010
+ 	Groupe :          01
+ 	Projet :          Laboratoire #2
+-	Date création :   2010-05-21
++	Date crï¿½ation :   2010-05-21
+ ******************************************************
+-Exécutable de Application Deux. À l'exécution, l'objet
+-tente de se connecter à [IP]:12045 pour établir
+-un lien avec le bus d'événements.
++Exï¿½cutable de Application Deux. ï¿½ l'exï¿½cution, l'objet
++tente de se connecter ï¿½ [IP]:12045 pour ï¿½tablir
++un lien avec le bus d'ï¿½vï¿½nements.
+ 
+-Délai de traitement des événements : 2 secondes.
+-Événement synchronisé : affiche le mot "Avez".
++Dï¿½lai de traitement des ï¿½vï¿½nements : 2 secondes.
++ï¿½vï¿½nement synchronisï¿½ : affiche le mot "Avez".
+ ******************************************************/ 
+ package application;
+ 
+@@ -35,7 +35,7 @@ public class MainPartTwo {
+ 		listenedEvents.add(IPartTwoEvent.class);
+ 		listenedEvents.add(IEventSynchronized.class);
+ 		EventBusConnector bus = new EventBusConnector(listenedEvents, ip, 12045);
+-		UIMainWindow window = new UIMainWindow(bus, "App Deux", "Avez", 2);
++		UIMainWindow window = new UIMainWindow(bus, "App Deux", "1#2#Avez", 2);
+ 		bus.addObserver(window);
+ 		
+ 		bus.start();
+diff --git a/LOG735_TP2/src/application/UIMainWindow.java b/LOG735_TP2/src/application/UIMainWindow.java
+index 204e0eb..383d632 100644
+--- a/LOG735_TP2/src/application/UIMainWindow.java
++++ b/LOG735_TP2/src/application/UIMainWindow.java
+@@ -1,23 +1,23 @@
+ /******************************************************
+ 	Cours :           LOG730
+-	Session :         Été 2010
++	Session :         ï¿½tï¿½ 2010
+ 	Groupe :          01
+ 	Projet :          Laboratoire #2
+-	Date création :   2010-05-21
++	Date crï¿½ation :   2010-05-21
+ ******************************************************
+-Interface graphique des applications simulées. MainPartOne,
++Interface graphique des applications simulï¿½es. MainPartOne,
+ MainPartTwo et MainPartThree instancient cette classe.
+ 
+-L'interface offre les fonctionnalités suivantes :
+--Envoyer à App Un/Deux/Trois : envoie l'événement associé
+- de l'application source à l'application de destination.
+--Envoyer à Tous : envoie l'événement associé
++L'interface offre les fonctionnalitï¿½s suivantes :
++-Envoyer ï¿½ App Un/Deux/Trois : envoie l'ï¿½vï¿½nement associï¿½
++ de l'application source ï¿½ l'application de destination.
++-Envoyer ï¿½ Tous : envoie l'ï¿½vï¿½nement associï¿½
+  de l'application source aux deux autres applications.
+--Envoi Synchronisé : envoie l'événement qui doit être
+-synchronisé à toutes les applications.
++-Envoi Synchronisï¿½ : envoie l'ï¿½vï¿½nement qui doit ï¿½tre
++synchronisï¿½ ï¿½ toutes les applications.
+ 
+-NOTE : Seules les classes internes implémentant ActionListener
+-situées à la fin de la classe ont le potentiel de nécessiter 
++NOTE : Seules les classes internes implï¿½mentant ActionListener
++situï¿½es ï¿½ la fin de la classe ont le potentiel de nï¿½cessiter 
+ des modifications.
+ ******************************************************/ 
+ package application;
+@@ -25,6 +25,7 @@ package application;
+ import java.awt.Color;
+ import java.awt.event.ActionEvent;
+ import java.awt.event.ActionListener;
++import java.util.HashMap;
+ 
+ import javax.swing.DefaultListModel;
+ import javax.swing.JButton;
+@@ -38,19 +39,37 @@ public class UIMainWindow extends JFrame implements IObserver {
+ 
+ 	private static final long serialVersionUID = 17889303454552887L;
+ 	
+-	private int delay; //Temps artificiel de délai de traitement des événements
+-	private String syncText; //Texte à afficher lors de l'événement synchronisé
++	private int delay; //Temps artificiel de dï¿½lai de traitement des ï¿½vï¿½nements
++	private String syncText; //Texte ï¿½ afficher lors de l'ï¿½vï¿½nement synchronisï¿½
+ 	
+ 	private JList lstResultatEvent;
+ 	private DefaultListModel model;
+ 	private JScrollPane scrollPane;
+ 	
++	static int id;
++	private class Sync_ele {
++		String msg;			//message a afficher
++		boolean end;		//si notre message est la fin de la chaine
++		int num_ack;		//numero d'ack, pour eviter les doublon
++		int cur_ack;		//compteur d'ack avant d'afficher notre msg
++		
++		public Sync_ele(String msg, boolean end, int num_ack) {
++			super();
++			this.msg = msg;
++			this.end = end;
++			this.cur_ack = this.num_ack = num_ack;
++		}
++	}
++	private HashMap<Integer, Sync_ele> list_syncMsg = new HashMap();
++	IEventBusConnector eventBusConn;
++	
+ 	//Construit l'interface graphique.
+-	//Ne devrait pas être modifié.
++	//Ne devrait pas ï¿½tre modifiï¿½.
+ 	public UIMainWindow(IEventBusConnector eventBusConn, String name, String syncText, int delay) {
+ 		super();
+ 		this.delay = delay;
+ 		this.syncText = syncText;
++		this.eventBusConn = eventBusConn;
+ 		setSize(450,480);
+ 		setDefaultCloseOperation(EXIT_ON_CLOSE);
+ 		setTitle(name);
+@@ -67,11 +86,11 @@ public class UIMainWindow extends JFrame implements IObserver {
+ 		JButton sendSynchroToAll = new JButton();
+ 		
+ 		scrollPane.getViewport().setView(lstResultatEvent);
+-		sendToPartOne.setText("Envoyer à App Un");
+-		sendToPartTwo.setText("Envoyer à App Deux");
+-		sendToPartThree.setText("Envoyer à App Trois");
+-		sendToAll.setText("Envoyer à Tous");
+-		sendSynchroToAll.setText("Envoie Synchronisé");
++		sendToPartOne.setText("Envoyer ï¿½ App Un");
++		sendToPartTwo.setText("Envoyer ï¿½ App Deux");
++		sendToPartThree.setText("Envoyer ï¿½ App Trois");
++		sendToAll.setText("Envoyer ï¿½ Tous");
++		sendSynchroToAll.setText("Envoie Synchronisï¿½");
+ 
+ 		sendToPartOne.addActionListener(new PartOneActionListener(name, eventBusConn));
+ 		sendToPartTwo.addActionListener(new PartTwoActionListener(name, eventBusConn));
+@@ -79,7 +98,7 @@ public class UIMainWindow extends JFrame implements IObserver {
+ 		sendToAll.addActionListener(new AllActionListener(name, eventBusConn));
+ 		sendSynchroToAll.addActionListener(new AllSynchroActionListener(name, eventBusConn));
+ 		
+-		// Une couleur exagérée pour être sûr que tu comprennes 
++		// Une couleur exagï¿½rï¿½e pour ï¿½tre sï¿½r que tu comprennes 
+ 		// que c'est le bouton important du laboratoire :)
+ 		sendSynchroToAll.setBackground(Color.CYAN);
+ 
+@@ -99,14 +118,14 @@ public class UIMainWindow extends JFrame implements IObserver {
+ 	}
+ 	
+ 
+-	//Affichage du message contenu dans les événements reçus
++	//Affichage du message contenu dans les ï¿½vï¿½nements reï¿½us
+ 	//par utilisation du patron Observer.
+-	//Si l'événement est de type IEventSynchronized,
++	//Si l'ï¿½vï¿½nement est de type IEventSynchronized,
+ 	//affiche le texte contenu dans syncText.
+ 	
+ 	public void update(Object o, Object arg) {
+ 		
+-		System.out.println("Réception de l'événement: " + arg.toString());
++		System.out.println("Rï¿½ception de l'ï¿½vï¿½nement: " + arg.toString());
+ 		IEvent event = (IEvent)arg;
+ 		try {
+ 			Thread.sleep(1000*delay);
+@@ -115,10 +134,75 @@ public class UIMainWindow extends JFrame implements IObserver {
+ 			ie.printStackTrace();
+ 		}
+ 		
+-		if(event instanceof IEventSynchronized) {
+-			model.addElement(syncText);
++		if(event instanceof IEventAckFin) {
++			//split
++			String ackmsg = event.getMessage();
++			String[] parts = ackmsg.toString().split("#");
++			int id = Integer.parseInt(parts[0]);
++			Sync_ele ele = list_syncMsg.get(id);
++			if(ele == null) //this msg ain't active for us
++				;
++			else {
++				//delete id	
++				list_syncMsg.remove(id);
++				if(list_syncMsg.isEmpty() == false){
++					do { //search mnext
++						ele = list_syncMsg.get(id+1 % list_syncMsg.size());
++					} while(ele == null); 
++					if(ele.num_ack==0){
++						model.addElement(ele.msg);
++						eventBusConn.callEvent(new EventAck(id+"#"+ele.num_ack));
++					}
++				}
++			}
++		}
++		else if(event instanceof IEventAck) {
++			//split
++			String ackmsg = event.getMessage();
++			String[] parts = ackmsg.toString().split("#");
++			int id = Integer.parseInt(parts[0]);
++			System.out.println("Reception d'un ACK:"+ackmsg);
++			
++			Sync_ele ele = list_syncMsg.get(id);
++			if(ele == null) //this msg ain't active for us
++				System.out.println("id="+id+" not found in list");
++			else if (ele.cur_ack > 0) {
++				//decrement
++				System.out.println("cur_ACK="+ele.cur_ack+" num_ACK="+ele.num_ack);
++				ele.cur_ack--;
++				list_syncMsg.replace(id, ele); //update
++				//affiche ou attend
++				if(ele.cur_ack==0){
++					model.addElement(ele.msg);
++					if(ele.end)
++						eventBusConn.callEvent(new EventAckFin(id+""));
++					else
++						eventBusConn.callEvent(new EventAck(id+"#"+ele.num_ack));
++				}
++				//si affiche ack ou ackfin
++			}
++		}
++		else if(event instanceof IEventSynchronized) {
++			//split
++			String[] parts = syncText.toString().split("#");
++			id++;
++			int num_ack = Integer.parseInt(parts[0]);
++			int tot_ack = Integer.parseInt(parts[1]);
++			String msg = parts[2];
++			boolean end = (num_ack == tot_ack);
++			
++			//store id {---;---}
++			Sync_ele ele = new Sync_ele(msg,end,num_ack);
++			list_syncMsg.put(id, ele);
++			
++			//si acknumber affiche et ack
++			if(num_ack==0){
++				model.addElement(msg);
++				eventBusConn.callEvent(new EventAck(id+"#"+ele.num_ack));
++			}
++			//sinon attend
+ 		}
+-		else {
++		else {			
+ 			model.addElement(event.toString() + " - " + event.getMessage());
+ 		}
+ 	}
+diff --git a/LOG735_TP2/src/events/EventAck.java b/LOG735_TP2/src/events/EventAck.java
 new file mode 100644
-index 0000000..375d2c9
+index 0000000..2099729
 --- /dev/null
-+++ b/LOG735_TP2/src/application/IEventAck.java
++++ b/LOG735_TP2/src/events/EventAck.java
+@@ -0,0 +1,10 @@
++package events;
++
++public class EventAck extends EventForAll implements IEventAck {
++
++	private static final long serialVersionUID = -1156382431931313979L;
++
++	public EventAck(String m){
++		super(m);
++	}
++}
+\ No newline at end of file
+diff --git a/LOG735_TP2/src/events/EventAckFin.java b/LOG735_TP2/src/events/EventAckFin.java
+new file mode 100644
+index 0000000..f5e3c4d
+--- /dev/null
++++ b/LOG735_TP2/src/events/EventAckFin.java
+@@ -0,0 +1,13 @@
++package events;
++
++public class EventAckFin extends EventForAll implements IEventAckFin {
++
++	/**
++	 * 
++	 */
++	private static final long serialVersionUID = -1156382431931313979L;
++
++	public EventAckFin(String m){
++		super(m);
++	}
++}
+\ No newline at end of file
+diff --git a/LOG735_TP2/src/events/IEventAck.java b/LOG735_TP2/src/events/IEventAck.java
+new file mode 100644
+index 0000000..3bceb71
+--- /dev/null
++++ b/LOG735_TP2/src/events/IEventAck.java
 @@ -0,0 +1,12 @@
 +/**
 + * 
 + */
-+package application;
++package events;
 +
 +/**
 + * @author csimon1
@@ -16,16 +375,16 @@ index 0000000..375d2c9
 +public interface IEventAck {
 +
 +}
-diff --git a/LOG735_TP2/src/application/IEventAckFin.java b/LOG735_TP2/src/application/IEventAckFin.java
+diff --git a/LOG735_TP2/src/events/IEventAckFin.java b/LOG735_TP2/src/events/IEventAckFin.java
 new file mode 100644
-index 0000000..0ae0c96
+index 0000000..6b947a3
 --- /dev/null
-+++ b/LOG735_TP2/src/application/IEventAckFin.java
++++ b/LOG735_TP2/src/events/IEventAckFin.java
 @@ -0,0 +1,12 @@
 +/**
 + * 
 + */
-+package application;
++package events;
 +
 +/**
 + * @author csimon1
@@ -34,44 +393,3 @@ index 0000000..0ae0c96
 +public interface IEventAckFin {
 +
 +}
-diff --git a/LOG735_TP2/src/application/UIMainWindow.java b/LOG735_TP2/src/application/UIMainWindow.java
-index 204e0eb..021af36 100644
---- a/LOG735_TP2/src/application/UIMainWindow.java
-+++ b/LOG735_TP2/src/application/UIMainWindow.java
-@@ -115,10 +115,35 @@ public class UIMainWindow extends JFrame implements IObserver {
- 			ie.printStackTrace();
- 		}
- 		
--		if(event instanceof IEventSynchronized) {
-+		if(event instanceof IEventAckFin) {
-+			
-+			//split
-+			//delete id
-+			
-+		}
-+		if(event instanceof IEventAck) {
-+			
-+			//split
-+			//decrement
-+			//affiche ou attend
-+			//si affiche ack ou ackfin
-+			
-+			
-+			
-+		}
-+		else if(event instanceof IEventSynchronized) {
-+			
-+			//split
-+			//store id {---;---}
-+			//si acknumber affiche et ack
-+			//sinon attend
-+			
-+			
-+			
- 			model.addElement(syncText);
- 		}
- 		else {
-+						
- 			model.addElement(event.toString() + " - " + event.getMessage());
- 		}
- 	}

@@ -130,9 +130,6 @@ MAJ: 2014-Nov-26 (Rajout de checkfile, Moreau Max)
 		<fail message="${fichier.rapport} manquant !!">
 			<condition><not><available file="${fichier.rapport}" property="rapportfound"/></not></condition>
 		</fail>
-		<fail message="${fichier.pom} manquant !!">
-			<condition><not><available file="${fichier.pom}" property="pomfound"/></not></condition>
-		</fail>
 		<fail message="${fichier.directives} manquant !!">
 			<condition><not><available file="${fichier.directives}" property="readmefound"/></not></condition>
 		</fail>
