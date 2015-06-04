@@ -172,12 +172,13 @@ public class UIMainWindow extends JFrame implements IObserver {
 				ele.cur_ack--;
 				list_syncMsg.replace(id, ele); //update
 				//affiche ou attend
-				if(ele.cur_ack==0)
+				if(ele.cur_ack==0){
 					model.addElement(ele.msg);
-				if(ele.end)
-					eventBusConn.callEvent(new EventAckFin(id+""));
-				else
-					eventBusConn.callEvent(new EventAck(id+"#"+ele.num_ack));
+					if(ele.end)
+						eventBusConn.callEvent(new EventAckFin(id+""));
+					else
+						eventBusConn.callEvent(new EventAck(id+"#"+ele.num_ack));
+				}
 				//si affiche ack ou ackfin
 			}
 		}
