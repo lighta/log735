@@ -19,9 +19,9 @@ public class Succursale extends Thread implements ISuccursale {
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
 	
 	List<SucHandler> clientjobs;
-	
 	private HashMap<Integer,Tunnel> connections;
 	private List<Transfert> transferts;
+	
 	private SuccursalesInfo infos;
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
@@ -96,7 +96,7 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	
 	public boolean connectTo(SuccursalesInfo info){
-		if(info.Id == this.infos.getId()) //on refuse la connection a nous meme !
+		if(info.getId() == this.infos.getId()) //on refuse la connection a nous meme !
 			return false;
 		try {
 			Tunnel tun = new Tunnel(this.infos,info);
@@ -105,7 +105,7 @@ public class Succursale extends Thread implements ISuccursale {
 			clientjobs.add(job);
 			job.start();
 			
-			connections.put(info.Id, tun);
+			connections.put(info.getId(), tun);
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return false;
@@ -116,7 +116,7 @@ public class Succursale extends Thread implements ISuccursale {
 	public boolean connectToAll(){
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
 			SuccursalesInfo info = suc.getValue();
-			if(info.Id != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
+			if(info.getId() != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
 				if(connectTo(info)==false){
 					System.err.println("Connection fail for suc:"+info);
 					//return false;

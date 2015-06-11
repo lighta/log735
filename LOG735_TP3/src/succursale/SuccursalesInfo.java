@@ -19,13 +19,16 @@ public class SuccursalesInfo extends ConnexionInfo {
 		this.montant = montant;
 	}
 
+	
 	public int getId() {
 		return Id;
 	}
 	
+	
 	@Override
 	public String toString() {
-		return  "Id : "+Id+
+		return  
+				//"Id : "+Id+
 				"Host : "+hostname+
 				"Port : "+port+
 				"Montant : "+montant;	
