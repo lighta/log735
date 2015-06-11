@@ -22,8 +22,7 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	private HashMap<Integer,Tunnel> connections;
 	private List<Transfert> transferts;
-	private int montant;
-	private int Id;
+	private SuccursalesInfo infos;
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
 		if (serverSocket==null || montant < 0) {
@@ -31,6 +30,9 @@ public class Succursale extends Thread implements ISuccursale {
 		      String.format("Parameters can't be null: serverSocket=%s montant=%d",
 		    		  serverSocket,montant));
 		}
+		int port = serverSocket.getLocalPort();
+		String hosname = serverSocket.getInetAddress().getHostName();
+		infos = new SuccursalesInfo(0,hosname,port,montant);
 		
 		suc_Infos = new HashMap<Integer,SuccursalesInfo>();
 		connections = new HashMap<Integer,Tunnel>();
@@ -40,9 +42,9 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	public String toString(){
 		return
-			"Host:"+suc_Infos.get(Id).hostname
-			+"Port:"+suc_Infos.get(Id).port
-			+"Montant: "+montant;
+			"Host:"+infos.getHostname()
+			+"Port:"+infos.getPort()
+			+"Montant: "+infos.getMontant();
 	}
 	
 	public String getStatus(){
@@ -79,7 +81,7 @@ public class Succursale extends Thread implements ISuccursale {
 		if(!(suc_Infos.containsValue(tf.s1) || suc_Infos.containsValue(tf.s2)))
 			return false;
 		//check si on a le montant
-		return montant < this.montant;
+		return tf.montant < this.infos.montant;
 	}
 	
 	public boolean SendTransfert(SuccursalesInfo s1, SuccursalesInfo s2, int montant){
@@ -94,10 +96,15 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	
 	public boolean connectTo(SuccursalesInfo info){
-		if(info.Id == Id) //on refuse la connection a nous meme !
+		if(info.Id == this.infos.getId()) //on refuse la connection a nous meme !
 			return false;
 		try {
-			Tunnel tun = new Tunnel(info);
+			Tunnel tun = new Tunnel(this.infos,info);
+			
+			SucHandler job = new SucHandler(tun.getSocket());
+			clientjobs.add(job);
+			job.start();
+			
 			connections.put(info.Id, tun);
 		} catch (IOException e) {
 			//e.printStackTrace();
@@ -109,7 +116,7 @@ public class Succursale extends Thread implements ISuccursale {
 	public boolean connectToAll(){
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
 			SuccursalesInfo info = suc.getValue();
-			if(info.Id != Id){ //on evite le cas d'erreur dela connexion a nous meme
+			if(info.Id != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
 				if(connectTo(info)==false){
 					System.err.println("Connection fail for suc:"+info);
 					//return false;
@@ -141,6 +148,15 @@ public class Succursale extends Thread implements ISuccursale {
 				BufferedInputStream in = new BufferedInputStream(clientSocket.getInputStream());
 				String rec = in.toString();
 				System.out.println("rec="+rec);
+				String part[] = rec.split("#");
+				
+				if(part[0].compareTo("TUN")==0){
+					int id = Integer.parseInt(part[1]);
+					System.out.println("id="+id);
+					Tunnel tun = new Tunnel(clientSocket);
+					connections.put(id, tun);
+				}
+				clientjobs.remove(this); //remove ourself			
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -156,9 +172,11 @@ public class Succursale extends Thread implements ISuccursale {
 		while(true){
 			try {
 				clientSocket = serverSocket.accept();
+				
 				SucHandler job = new SucHandler(clientSocket);
-				job.start();
 				clientjobs.add(job);
+				job.start();
+				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

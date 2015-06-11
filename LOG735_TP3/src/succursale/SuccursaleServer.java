@@ -24,4 +24,14 @@ public class SuccursaleServer {
 			System.exit(1);
 		}
 	}
+	
+	public void stoping() {
+		try {
+		//	clientjob.stoping();
+			serverSocket.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 }
