@@ -2,14 +2,19 @@ package banque;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import succursale.SuccursalesInfo;
 
-public class Banque implements IBanque, IConsoleBanque {
+public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
 
+	
+	
+	public Banque() {
+		// TODO Auto-generated constructor stub
+	}
+	
+	
 	@Override
 	public int AcceptConnexion() {
 		// TODO Auto-generated method stub
@@ -37,7 +42,6 @@ public class Banque implements IBanque, IConsoleBanque {
 
 	
 	public Integer GenerateSuccursalId(){
-		
 		return null;
 	}
 	
