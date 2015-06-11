@@ -32,7 +32,7 @@ public class Succursale extends Thread implements ISuccursale {
 		}
 		int port = serverSocket.getLocalPort();
 		String hosname = serverSocket.getInetAddress().getHostName();
-		infos = new SuccursalesInfo(0,hosname,port,montant);
+		infos = new SuccursalesInfo(hosname,port,montant);
 		
 		suc_Infos = new HashMap<Integer,SuccursalesInfo>();
 		connections = new HashMap<Integer,Tunnel>();
@@ -126,6 +126,9 @@ public class Succursale extends Thread implements ISuccursale {
 		return true;
 	}
 	
+	public void setId(int id){
+		infos.setId(id);
+	}
 	
 	public int ScheduleTransfert(){
 		return 0;
@@ -137,29 +140,50 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	public class SucHandler extends Thread {
 		Socket clientSocket;
-		public SucHandler(Socket clientSocket) {
+		BufferedInputStream in;
+		public SucHandler(Socket clientSocket) throws IOException {
 			this.clientSocket = clientSocket;
+			in = new BufferedInputStream(clientSocket.getInputStream());
 		}
 		
 		@Override
 		public void run() {
 			super.run();
-			try {
-				BufferedInputStream in = new BufferedInputStream(clientSocket.getInputStream());
-				String rec = in.toString();
-				System.out.println("rec="+rec);
-				String part[] = rec.split("#");
-				
-				if(part[0].compareTo("TUN")==0){
-					int id = Integer.parseInt(part[1]);
-					System.out.println("id="+id);
-					Tunnel tun = new Tunnel(clientSocket);
-					connections.put(id, tun);
+			
+			while(true){
+				int c;
+				try {
+					c = in.read();
+					if(c == -1)
+						break;
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					break;
 				}
-				clientjobs.remove(this); //remove ourself			
-			} catch (IOException e) {
-				e.printStackTrace();
+				
+				try {
+					String rec = Character.toString((char) c);
+					System.out.println("rec="+rec);
+					String part[] = rec.split("#");
+					
+					if(part[0].compareTo("TUN")==0){
+						int id = Integer.parseInt(part[1]);
+						System.out.println("id="+id);
+						Tunnel tun = new Tunnel(clientSocket);
+						connections.put(id, tun);
+					}
+					if(part[0].compareTo("ID")==0){
+						int id = Integer.parseInt(part[1]);
+						System.out.println("id="+id);
+						setId(id);
+					}	
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
+			
+			clientjobs.remove(this); //remove ourself	
 		}
 	}
 	

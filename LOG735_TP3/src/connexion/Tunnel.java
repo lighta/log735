@@ -12,6 +12,16 @@ public class Tunnel {
 	private final BufferedInputStream in;
 	private final Socket socket;
 
+	
+	public Tunnel(ConnexionInfo s2) throws IOException {
+		super();
+		this.socket = new Socket(s2.getHostname(), s2.getPort());
+		out = new BufferedOutputStream(socket.getOutputStream());
+		in = new BufferedInputStream(socket.getInputStream());
+		
+		askList();
+	}
+	
 	//constructeur pour emetteur
 	public Tunnel(SuccursalesInfo s1, SuccursalesInfo s2) throws IOException {
 		super();
@@ -62,6 +72,16 @@ public class Tunnel {
 		
 	}
 
+	private void askList() {
+		String req = "LIST#";
+		try {
+			out.write(req.getBytes());
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void askTunnel(SuccursalesInfo s1) {
 		String req = "TUN#"+s1.getId();
 		try {
