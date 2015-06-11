@@ -10,7 +10,6 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	
 	
 	
-	
 	public Banque() {
 		// TODO Auto-generated constructor stub
 	}
@@ -30,9 +29,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 			return  (Map<Integer, SuccursalesInfo>) suc_Infos.clone();
 		else
 			throw new NullPointerException("null suc_info");
-		
-		
-		
+				
 	}
 	
 	protected void newConnexionFrom(AccesPoint ap){

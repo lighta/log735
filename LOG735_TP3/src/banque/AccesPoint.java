@@ -1,19 +1,19 @@
 package banque;
 
+import java.util.Observable;
+import connexion.ConnexionInfo;
+
 public class AccesPoint extends Observable {
 	
 	private ConnexionInfo _cInfo;
 	private boolean stop;
-	
 	
 	public enum notificationType{
 		ACCEPT_CONNEXION,
 		NEW_MESSAGE
 	}
 	
-	public AccesPoint(ConnexionInfo cInfo) {
-		// TODO Auto-generated constructor stub
-		
+	public AccesPoint(String name,ConnexionInfo cInfo) {
 		stop = false;
 	}
 	
@@ -22,10 +22,11 @@ public class AccesPoint extends Observable {
 	}
 	
 	public void accept() {
+		new Thread
 		while(!stop){
 			//accept from socket	
 			setChanged();
-			notifyObserver(this,ACCEPT_CONNEXION);
+			notifyObservers(notificationType.ACCEPT_CONNEXION);
 		}
 	}
 	

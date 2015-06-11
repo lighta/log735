@@ -3,13 +3,18 @@
  */
 package banque;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Observable;
+
+import connexion.ConnexionInfo;
 
 /**
  * @author AJ98150
  *
  */
-public class MultiAccesPoint extends Observable {
+public abstract class MultiAccesPoint extends Observable {
 	
 	private Map<String,AccesPoint> _accesPoint;
 	
