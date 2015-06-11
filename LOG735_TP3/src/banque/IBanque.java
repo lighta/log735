@@ -1,6 +1,8 @@
 package banque;
 
+import succursale.SuccursalesInfo;
+
 public interface IBanque {
 	int AcceptConnexion();
-	GetSuccursalesInfo();
+	SuccursalesInfo GetSuccursalesInfo();
 }
