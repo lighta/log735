@@ -7,7 +7,8 @@ import succursale.SuccursalesInfo;
 
 public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
-
+	
+	
 	
 	
 	public Banque() {
@@ -31,6 +32,14 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 			throw new NullPointerException("null suc_info");
 		
 		
+		
+	}
+	
+	protected void newConnexionFrom(AccesPoint ap){
+		
+	}
+	
+	protected void messageReceiveFrom(AccesPoint ap){
 		
 	}
 

@@ -3,7 +3,6 @@ package connexion;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 import succursale.SuccursalesInfo;
