@@ -9,7 +9,7 @@ import java.util.List;
  * @author AJ98150
  *
  */
-public class MultiAccesPoint {
+public class MultiAccesPoint extends Observable {
 	
 	private List<AccesPoint> _accesPoint;
 	
@@ -25,7 +25,21 @@ public class MultiAccesPoint {
 	}
 	
 	
+	public void update(Object obj){
+		
+		if(obj == null)
+			return;
+			
+		if(obj instanceof AccesPoint)
+			updateAccesPoint(obj);
+		
+	}
 	
+	private void updateAccesPoint(obj){
+		
+		
+		
+	}
 	
 	
 	

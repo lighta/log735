@@ -13,7 +13,7 @@ public class Tunnel {
 	private final BufferedInputStream in;
 	private final Socket socket;
 
-	public Tunnel(SuccursalesInfo s2) throws IOException {
+	public Tunnel(ConnexionInfo s2) throws IOException {
 		super();
 		socket = new Socket(s2.getHostname(), s2.getPort());
 		out = new BufferedOutputStream(socket.getOutputStream());
