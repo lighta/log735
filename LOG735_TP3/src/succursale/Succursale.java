@@ -13,16 +13,21 @@ import connexion.Tunnel;
 
 
 public class Succursale extends Thread implements ISuccursale {
-	ServerSocket serverSocket;
+	private ServerSocket serverSocket;
+	private boolean running;
+	private ScheduleTf sched_transfert;
+	private ScheduleState sched_state;
 	
 	//virez sucinfo?
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
 	
-	List<SucHandler> clientjobs;
+	private List<SucHandler> clientjobs;
 	private HashMap<Integer,Tunnel> connections;
 	private List<Transfert> transferts;
 	
 	private SuccursalesInfo infos;
+	
+
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
 		if (serverSocket==null || montant < 0) {
@@ -84,8 +89,8 @@ public class Succursale extends Thread implements ISuccursale {
 		return tf.montant < this.infos.montant;
 	}
 	
-	public boolean SendTransfert(SuccursalesInfo s1, SuccursalesInfo s2, int montant){
-		Transfert tf = new Transfert(s1,s2,montant);
+	public boolean SendTransfert(SuccursalesInfo s2, int montant){
+		Transfert tf = new Transfert(this.infos,s2,montant);
 		if(AuthorizeTransfert(tf)){
 			transferts.add(tf);
 			tf.send();
@@ -130,27 +135,84 @@ public class Succursale extends Thread implements ISuccursale {
 		infos.setId(id);
 	}
 	
-	public int ScheduleTransfert(){
-		return 0;
+	private void ScheduleTransfert(){
+		sched_transfert = new ScheduleTf();
+		sched_transfert.start();
 	}
 	
-	public int ScheduleGetSystemStatus(){
-		return 0;
+	private void ScheduleGetSystemStatus(){
+		sched_state = new ScheduleState();
+		sched_state.start();
 	}
 	
-	public class SucHandler extends Thread {
+	@Override
+	public void interrupt() {	
+		super.interrupt();
+		this.running=false;
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			//e.printStackTrace();
+		}
+	}
+	
+	
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		super.run();
+		Socket clientSocket = null;
+		
+		this.running=false;
+		
+		ScheduleTransfert();
+		ScheduleGetSystemStatus();
+		
+		while(this.running){
+			try {
+				clientSocket = serverSocket.accept();
+				
+				SucHandler job = new SucHandler(clientSocket);
+				clientjobs.add(job);
+				job.start();
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	
+	private class SucHandler extends Thread {
 		Socket clientSocket;
 		BufferedInputStream in;
+		boolean running;
+		
 		public SucHandler(Socket clientSocket) throws IOException {
 			this.clientSocket = clientSocket;
 			in = new BufferedInputStream(clientSocket.getInputStream());
 		}
 		
 		@Override
+		public void interrupt() {	
+			super.interrupt();
+			this.running=false;
+			try {
+				in.close();
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+		}
+		
+		@Override
 		public void run() {
 			super.run();
 			
-			while(true){
+			this.running=true;
+			
+			while(this.running){
 				int c;
 				try {
 					c = in.read();
@@ -187,25 +249,67 @@ public class Succursale extends Thread implements ISuccursale {
 		}
 	}
 	
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		super.run();
-		Socket clientSocket = null;
+	private class ScheduleState extends Thread {
+		boolean running;
 		
-		while(true){
-			try {
-				clientSocket = serverSocket.accept();
+		public ScheduleState() {
+			// TODO Auto-generated constructor stub
+		}
+		
+		@Override
+		public void interrupt() {
+			super.interrupt();
+			this.running=false;
+		}
+		
+		@Override
+		public void run() {
+			super.run();
+			this.running=true;
 				
-				SucHandler job = new SucHandler(clientSocket);
-				clientjobs.add(job);
-				job.start();
-				
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			while(this.running){
+				double rand = Math.random();
+				try {
+					Thread.sleep( (long) (10000*(rand+2)) ); //wait entre 10 et 30s
+					getSystemStatus();
+				} catch (InterruptedException e) {
+					//e.printStackTrace();
+				}
 			}
 		}
 	}
 	
+	private class ScheduleTf extends Thread {
+		boolean running;
+		
+		public ScheduleTf() {
+			// TODO Auto-generated constructor stub
+		}
+		
+		@Override
+		public void interrupt() {	
+			super.interrupt();
+			this.running=false;
+		}
+		
+		@Override
+		public void run() {
+			super.run();
+			this.running=true;
+					
+			while(this.running){
+				double rand = Math.random();
+				try {
+					Thread.sleep( (long) (5000*(rand+1)) ); //wait entre 5 et 10s
+					if(suc_Infos.size()>0){ //we need some othersuccursale for this
+						int i = (int)(suc_Infos.size() * rand); //take a rnd indice
+						int montant = (int) ((int) 20 * (1+ 4*(rand) )); //entre 20 et 100
+						SendTransfert(suc_Infos.get(i),montant);
+					}
+				} catch (InterruptedException e) {
+					//e.printStackTrace();
+				}
+			}
+		}
+	}
 }
