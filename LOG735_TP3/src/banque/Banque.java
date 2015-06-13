@@ -1,10 +1,13 @@
 package banque;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import succursale.SuccursalesInfo;
-import connexion.Message;
+import connexion.Commande;
+import connexion.ConnexionInfo;
 import connexion.MultiAccesPoint;
 import connexion.Tunnel;
 
@@ -14,7 +17,19 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	
 	
 	public Banque() {
-		// TODO Auto-generated constructor stub
+		super();
+		ConnexionInfo consoleConnexion = new ConnexionInfo("localhost",9100);
+		ConnexionInfo succursaleConnexion = new ConnexionInfo("localhost",9300);
+		
+		try {
+			super.openAccesPoint("Console", consoleConnexion);
+			super.openAccesPoint("Console", succursaleConnexion);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
 	}
 	
 	
@@ -35,16 +50,23 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		
 	}
 	
+	
 	@Override
-	protected void messageReceiveFrom(Tunnel tun,Message mess) {
+	protected void commandeReceiveFrom(Commande comm,Tunnel tun) {
 		
 	}
-
-
+	
+	
 	@Override
 	public Integer getTotalAmount() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		int amount = 0;
+		
+		for (Entry<Integer, SuccursalesInfo> succ : suc_Infos.entrySet()) {
+			amount += succ.getValue().getMontant();
+		}
+		
+		return amount;
 	}
 	
 	public Integer GenerateSuccursalId(){
@@ -67,5 +89,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		
 	}
 
-	
+	public static void main(String[] args) {
+		new Banque();
+	}
 }

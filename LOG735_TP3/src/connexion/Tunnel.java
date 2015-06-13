@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Observable;
 
+import connexion.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
@@ -149,22 +150,22 @@ public class Tunnel extends Observable{
 	}
 
 	private void askList() {
-		sendMessage(new Message("LIST#"));
+		sendCommande(new Commande(CommandeType.LIST,""));
 	}
 	
 	private void askTunnel(SuccursalesInfo s1) {
-		sendMessage(new Message("TUN#"+s1.getId()));
+		sendCommande(new Commande(CommandeType.TUN, "" + s1.getId()));
 	}
 	
 	public void askStatus() {
-		sendMessage(new Message("Give me your status !"));
+		sendCommande(new Commande(CommandeType.STATE ,"Give me your status !"));
 	}
 
 	
-	protected void sendMessage(Message mess)
+	protected void sendCommande(Commande comm)
 	{
 		try {
-			out.write(mess.getBytes());
+			out.write(comm.getBytes());
 			out.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -192,7 +193,7 @@ public class Tunnel extends Observable{
 		public void loopAction() {
 			while(super.getCurrentState() != ServiceState.ENDING)
 			{
-				Message m = Message.ParseMessage(inputStream);
+				Commande m = Commande.ParseCommande(inputStream);
 				
 				if(m == null)
 					try {

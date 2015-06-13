@@ -55,16 +55,16 @@ public abstract class MultiAccesPoint implements Observer {
 			Tunnel tun = (Tunnel) obj;
 			
 			
-			if(arg instanceof Message){
-				Message mess = (Message) arg;
-				messageReceiveFrom(tun,mess);
+			if(arg instanceof Commande){
+				Commande comm = (Commande) arg;
+				commandeReceiveFrom(comm,tun);
 			}
 		}
 		
 	}
 	
 	protected abstract void newTunnelCreated(Tunnel tun);
-	protected abstract void messageReceiveFrom(Tunnel tun,Message mess);
+	protected abstract void commandeReceiveFrom(Commande comm,Tunnel tun);
 	
 	protected Tunnel getTunnelByNameId(String tunnelNameId){
 		return _tunnels.get(tunnelNameId);
