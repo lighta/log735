@@ -2,12 +2,11 @@ package succursale;
 import connexion.ConnexionInfo;
 
 public class SuccursalesInfo extends ConnexionInfo {
-	final int Id;
+	int Id = 0; //undefined
 	int montant;
 	
-	public SuccursalesInfo(int id, String hostname, int port, int montant) {
+	public SuccursalesInfo(String hostname, int port, int montant) {
 		super(hostname,port);
-		Id = id;
 		this.montant = montant;
 	}
 	
@@ -19,13 +18,20 @@ public class SuccursalesInfo extends ConnexionInfo {
 		this.montant = montant;
 	}
 
+	
 	public int getId() {
 		return Id;
 	}
 	
+	public void setId(int id) {
+		Id = id;
+	}
+	
+	
 	@Override
 	public String toString() {
-		return  "Id : "+Id+
+		return  
+				"Id : "+Id+
 				"Host : "+hostname+
 				"Port : "+port+
 				"Montant : "+montant;	

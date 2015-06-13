@@ -13,16 +13,21 @@ import connexion.Tunnel;
 
 
 public class Succursale extends Thread implements ISuccursale {
-	ServerSocket serverSocket;
+	private ServerSocket serverSocket;
+	private boolean running;
+	private ScheduleTf sched_transfert;
+	private ScheduleState sched_state;
 	
 	//virez sucinfo?
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
 	
-	List<SucHandler> clientjobs;
-	
+	private List<SucHandler> clientjobs;
 	private HashMap<Integer,Tunnel> connections;
 	private List<Transfert> transferts;
+	
 	private SuccursalesInfo infos;
+	
+
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
 		if (serverSocket==null || montant < 0) {
@@ -32,7 +37,7 @@ public class Succursale extends Thread implements ISuccursale {
 		}
 		int port = serverSocket.getLocalPort();
 		String hosname = serverSocket.getInetAddress().getHostName();
-		infos = new SuccursalesInfo(0,hosname,port,montant);
+		infos = new SuccursalesInfo(hosname,port,montant);
 		
 		suc_Infos = new HashMap<Integer,SuccursalesInfo>();
 		connections = new HashMap<Integer,Tunnel>();
@@ -84,8 +89,8 @@ public class Succursale extends Thread implements ISuccursale {
 		return tf.montant < this.infos.montant;
 	}
 	
-	public boolean SendTransfert(SuccursalesInfo s1, SuccursalesInfo s2, int montant){
-		Transfert tf = new Transfert(s1,s2,montant);
+	public boolean SendTransfert(SuccursalesInfo s2, int montant){
+		Transfert tf = new Transfert(this.infos,s2,montant);
 		if(AuthorizeTransfert(tf)){
 			transferts.add(tf);
 			tf.send();
@@ -96,7 +101,7 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	
 	public boolean connectTo(SuccursalesInfo info){
-		if(info.Id == this.infos.getId()) //on refuse la connection a nous meme !
+		if(info.getId() == this.infos.getId()) //on refuse la connection a nous meme !
 			return false;
 		try {
 			Tunnel tun = new Tunnel(this.infos,info);
@@ -105,7 +110,7 @@ public class Succursale extends Thread implements ISuccursale {
 			clientjobs.add(job);
 			job.start();
 			
-			connections.put(info.Id, tun);
+			connections.put(info.getId(), tun);
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return false;
@@ -116,7 +121,7 @@ public class Succursale extends Thread implements ISuccursale {
 	public boolean connectToAll(){
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
 			SuccursalesInfo info = suc.getValue();
-			if(info.Id != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
+			if(info.getId() != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
 				if(connectTo(info)==false){
 					System.err.println("Connection fail for suc:"+info);
 					//return false;
@@ -126,42 +131,32 @@ public class Succursale extends Thread implements ISuccursale {
 		return true;
 	}
 	
-	
-	public int ScheduleTransfert(){
-		return 0;
+	public void setId(int id){
+		infos.setId(id);
 	}
 	
-	public int ScheduleGetSystemStatus(){
-		return 0;
+	private void ScheduleTransfert(){
+		sched_transfert = new ScheduleTf();
+		sched_transfert.start();
 	}
 	
-	public class SucHandler extends Thread {
-		Socket clientSocket;
-		public SucHandler(Socket clientSocket) {
-			this.clientSocket = clientSocket;
-		}
-		
-		@Override
-		public void run() {
-			super.run();
-			try {
-				BufferedInputStream in = new BufferedInputStream(clientSocket.getInputStream());
-				String rec = in.toString();
-				System.out.println("rec="+rec);
-				String part[] = rec.split("#");
-				
-				if(part[0].compareTo("TUN")==0){
-					int id = Integer.parseInt(part[1]);
-					System.out.println("id="+id);
-					Tunnel tun = new Tunnel(clientSocket);
-					connections.put(id, tun);
-				}
-				clientjobs.remove(this); //remove ourself			
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+	private void ScheduleGetSystemStatus(){
+		sched_state = new ScheduleState();
+		sched_state.start();
+	}
+	
+	@Override
+	public void interrupt() {	
+		super.interrupt();
+		this.running=false;
+		try {
+			serverSocket.close();
+		} catch (IOException e) {
+			//e.printStackTrace();
 		}
 	}
+	
+	
 	
 	@Override
 	public void run() {
@@ -169,7 +164,12 @@ public class Succursale extends Thread implements ISuccursale {
 		super.run();
 		Socket clientSocket = null;
 		
-		while(true){
+		this.running=false;
+		
+		ScheduleTransfert();
+		ScheduleGetSystemStatus();
+		
+		while(this.running){
 			try {
 				clientSocket = serverSocket.accept();
 				
@@ -183,5 +183,133 @@ public class Succursale extends Thread implements ISuccursale {
 			}
 		}
 	}
+
 	
+	private class SucHandler extends Thread {
+		Socket clientSocket;
+		BufferedInputStream in;
+		boolean running;
+		
+		public SucHandler(Socket clientSocket) throws IOException {
+			this.clientSocket = clientSocket;
+			in = new BufferedInputStream(clientSocket.getInputStream());
+		}
+		
+		@Override
+		public void interrupt() {	
+			super.interrupt();
+			this.running=false;
+			try {
+				in.close();
+			} catch (IOException e) {
+				//e.printStackTrace();
+			}
+		}
+		
+		@Override
+		public void run() {
+			super.run();
+			
+			this.running=true;
+			
+			while(this.running){
+				int c;
+				try {
+					c = in.read();
+					if(c == -1)
+						break;
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+					break;
+				}
+				
+				try {
+					String rec = Character.toString((char) c);
+					System.out.println("rec="+rec);
+					String part[] = rec.split("#");
+					
+					if(part[0].compareTo("TUN")==0){
+						int id = Integer.parseInt(part[1]);
+						System.out.println("id="+id);
+						Tunnel tun = new Tunnel(clientSocket);
+						connections.put(id, tun);
+					}
+					if(part[0].compareTo("ID")==0){
+						int id = Integer.parseInt(part[1]);
+						System.out.println("id="+id);
+						setId(id);
+					}	
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			clientjobs.remove(this); //remove ourself	
+		}
+	}
+	
+	private class ScheduleState extends Thread {
+		boolean running;
+		
+		public ScheduleState() {
+			// TODO Auto-generated constructor stub
+		}
+		
+		@Override
+		public void interrupt() {
+			super.interrupt();
+			this.running=false;
+		}
+		
+		@Override
+		public void run() {
+			super.run();
+			this.running=true;
+				
+			while(this.running){
+				double rand = Math.random();
+				try {
+					Thread.sleep( (long) (10000*(rand+2)) ); //wait entre 10 et 30s
+					getSystemStatus();
+				} catch (InterruptedException e) {
+					//e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	private class ScheduleTf extends Thread {
+		boolean running;
+		
+		public ScheduleTf() {
+			// TODO Auto-generated constructor stub
+		}
+		
+		@Override
+		public void interrupt() {	
+			super.interrupt();
+			this.running=false;
+		}
+		
+		@Override
+		public void run() {
+			super.run();
+			this.running=true;
+					
+			while(this.running){
+				double rand = Math.random();
+				try {
+					Thread.sleep( (long) (5000*(rand+1)) ); //wait entre 5 et 10s
+					if(suc_Infos.size()>0){ //we need some othersuccursale for this
+						int i = (int)(suc_Infos.size() * rand); //take a rnd indice
+						int montant = (int) ((int) 20 * (1+ 4*(rand) )); //entre 20 et 100
+						SendTransfert(suc_Infos.get(i),montant);
+					}
+				} catch (InterruptedException e) {
+					//e.printStackTrace();
+				}
+			}
+		}
+	}
 }
