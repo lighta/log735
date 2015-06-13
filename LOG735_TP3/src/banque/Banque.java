@@ -4,6 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import succursale.SuccursalesInfo;
+import connexion.Message;
+import connexion.MultiAccesPoint;
+import connexion.Tunnel;
 
 public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
@@ -15,11 +18,6 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	}
 	
 	
-	@Override
-	public int AcceptConnexion() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -32,20 +30,22 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 				
 	}
 	
-	protected void newConnexionFrom(AccesPoint ap){
+	@Override
+	protected void newTunnelCreated(Tunnel tun){
 		
 	}
 	
-	protected void messageReceiveFrom(AccesPoint ap){
+	@Override
+	protected void messageReceiveFrom(Tunnel tun,Message mess) {
 		
 	}
+
 
 	@Override
 	public Integer getTotalAmount() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 	
 	public Integer GenerateSuccursalId(){
 		return null;
@@ -66,8 +66,6 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		// TODO Auto-generated method stub
 		
 	}
-	
-	
-	
+
 	
 }
