@@ -5,13 +5,18 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Observable;
+import java.util.Observer;
 
+import logs.Logger;
 import connexion.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
 
-public class Tunnel extends Observable{
+public class Tunnel extends Observable implements Observer{
+	
+	private static Logger log = Logger.createLog(Tunnel.class);
+	
 	private final BufferedOutputStream out;
 	private final BufferedInputStream in;
 	private final Socket socket;
@@ -55,13 +60,16 @@ public class Tunnel extends Observable{
 	public Tunnel(Socket socket) throws IOException {
 		super();
 		this.socket = socket;
+		log.message("Try to retrieve socket outputStream");
 		out = new BufferedOutputStream(socket.getOutputStream());
+		log.message("Try to retrieve socket inputStream");
 		in = new BufferedInputStream(socket.getInputStream());
 		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
 		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
 		wMessService = new WaitMessageService(this, in);
-		
+		wMessService.addObserver(this);
 		try {
+			log.message("Try start service ( " + wMessService.getName() + " )");
 			Service.startService(wMessService);
 		} catch (AlreadyStartException e) {
 			// TODO Auto-generated catch block
@@ -71,10 +79,10 @@ public class Tunnel extends Observable{
 	}
 	
 	//constructeur pour receiver
-		public Tunnel(String name_id, Socket socket) throws IOException {
-			this(socket);
-			this.name_id = name_id;				
-		}
+	public Tunnel(String name_id, Socket socket) throws IOException {
+		this(socket);
+		this.name_id = name_id;				
+	}
 	
 	
 	public ConnexionInfo getcInfoDist() {
@@ -149,7 +157,7 @@ public class Tunnel extends Observable{
 		super.finalize();
 	}
 
-	private void askList() {
+	public void askList() {
 		sendCommande(new Commande(CommandeType.LIST,""));
 	}
 	
@@ -162,11 +170,13 @@ public class Tunnel extends Observable{
 	}
 
 	
-	protected void sendCommande(Commande comm)
+	public void sendCommande(Commande comm)
 	{
+		log.message("Try to send commande : " + comm);
 		try {
 			out.write(comm.getBytes());
 			out.flush();
+			log.message("Commande send : " + comm );	
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -178,8 +188,23 @@ public class Tunnel extends Observable{
 		return  cInfoLocal.toString() + " <==> " + cInfoDist.toString();
 	}
 	
+	@Override
+	public void update(Observable o, Object arg) {
+		
+		if(o instanceof WaitMessageService){
+			//AcceptConnexionService acs = (AcceptConnexionService) o;
+			if(arg instanceof Commande){
+					log.message("Commande receive : " + arg +" notifyObservers");
+					setChanged();
+					notifyObservers(arg);
+			}
+			
+		}
+	}
+	
 	private class WaitMessageService extends Service
 	{
+		private Logger log = Logger.createLog(WaitMessageService.class);
 		
 		BufferedInputStream inputStream;
 		
@@ -193,21 +218,37 @@ public class Tunnel extends Observable{
 		public void loopAction() {
 			while(super.getCurrentState() != ServiceState.ENDING)
 			{
-				Commande m = Commande.ParseCommande(inputStream);
 				
-				if(m == null)
-					try {
-						this.wait(30);
-					} catch (InterruptedException e) {
-						Service.stopService(this);
-						e.printStackTrace();	
+				//log.message("Try to parse Commande" );
+				
+				try {
+					if(inputStream.available() > 1){
+						Commande m = Commande.ParseCommande(inputStream);
+						if(m == null)
+						{
+							log.message("null Commande" );
+						}
+						else
+						{
+							log.message("Notify new commande : " + m );
+							setChanged();
+							notifyObservers(m);
+							
+						}
 					}
-				
+					
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+
 			}
 		}
 		
 		
 	}
+
+	
 
 	
 }

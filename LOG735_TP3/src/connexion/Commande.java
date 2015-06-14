@@ -3,9 +3,16 @@ package connexion;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 
+import logs.Logger;
+
 
 public class Commande {
 
+	private final static char DELIMITER_CHARACTER_START = '!';
+	private final static char DELIMITER_CHARACTER_END = '!';
+	
+	private static final Logger log = Logger.createLog(Commande.class);
+	
 	public enum CommandeType
 	{
 		TUN,
@@ -14,7 +21,6 @@ public class Commande {
 		LIST,
 		MESS
 	}
-	
 	
 	private CommandeType type;
 	private String message;
@@ -29,7 +35,7 @@ public class Commande {
 	}
 	
 	public byte[] getBytes() {
-		String messToTransfert = "{"+type.name() + "#" + this.message + "}";
+		String messToTransfert = DELIMITER_CHARACTER_START+type.name() + "#" + this.message + DELIMITER_CHARACTER_END;
 		return messToTransfert.getBytes();
 	}
 		
@@ -37,22 +43,39 @@ public class Commande {
 	 * Retrieve message from BufferedInputStream
 	 * @param inputStream
 	 * @return new Message or null if an error occurs
+	 * @throws IOException 
 	 */
-	public static Commande ParseCommande(BufferedInputStream inputStream)
+	public static Commande ParseCommande(BufferedInputStream inputStream) throws IOException
 	{
+		log.message("Try to parse commande" );
+		
 		if(inputStream == null)
+		{
+			log.message("Null input Stream" );
 			return null;
+		}
+		
+		if(inputStream.available() < 1){
+			return null;
+		}
 		
 		try {
-			char c = (char) inputStream.read();
-			if(c == '{')
+			log.message("Parse first char" );
+			Character c = (char) inputStream.read();
+			if(c == DELIMITER_CHARACTER_START)
 			{
+				
 				String comm = "";
 				String content = "";
+				
+				log.message("Commande receive !!! ( parsing Type )" );
+				
 				while((c = (char) inputStream.read()) != '#')
 				{
 					comm += c;
 				}
+				
+				log.message("Commande type separator found : " + comm );
 				
 				CommandeType ctype;
 				
@@ -67,24 +90,40 @@ public class Commande {
 				else if( CommandeType.MESS.name().equals(comm))
 					ctype =  CommandeType.MESS;
 				else
+				{
+					log.message("Unknown Commande Type" );
 					return null;
-				
+				}
+				log.message("Commande type receive : " + ctype );
 
-				while((c = (char) inputStream.read()) != '}')
+				while((c = (char) inputStream.read()) != DELIMITER_CHARACTER_END)
 				{
 					content += c;
 				}
 				
+				log.message("Commande content receive : " + content );
+				
 				return new Commande(ctype,content);
 			}
 			
+			log.message("Not reconized as commade: First char = " + c);
 			
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw e;
 		}
 		
+	
 		return null;
+	}
+	
+	@Override
+	public String toString() {
+		return "" + DELIMITER_CHARACTER_START + this.type + "#" + this.message + DELIMITER_CHARACTER_END;
+	}
+
+	public CommandeType getType() {
+		return this.type;
 	}
 	
 }

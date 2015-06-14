@@ -4,8 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 
+import logs.Logger;
+
 public abstract class Service extends Observable {
 
+	private static final Logger log = Logger.createLog(Service.class);
+	
 	private static Map<String,Service> serviceMap = null;
 	
 	static {
@@ -16,16 +20,25 @@ public abstract class Service extends Observable {
 	}
 	
 	public static void startService(Service s) throws AlreadyStartException{
+		
+		log.message("Try to start service ( " + s.serviceName + " )");	
+		
+		
 		if(serviceMap.containsKey(s.getName()) && 
 				(s.getCurrentState() == ServiceState.ENDED || s.getCurrentState() == ServiceState.NOT_STARTED )){
 			s.setCurrentState(ServiceState.STARTING);
 			(new Thread(s.serviceLoopAction)).start();
+			log.message("starting service ( " + s.serviceName + " )");
 		}
-		else
+		else{
+			log.message("already started service ( " + s.serviceName + " )");
 			throw new AlreadyStartException("Service is already started");
+		}
+		
 	}
 
 	public static void stopService(Service s){
+		log.message("Stopping service ( " + s.serviceName + " )");
 		s.setCurrentState(ServiceState.ENDING);
 	}
 	
@@ -42,7 +55,7 @@ public abstract class Service extends Observable {
 	private Runnable serviceLoopAction;
 	private ServiceState currentState;
 	
-	public Service(String serviceName) {
+	public Service(final String serviceName) {
 		
 		this.serviceName = serviceName;
 		
@@ -52,8 +65,10 @@ public abstract class Service extends Observable {
 			@Override
 			public void run() {
 				setCurrentState(ServiceState.STARTED);
+				log.message("started service ( " + serviceName + " )");
 				loopAction();
 				setCurrentState(ServiceState.ENDED);
+				log.message("ended service ( " + serviceName + " )");
 			}
 		};
 		synchronized (serviceMap) {
@@ -62,7 +77,7 @@ public abstract class Service extends Observable {
 		
 	}
 
-	private String getName() {
+	public String getName() {
 		return serviceName;
 	}
 	
