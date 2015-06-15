@@ -26,7 +26,8 @@ public class Tunnel extends Observable implements Observer{
 	
 	private WaitMessageService wMessService = null;
 	
-	public Tunnel(ConnexionInfo s2) throws IOException {
+	//connection entre succursale et banque
+	public Tunnel(SuccursalesInfo s1,ConnexionInfo s2) throws IOException {
 		super();
 		this.socket = new Socket(s2.getHostname(), s2.getPort());
 		out = new BufferedOutputStream(socket.getOutputStream());
@@ -35,9 +36,12 @@ public class Tunnel extends Observable implements Observer{
 		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
 		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
 		
-		askList();
+		askID(s1.getMontant()); //demande notre ID
+		askList(); //puis la liste
 	}
+
 	
+
 	//constructeur pour emetteur
 	public Tunnel(SuccursalesInfo s1, SuccursalesInfo s2) throws IOException {
 		super();
@@ -47,6 +51,7 @@ public class Tunnel extends Observable implements Observer{
 		
 		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
 		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
+		
 		
 		askTunnel(s1);
 	}
@@ -159,6 +164,10 @@ public class Tunnel extends Observable implements Observer{
 
 	public void askList() {
 		sendCommande(new Commande(CommandeType.LIST,""));
+	}
+	
+	private void askID(int montant) {
+		sendCommande(new Commande(CommandeType.ID, "" + montant ));
 	}
 	
 	private void askTunnel(SuccursalesInfo s1) {

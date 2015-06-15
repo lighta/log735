@@ -11,7 +11,7 @@ public class SuccursaleServer {
 	private ServerSocket serverSocket;
 	private Succursale sucursale;
 	
-	public SuccursaleServer(String hostname, int port) {
+	public SuccursaleServer(String hostname, int port, int montant) {
 		InetAddress ipAddress;
 		String inputLine = "";
 		BufferedReader stdIn = new BufferedReader(new InputStreamReader(System.in));
@@ -20,7 +20,7 @@ public class SuccursaleServer {
 			ipAddress= InetAddress.getByName(hostname);
 			serverSocket = new ServerSocket(port,0, ipAddress);
 			System.out.println("Starting succursale");
-			sucursale = new Succursale(serverSocket,1245);
+			sucursale = new Succursale(serverSocket,montant);
 			sucursale.start();
 		} catch (UnknownHostException e1) {
 			System.err.println("On ne peut pas se binder sur : "+hostname+ " invalide");
@@ -54,6 +54,6 @@ public class SuccursaleServer {
 	}
 	
 	public static void main(String[] args) throws IOException {				
-		SuccursaleServer suc_srv = new SuccursaleServer("localhost", 2000);	
+		SuccursaleServer suc_srv = new SuccursaleServer("localhost", 2000, 1000);	
 	}
 }

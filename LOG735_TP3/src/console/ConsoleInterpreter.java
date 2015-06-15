@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.Scanner;
 
+import banque.Banque;
 import logs.Logger;
 import connexion.AccesPoint;
 import connexion.Commande;
