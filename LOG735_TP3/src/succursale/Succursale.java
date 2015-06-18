@@ -266,7 +266,7 @@ public class Succursale extends Thread implements ISuccursale {
 				try {
 					String rec;
 					while ((rec = in.readLine()) != null){
-						//System.out.println("rec="+rec);
+						System.out.println("rec="+rec);
 						final String part[] = rec.split("#");
 			
 						final String cmd = part[0];
@@ -275,7 +275,9 @@ public class Succursale extends Thread implements ISuccursale {
 							System.out.println("rec="+rec);
 							continue;
 						}
-						if(cmd.startsWith("!") && rec.endsWith("!")){
+						if(cmd.startsWith("!")==false
+							//&& rec.endsWith("!")
+						){
 							System.out.println("Invalid cmd received");
 							System.out.println("rec="+rec);
 							continue;
@@ -295,6 +297,7 @@ public class Succursale extends Thread implements ISuccursale {
 								final String host = msgpart[0];
 								int port = Integer.parseInt(msgpart[1]);
 								
+								System.out.println("Creating connection to banque");
 								ConnexionInfo banqueCon = new ConnexionInfo(host, port);
 								boolean res = connectToBanque(banqueCon);
 								Tunnel tun = connections.get(-2); //recupere la console
