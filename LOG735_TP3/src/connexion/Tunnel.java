@@ -3,6 +3,7 @@ package connexion;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.util.Observable;
 import java.util.Observer;
@@ -20,7 +21,7 @@ public class Tunnel extends Observable implements Observer{
 	private static Logger log = Logger.createLog(Tunnel.class);
 	
 	private final BufferedOutputStream out;
-	private final BufferedInputStream in;
+	private final InputStream in;
 	private final Socket socket;
 	private final ConnexionInfo cInfoLocal;
 	private final ConnexionInfo cInfoDist;
@@ -69,7 +70,7 @@ public class Tunnel extends Observable implements Observer{
 		log.message("Try to retrieve socket outputStream");
 		out = new BufferedOutputStream(socket.getOutputStream());
 		log.message("Try to retrieve socket inputStream");
-		in = new BufferedInputStream(socket.getInputStream());
+		in = socket.getInputStream();
 		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
 		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
 		wMessService = new WaitMessageService(this, in);
@@ -103,7 +104,7 @@ public class Tunnel extends Observable implements Observer{
 	public BufferedOutputStream getOut() {
 		return out;
 	}
-	public BufferedInputStream getIn() {
+	public InputStream getIn() {
 		return in;
 	}
 	
@@ -252,11 +253,11 @@ public class Tunnel extends Observable implements Observer{
 	{
 		private Logger log = Logger.createLog(WaitMessageService.class);
 		
-		BufferedInputStream inputStream;
+		InputStream inputStream;
 		
-		public WaitMessageService(Tunnel tun, BufferedInputStream input) {
+		public WaitMessageService(Tunnel tun, InputStream in) {
 			super("waitMessageService for tunnel " + tun.toString() );
-			this.inputStream = input;
+			this.inputStream = in;
 			
 		}
 

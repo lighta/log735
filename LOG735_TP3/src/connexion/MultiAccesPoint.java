@@ -36,7 +36,7 @@ public abstract class MultiAccesPoint implements Observer {
 	}
 	
 	private void useLocalPort(int port) {
-		if(_tunnels.get(port) != null){
+		if(_tunnels.get(port) == null){
 			_tunnels.put(port, new HashMap<String,Tunnel>());
 		}
 	}
