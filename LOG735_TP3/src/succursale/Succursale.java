@@ -170,7 +170,7 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	public void RegisterSuccursalesList(final String list){
 		//System.out.println("Entering RegisterSuccursalesList list="+list);
-		String[] sucs = list.split("-");
+		String[] sucs = list.split("\\|");
 		for (int i=0; i<sucs.length; i++) {
 			String sucstring=sucs[i];
 			if(sucstring == null || sucstring.isEmpty())
