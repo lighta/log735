@@ -266,24 +266,30 @@ public class Succursale extends Thread implements ISuccursale {
 				try {
 					String rec;
 					while ((rec = in.readLine()) != null){
-						System.out.println("rec="+rec);
+						//System.out.println("rec="+rec);
 						final String part[] = rec.split("#");
-						
+			
+						final String cmd = part[0];
 						if(part.length < 1){
 							System.out.println("Malformed packet received");
+							System.out.println("rec="+rec);
 							continue;
 						}
-						final String cmd = part[0];
+						if(cmd.startsWith("!") && rec.endsWith("!")){
+							System.out.println("Invalid cmd received");
+							System.out.println("rec="+rec);
+							continue;
+						}
 						
 						switch(cmd){
-							case "HELLO":{ //received a create connexion request
+							case "!HELLO":{ //received a create connexion request
 								// save tunnel
 								Tunnel tun = new Tunnel("CONSOLE",clientSocket);
 								connections.put(-2, tun);
 								tun.sendMsg("Welcome !");
 								break;
 							}
-							case "CON":{ //received a create connexion request
+							case "!CON":{ //received a create connexion request
 								final String msg = part[1];
 								final String msgpart[] = msg.split(":");
 								final String host = msgpart[0];
@@ -297,14 +303,14 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "TUN":{ //received a tunnel connexion request
+							case "!TUN":{ //received a tunnel connexion request
 								final int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
 								Tunnel tun = new Tunnel("SUC"+id,clientSocket);
 								connections.put(id, tun);
 								break;
 							}
-							case "ID":{ //received an ID assignation
+							case "!ID":{ //received an ID assignation
 								int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
 								setId(id);
@@ -312,7 +318,7 @@ public class Succursale extends Thread implements ISuccursale {
 								tun.askList(); //demande de la list
 								break;
 							}
-							case "ADDLIST":{ //received a list from bank
+							case "!ADDLIST":{ //received a list from bank
 								final String msg = part[1];
 								final String msgpart[] = msg.split(":");
 								
@@ -329,7 +335,7 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "LIST":{ //received a list from bank
+							case "!LIST":{ //received a list from bank
 								RegisterSuccursalesList(part[1]); //enregistrement des autres succursale dans notre list
 								connectToOthers(); //check si deja connecter
 								Tunnel tun = connections.get(-2); //recupere la console
@@ -339,7 +345,7 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "TFCON":{
+							case "!TFCON":{
 								final String msg = part[1];
 								final String msgpart[] = msg.split(":");
 								
@@ -363,7 +369,7 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "TFSUC":{
+							case "!TFSUC":{
 								final String msg = part[1];
 								final String msgpart[] = msg.split(":");
 								
@@ -387,7 +393,7 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "SETM":{
+							case "!SETM":{
 								int montant = Integer.parseInt(part[1]);
 								if(montant < 1){
 									System.out.println("Invalide montant="+montant+ " must be strict positive");
@@ -400,11 +406,11 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "MESS":{
+							case "!MESS":{
 								System.out.println("Received mess="+part[1]);
 								break;
 							}	
-							case "BUG": //TODO
+							case "!BUG": //TODO
 							default:{
 								System.out.println("Unsupported cmd received cmd="+cmd+ "rec="+rec);
 							}		
