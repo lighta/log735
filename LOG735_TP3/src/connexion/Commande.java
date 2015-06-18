@@ -19,7 +19,21 @@ public class Commande {
 		ID,
 		STATE,
 		LIST,
-		MESS
+		MESS,
+		
+		TFCON,	// con->suc, demande de transfert par console
+		TFSUC,	// suc->suc, demande de transfert par succursale
+		TFACK,	// suc->con, notification que le transfert est authorisé (commencé)
+		TFDONE,	// suc->con, notification que le transfert est effectué
+		CON,	// con->suc, demande d'une creation de connexion de la succursale a la banque
+		CONACK,	// suc->con  notification que la connection s'est bien faite
+		BUG,	// con->suc|bnk  con->bnk, demande de creation d'un bug
+		BUGACK, // suc|bnk->con, notification sur l'acceptation de la creation de bug
+		REG,	// suc->bnk, demande d'enregistrement de la succursale a la banque
+		SETM,	// con->suc, maj du montant d'une succursale, (devrait etre fait avant REG)
+		CRCON,	// con->bnk, demande de creation de connexion entre succursale et banque
+		NLIST	// suc->con, envoie la liste des succursale a la console
+		
 	}
 	
 	private CommandeType type;

@@ -243,26 +243,37 @@ public class Succursale extends Thread implements ISuccursale {
 							System.out.println("Malformed packet received");
 							continue;
 						}
-						if(part[0].compareTo("CON")==0){
-							//received a create connexion request
-							String host = part[1];
-							int port = Integer.parseInt(part[2]);
-							ConnexionInfo banqueCon = new ConnexionInfo(host, port);
-							connectToBanque(banqueCon);
+						final String cmd = part[0];
+						
+						switch(cmd){
+							case "CON":{ //received a create connexion request
+								String host = part[1];
+								int port = Integer.parseInt(part[2]);
+								ConnexionInfo banqueCon = new ConnexionInfo(host, port);
+								connectToBanque(banqueCon);
+								break;
+							}
+							case "TUN":{ //received a tunnel connexion request
+								int id = Integer.parseInt(part[1]);
+								System.out.println("id="+id);
+								Tunnel tun = new Tunnel(clientSocket);
+								connections.put(id, tun);
+								break;
+							}
+							case "ID":{ //received a tunnel connexion request
+								//received an ID assignation
+								int id = Integer.parseInt(part[1]);
+								System.out.println("id="+id);
+								setId(id);
+								break;
+							}
+							case "TFSUC":
+							case "SETM":
+							case "BUG":
+							default:{
+								System.out.println("Unsupported cmd received cmd="+cmd+ "rec="+rec);
+							}		
 						}
-						if(part[0].compareTo("TUN")==0){ 	
-							//received a tunnel connexion request
-							int id = Integer.parseInt(part[1]);
-							System.out.println("id="+id);
-							Tunnel tun = new Tunnel(clientSocket);
-							connections.put(id, tun);
-						}
-						if(part[0].compareTo("ID")==0){
-							//received an ID assignation
-							int id = Integer.parseInt(part[1]);
-							System.out.println("id="+id);
-							setId(id);
-						}	
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
