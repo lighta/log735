@@ -76,6 +76,10 @@ public class Commande {
 		 */
 		SETM,
 		/**
+		 * aquite que la succ a bien setter le montant
+		 */
+		SETMACK,
+		/**
 		 * con->bnk, demande de creation de connexion entre succursale et banque
 		 */
 		CRCON,
@@ -90,7 +94,13 @@ public class Commande {
 		/**
 		 * notify new succ registered
 		 */
-		ADDLIST
+		ADDLIST,
+		/**
+		 * 	bnk->con send amountofnewsucc:totalamount
+		 */
+		HAM,
+		
+		
 		
 	}
 	
