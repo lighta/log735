@@ -123,7 +123,7 @@ public class AccesPoint extends Observable implements Observer {
 			{
 				try {
 					Socket clientSocket = serverSocket.accept();
-					Tunnel t = new Tunnel("@tun-"+Math.random(),(Socket) clientSocket);
+					Tunnel t = new Tunnel("@tun-"+Math.random(),clientSocket);
 					setChanged();
 					notifyObservers(t);
 				} catch (IOException e) {

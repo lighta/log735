@@ -5,6 +5,6 @@ import succursale.SuccursalesInfo;
 
 public interface IBanque {
 	
-	Map<Integer,SuccursalesInfo> GetSuccursalesInfo();
+	String GetSuccursalesInfo();
 	
 }

@@ -2,22 +2,29 @@ package banque;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import logs.Logger;
+import services.Service;
+import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
 import connexion.Commande;
+import connexion.Commande.CommandeType;
 import connexion.ConnexionInfo;
 import connexion.MultiAccesPoint;
 import connexion.Tunnel;
-import connexion.Commande.CommandeType;
 
 public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	private HashMap<Integer, SuccursalesInfo> suc_Infos;
 
 	private static Logger log = Logger.createLog(Banque.class);
-
+	
+	private final static String _CONSOLE_CONNECTION_HOSTNAME = "localhost";
+	private final static int _CONSOLE_CONNECTION_PORT = 9100;
+	
+	private final static String _SUCC_CONNECTION_HOSTNAME = "localhost";
+	private final static int _SUCC_CONNECTION_PORT = 9300;
+	
 	private int sequenceCurrentValue = 1;
 	
 	public Banque() {
@@ -26,8 +33,8 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		
 		suc_Infos = new HashMap<>();
 		
-		ConnexionInfo consoleConnexion = new ConnexionInfo("localhost", 9100);
-		ConnexionInfo succursaleConnexion = new ConnexionInfo("localhost", 9300);
+		ConnexionInfo consoleConnexion = new ConnexionInfo(Banque._CONSOLE_CONNECTION_HOSTNAME,Banque._CONSOLE_CONNECTION_PORT);
+		ConnexionInfo succursaleConnexion = new ConnexionInfo(Banque._SUCC_CONNECTION_HOSTNAME,Banque._SUCC_CONNECTION_PORT);
 
 		try {
 			log.message("Try to open access points");
@@ -49,17 +56,25 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 //		})).start();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public Map<Integer, SuccursalesInfo> GetSuccursalesInfo() {
+	public String GetSuccursalesInfo() {
 
 		if (suc_Infos != null)
-			return (Map<Integer, SuccursalesInfo>) suc_Infos.clone();
+			return FormatSuccursalesList("|");
 		else
 			throw new NullPointerException("null suc_info");
 
 	}
 
+	public String FormatSuccursalesList(String separator){
+		StringBuilder sb_ = new StringBuilder();
+		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
+			SuccursalesInfo info = suc.getValue();	
+			sb_.append(info.getId()+":"+info.getHostname()+":"+info.getPort()+separator);
+		}
+		return sb_.toString();
+	}
+	
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		tun.addObserver(this);
@@ -70,25 +85,43 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 
 		log.message("Commande receive : " + comm + " from " + tun);
 
-		if (CommandeType.TUN == comm.getType()) {
-
-		} else if (CommandeType.ID == comm.getType()) {
-
-			Commande c = new Commande(CommandeType.ID, ""
-					+ GenerateSuccursalId());
-			tun.sendCommande(c);
-
-		} else if (CommandeType.STATE == comm.getType()) {
-
-		} else if (CommandeType.LIST == comm.getType()) {
-
-			Commande c = new Commande(CommandeType.LIST, ""
-					+ GetSuccursalesInfo());
-			tun.sendCommande(c);
-
-		} else if (CommandeType.MESS == comm.getType()) {
-
+		Commande c = null;
+		
+		switch (comm.getType()) {
+		case BUG:
+			System.out.println("Not supported yet !!!!!!!!!!!!");
+			break;
+		case CRCON:
+			c = new Commande(CommandeType.CON, Banque._SUCC_CONNECTION_HOSTNAME + ":" + Banque._SUCC_CONNECTION_PORT);
+			break;
+		case MESS:
+			System.out.println("" + comm.getMessageContent());
+			break;
+		case REG:
+			int succ_id = GenerateSuccursalId();
+			SuccursalesInfo succ_info = new SuccursalesInfo(tun.getcInfoDist().getHostname(), tun.getcInfoDist().getPort(), Integer.parseInt(comm.getMessageContent()));
+			succ_info.setId(succ_id);
+			
+			this.suc_Infos.put(succ_id, succ_info);	//register succ
+			c = new Commande(CommandeType.HAM, ""	+ succ_info.getMontant() + ":" + this.getTotalAmount());
+			
+			c = new Commande(CommandeType.ID, "" + succ_id);	//send id to succ
+			notifyAllSuccOfNewOne(succ_info);
+			break;
+		case STATE:
+			System.out.println("Not supported yet !!!!!!!!!!!!");
+			break;
+		case GETLIST:
+			c = new Commande(CommandeType.LIST, ""	+ GetSuccursalesInfo());
+			break;		
+		default:
+			System.out.println("Unrecognized Command !!!!!!!!!");
 		}
+		
+		if(c != null){
+			tun.sendCommande(c);
+		}
+		
 	}
 
 	@Override
@@ -111,6 +144,28 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		return true;
 	}
 
+	private void notifyAllSuccOfNewOne(final SuccursalesInfo succ_info){
+		
+		try {
+			Service.startService(new Service("notifyAllSuccOfNewOne : " + succ_info) {
+				
+				Commande c = null;
+				
+				@Override
+				public void loopAction() {
+					c = new Commande(CommandeType.ADDLIST, succ_info.toString());
+					for (Tunnel tun : getTunnelsbyPort(_SUCC_CONNECTION_PORT)) {
+						tun.sendCommande(c);
+					}
+				}
+			});
+		} catch (AlreadyStartException e) {
+			log.message("" + e.getStackTrace());
+		}
+		
+		
+	}
+	
 	@Override
 	public void printSuccursale() {
 		
