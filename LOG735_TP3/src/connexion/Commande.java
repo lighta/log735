@@ -82,7 +82,15 @@ public class Commande {
 		/**
 		 * suc->con, envoie la liste des succursale a la console
 		 */
-		NLIST
+		NLIST,
+		/**
+		 * Request Succ list
+		 */
+		GETLIST,
+		/**
+		 * notify new succ registered
+		 */
+		ADDLIST
 		
 	}
 	
