@@ -178,26 +178,29 @@ public class Commande {
 					
 					log.message("Commande type separator found : " + comm );
 					
-					CommandeType ctype;
+					CommandeType ctype = CommandeType.valueOf(comm);
 					
-					if( CommandeType.TUN.name().equals(comm))
-						ctype =  CommandeType.TUN;
-					else if( CommandeType.ID.name().equals(comm))
-						ctype =  CommandeType.ID;
-					else if( CommandeType.STATE.name().equals(comm))
-						ctype =  CommandeType.STATE;
-					else if( CommandeType.LIST.name().equals(comm))
-						ctype =  CommandeType.LIST;
-					else if( CommandeType.MESS.name().equals(comm))
-						ctype =  CommandeType.MESS;
-					else
-					{
-						log.message("Unknown Commande Type" );
+//					if( CommandeType.TUN.name().equals(comm))
+//						ctype =  CommandeType.TUN;
+//					else if( CommandeType.ID.name().equals(comm))
+//						ctype =  CommandeType.ID;
+//					else if( CommandeType.STATE.name().equals(comm))
+//						ctype =  CommandeType.STATE;
+//					else if( CommandeType.LIST.name().equals(comm))
+//						ctype =  CommandeType.LIST;
+//					else if( CommandeType.MESS.name().equals(comm))
+//						ctype =  CommandeType.MESS;
+//					else
+					if(ctype == null){
+						log.message("Unknown Commande Type : " + comm );
 						return null;
 					}
 					log.message("Commande type receive : " + ctype );
-	
-					content += part[1];
+					
+					if(part.length > 1)
+					{
+						content += part[1];
+					}
 					
 					log.message("Commande content receive : " + content );
 					

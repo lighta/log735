@@ -60,7 +60,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	public String GetSuccursalesInfo() {
 
 		if (suc_Infos != null)
-			return FormatSuccursalesList("|");
+			return FormatSuccursalesList("-");
 		else
 			throw new NullPointerException("null suc_info");
 
@@ -70,7 +70,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		StringBuilder sb_ = new StringBuilder();
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
 			SuccursalesInfo info = suc.getValue();	
-			sb_.append(info.getId()+":"+info.getHostname()+":"+info.getPort()+separator);
+			sb_.append(info.getId()+":"+info.getHostname()+":"+9200+separator);
 		}
 		return sb_.toString();
 	}
@@ -105,8 +105,9 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 			SuccursalesInfo succ_info = new SuccursalesInfo(tun.getcInfoDist().getHostname(), tun.getcInfoDist().getPort(), Integer.parseInt(comm.getMessageContent()));
 			succ_info.setId(succ_id);
 			
+			printToConsoles("" + succ_info.getMontant()+":"+ this.getTotalAmount());
+			
 			this.suc_Infos.put(succ_id, succ_info);	//register succ
-			c = new Commande(CommandeType.HAM, ""	+ succ_info.getMontant() + ":" + this.getTotalAmount());
 			
 			c = new Commande(CommandeType.ID, "" + succ_id);	//send id to succ
 			notifyAllSuccOfNewOne(succ_info);
@@ -156,8 +157,30 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 				
 				@Override
 				public void loopAction() {
-					c = new Commande(CommandeType.ADDLIST, succ_info.toString());
+					c = new Commande(CommandeType.ADDLIST, succ_info.getId()+":"+succ_info.getHostname()+":"+9200);
 					for (Tunnel tun : getTunnelsbyPort(_SUCC_CONNECTION_PORT)) {
+						tun.sendCommande(c);
+					}
+				}
+			});
+		} catch (AlreadyStartException e) {
+			log.message("" + e.getStackTrace());
+		}
+		
+		
+	}
+	
+	private void printToConsoles(final String message){
+		
+		try {
+			Service.startService(new Service("printToConsoles : " + Math.random()) {
+				
+				Commande c = null;
+				
+				@Override
+				public void loopAction() {
+					c = new Commande(CommandeType.HAM, message);
+					for (Tunnel tun : getTunnelsbyPort(_CONSOLE_CONNECTION_PORT)) {
 						tun.sendCommande(c);
 					}
 				}
