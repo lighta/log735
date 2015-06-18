@@ -54,6 +54,6 @@ public class SuccursaleServer {
 	}
 	
 	public static void main(String[] args) throws IOException {				
-		SuccursaleServer suc_srv = new SuccursaleServer("localhost", 2000, 1000);	
+		SuccursaleServer suc_srv = new SuccursaleServer("0.0.0.0", 9200, 1000);	
 	}
 }
