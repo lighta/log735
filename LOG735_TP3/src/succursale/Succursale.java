@@ -130,6 +130,7 @@ public class Succursale extends Thread implements ISuccursale {
 			return false; //ourself again
 		
 		try {
+			System.out.println("Trying to connect to "+info);
 			Tunnel tun = new Tunnel(this.infos,info);
 			
 			SucHandler job = new SucHandler(tun.getSocket());
@@ -169,14 +170,15 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	public void RegisterSuccursalesList(final String list){
 		//System.out.println("Entering RegisterSuccursalesList list="+list);
-		final String[] sucs = list.split("$");
-		for (String sucstring : sucs) {
+		String[] sucs = list.split("-");
+		for (int i=0; i<sucs.length; i++) {
+			String sucstring=sucs[i];
 			if(sucstring == null || sucstring.isEmpty())
 				break;
-			sucstring = sucstring.substring(0, sucstring.length()-1); //remove last
-			//System.out.println("sucstring="+sucstring);
+			//sucstring = sucstring.substring(0, sucstring.length()-1); //remove last
+			System.out.println("sucstring="+sucstring);
 			final String[] part = sucstring.split(":");
-			//System.out.println("size sucs="+sucs.length+" size sucstring="+part.length);
+			System.out.println("size sucs="+sucs.length+" size sucstring="+part.length);
 			
 			final int id = Integer.parseInt(part[0]);
 			final String host = part[1];
