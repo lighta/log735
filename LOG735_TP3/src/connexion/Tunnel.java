@@ -192,7 +192,7 @@ public class Tunnel extends Observable implements Observer{
 	}
 	
 	public void sendSETMACK(boolean res) {
-		sendCommande(new Commande(CommandeType.SETMACK,res));
+		sendCommande(new Commande(CommandeType.SETMACK,""+res));
 	}
 	
 	public void askList() {
