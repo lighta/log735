@@ -111,7 +111,6 @@ public class Succursale extends Thread implements ISuccursale {
 			SucHandler job = new SucHandler(tun.getSocket());
 			clientjobs.add(job);
 			job.start();
-			
 			connections.put(-1, tun); //banque is -1
 		} catch (IOException e) {
 			//e.printStackTrace();
@@ -224,9 +223,10 @@ public class Succursale extends Thread implements ISuccursale {
 		super.run();
 		Socket clientSocket = null;
 		
+		
 		this.running=true;
 		
-		//ScheduleTransfert();
+		ScheduleTransfert();
 		//ScheduleGetSystemStatus();
 		
 		while(this.running){
@@ -493,13 +493,21 @@ public class Succursale extends Thread implements ISuccursale {
 			this.running=true;
 					
 			while(this.running){
-				double rand = Math.random();
+				final double rand = Math.random();	
+				final long wait = (long) (5000*(rand+1)); //wait entre 5 et 10s
+				
+				System.out.println("ScheduleTf waiting for wait="+wait);
 				try {
-					Thread.sleep( (long) (5000*(rand+1)) ); //wait entre 5 et 10s
-					if(suc_Infos.size()>0){ //we need some othersuccursale for this
-						int i = (int)(suc_Infos.size() * rand); //take a rnd indice
-						int montant = (int) ((int) 20 * (1+ 4*(rand) )); //entre 20 et 100
-						SendTransfert(suc_Infos.get(i),montant);
+					Thread.sleep( wait ); 
+					if(suc_Infos.size()>1){ //we need some othersuccursale for this 
+						final int suc_indice = (int)((suc_Infos.size()-1) * rand); //take a rnd indice
+						final int montant = (int) ((int) 20 * (1+ 4*(rand) )); //entre 20 et 100
+						
+						System.out.println("ScheduleTf sending to suc_id="+suc_indice+" montant="+montant );
+						SendTransfert(suc_Infos.get(suc_indice),montant);
+					}
+					else {
+						System.out.println("No succursale available for TF");
 					}
 				} catch (InterruptedException e) {
 					//e.printStackTrace();

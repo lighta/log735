@@ -181,19 +181,19 @@ public class Tunnel extends Observable implements Observer{
 	}
 	
 	public void sendBUGACK(boolean res) {
-		sendCommande(new Commande(CommandeType.BUGACK,""+res));
+		sendCommande(new Commande(CommandeType.BUGACK,""+(res?"Success":"Fail")));
 	}
 	
 	public void sendTFACK(int id, boolean res) {
-		sendCommande(new Commande(CommandeType.TFACK,id+":"+res));
+		sendCommande(new Commande(CommandeType.TFACK,id+":"+(res?"Success":"Fail")));
 	}
 	
 	public void sendTFDONE(int id, boolean res) {
-		sendCommande(new Commande(CommandeType.TFDONE,id+":"+res));
+		sendCommande(new Commande(CommandeType.TFDONE,id+":"+(res?"Success":"Fail")));
 	}
 	
 	public void sendSETMACK(boolean res) {
-		sendCommande(new Commande(CommandeType.SETMACK,""+res));
+		sendCommande(new Commande(CommandeType.SETMACK,""+(res?"Success":"Fail")));
 	}
 	
 	public void askList() {
