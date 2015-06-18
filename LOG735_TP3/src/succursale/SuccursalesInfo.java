@@ -17,6 +17,10 @@ public class SuccursalesInfo extends ConnexionInfo {
 	public void setMontant(int montant) {
 		this.montant = montant;
 	}
+	
+	public void addMontant(int montant) {
+		this.montant += montant;
+	}
 
 	
 	public int getId() {

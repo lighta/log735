@@ -12,6 +12,8 @@ import connexion.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
+import succursale.Transfert;
+import succursale.Transfert.transfert_state;
 
 public class Tunnel extends Observable implements Observer{
 	
@@ -36,8 +38,7 @@ public class Tunnel extends Observable implements Observer{
 		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
 		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
 		
-		askID(s1.getMontant()); //demande notre ID
-		askList(); //puis la liste
+		askRegister( s1.getMontant() ); //demande notre ID
 	}
 
 	
@@ -162,12 +163,48 @@ public class Tunnel extends Observable implements Observer{
 		super.finalize();
 	}
 
-	public void askList() {
-		sendCommande(new Commande(CommandeType.LIST,""));
+	public void sendMsg(String msg) {
+		sendCommande(new Commande(CommandeType.MESS,msg));
 	}
 	
-	private void askID(int montant) {
-		sendCommande(new Commande(CommandeType.ID, "" + montant ));
+	public void sendList(String list) {
+		sendCommande(new Commande(CommandeType.LIST,list));
+	}
+	
+	public void sendNList(String list) {
+		sendCommande(new Commande(CommandeType.NLIST,list));
+	}
+	
+	public void sendCONACK(int id) {
+		sendCommande(new Commande(CommandeType.CONACK,""+id));
+	}
+	
+	public void sendBUGACK(boolean res) {
+		sendCommande(new Commande(CommandeType.BUGACK,""+res));
+	}
+	
+	public void sendTFACK(int id, boolean res) {
+		sendCommande(new Commande(CommandeType.TFACK,id+":"+res));
+	}
+	
+	public void sendTFDONE(int id, boolean res) {
+		sendCommande(new Commande(CommandeType.TFDONE,id+":"+res));
+	}
+	
+	public void sendSETMACK(boolean res) {
+		sendCommande(new Commande(CommandeType.SETMACK,res));
+	}
+	
+	public void askList() {
+		sendCommande(new Commande(CommandeType.GETLIST,""));
+	}
+	
+	public void askTransfert(int id, int montant, transfert_state ack) {
+		sendCommande(new Commande(CommandeType.TFSUC, "" + id+":"+montant+":"+ack ));
+	}
+	
+	private void askRegister(int montant) {
+		sendCommande(new Commande(CommandeType.REG, "" + montant ));
 	}
 	
 	private void askTunnel(SuccursalesInfo s1) {
@@ -256,8 +293,6 @@ public class Tunnel extends Observable implements Observer{
 		
 		
 	}
-
-	
 
 	
 }

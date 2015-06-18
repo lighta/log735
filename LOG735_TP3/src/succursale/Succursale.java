@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import succursale.Transfert.transfert_state;
 import connexion.ConnexionInfo;
 import connexion.Tunnel;
 
@@ -116,12 +117,18 @@ public class Succursale extends Thread implements ISuccursale {
 			//e.printStackTrace();
 			return false;
 		}
-		return running;	
+		return true;	
 	}
 	
 	public boolean connectTo(SuccursalesInfo info){
+		if(connections.get(info.getId()) != null)
+			return false; //already connected
 		if(info.getId() == this.infos.getId()) //on refuse la connection a nous meme !
 			return false;
+		if( serverSocket.getLocalPort() == info.getPort() 
+				&& serverSocket.getInetAddress().getHostName().equalsIgnoreCase(info.getHostname()) )
+			return false; //ourself again
+		
 		try {
 			Tunnel tun = new Tunnel(this.infos,info);
 			
@@ -137,9 +144,9 @@ public class Succursale extends Thread implements ISuccursale {
 		return true;
 	}
 	
-	public boolean connectToAll(){
+	public boolean connectToOthers(){
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
-			SuccursalesInfo info = suc.getValue();
+			SuccursalesInfo info = suc.getValue();		
 			if(info.getId() != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
 				if(connectTo(info)==false){
 					System.err.println("Connection fail for suc:"+info);
@@ -148,6 +155,29 @@ public class Succursale extends Thread implements ISuccursale {
 			}
 		}
 		return true;
+	}
+	
+	
+	public String FormatSuccursalesList(String separator){
+		StringBuilder sb_ = new StringBuilder();
+		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
+			SuccursalesInfo info = suc.getValue();		
+			sb_.append(info.getId()+":"+info.getHostname()+":"+info.getPort()+separator);
+		}
+		return sb_.toString();
+	}
+	
+	public void RegisterSuccursalesList(final String list){
+		final String[] sucs = list.split("|");
+		for (String sucstring : sucs) {
+			final String[] part = sucstring.split(":");
+			final int id = Integer.parseInt(part[0]);
+			final String host = part[1];
+			final int port = Integer.parseInt(part[2]);
+			SuccursalesInfo suc = new SuccursalesInfo(host, port, -1);
+			suc.setId(id);
+			suc_Infos.put(id, suc);
+		}
 	}
 	
 	public void setId(int id){
@@ -237,39 +267,131 @@ public class Succursale extends Thread implements ISuccursale {
 					String rec;
 					while ((rec = in.readLine()) != null){
 						System.out.println("rec="+rec);
-						String part[] = rec.split("#");
+						final String part[] = rec.split("#");
 						
-						if(part.length < 2){
+						if(part.length < 1){
 							System.out.println("Malformed packet received");
 							continue;
 						}
 						final String cmd = part[0];
 						
 						switch(cmd){
+							case "HELLO":{ //received a create connexion request
+								// save tunnel
+								Tunnel tun = new Tunnel("CONSOLE",clientSocket);
+								connections.put(-2, tun);
+								tun.sendMsg("Welcome !");
+								break;
+							}
 							case "CON":{ //received a create connexion request
-								String host = part[1];
+								final String host = part[1];
 								int port = Integer.parseInt(part[2]);
 								ConnexionInfo banqueCon = new ConnexionInfo(host, port);
-								connectToBanque(banqueCon);
+								boolean res = connectToBanque(banqueCon);
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									tun.sendCONACK(infos.getId());
+								}
 								break;
 							}
 							case "TUN":{ //received a tunnel connexion request
-								int id = Integer.parseInt(part[1]);
+								final int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
-								Tunnel tun = new Tunnel(clientSocket);
+								Tunnel tun = new Tunnel("SUC"+id,clientSocket);
 								connections.put(id, tun);
 								break;
 							}
-							case "ID":{ //received a tunnel connexion request
-								//received an ID assignation
+							case "ID":{ //received an ID assignation
 								int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
 								setId(id);
+								Tunnel tun = connections.get(-1); //recupere le tunnel de la banque
+								tun.askList(); //demande de la list
 								break;
 							}
-							case "TFSUC":
-							case "SETM":
-							case "BUG":
+							case "ADDLIST":{ //received a list from bank
+								final int id = Integer.parseInt(part[1]);
+								final String host = part[2];
+								final int port = Integer.parseInt(part[3]);
+								SuccursalesInfo suc = new SuccursalesInfo(host, port, -1); //remove montant from succursale info
+								suc_Infos.put(id, suc);
+								connectToOthers(); //check si deja connecter
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									String list = FormatSuccursalesList("\n");
+									tun.sendNList(list);
+								}
+								break;
+							}
+							case "LIST":{ //received a list from bank
+								RegisterSuccursalesList(part[1]); //enregistrement des autres succursale dans notre list
+								connectToOthers(); //check si deja connecter
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									String list = FormatSuccursalesList("\n");
+									tun.sendList(list);
+								}
+								break;
+							}
+							case "TFCON":{
+								final int id = Integer.parseInt(part[1]);
+								final int montant = Integer.parseInt(part[2]);
+								Tunnel tun = connections.get(id);
+								SuccursalesInfo dest_suc = suc_Infos.get(id);
+								boolean res = false;
+								
+								if(infos.getMontant() > montant){
+									Transfert tf = new Transfert(infos, dest_suc, montant); //todo later
+									infos.addMontant(-montant);
+									tun.askTransfert(infos.getId(),montant,Transfert.transfert_state.INIT);
+									transferts.add(tf);
+									res = true;
+								}
+								
+								Tunnel con = connections.get(-2); //recupere la console
+								if(con != null){
+									con.sendTFACK(id, res);
+								}
+								break;
+							}
+							case "TFSUC":{
+								final int id = Integer.parseInt(part[1]);
+								final int montant = Integer.parseInt(part[2]);
+								final String state = part[3];
+								if( state.compareTo(transfert_state.ACK.toString()) == 0){
+									SuccursalesInfo dest_suc = suc_Infos.get(id);
+									final Transfert tf = new Transfert(infos, dest_suc, montant);
+									transferts.remove(tf);  //retrait du transfert de notre liste
+									Tunnel con = connections.get(-2); //recupere la console
+									if(con != null){
+										con.sendTFDONE(id, true);
+									}
+								}
+								else {
+									Tunnel tun = connections.get(id);
+									infos.addMontant(montant);
+									tun.askTransfert(infos.getId(),montant,Transfert.transfert_state.ACK);
+								}
+								break;
+							}
+							case "SETM":{
+								int montant = Integer.parseInt(part[1]);
+								if(montant < 1){
+									System.out.println("Invalide montant="+montant+ " must be strict positive");
+									break;
+								}
+								infos.setMontant(montant);
+								Tunnel con = connections.get(-2); //recupere la console
+								if(con != null){
+									con.sendSETMACK(true);
+								}
+								break;
+							}
+							case "MESS":{
+								System.out.println("Received mess="+part[1]);
+								break;
+							}	
+							case "BUG": //TODO
 							default:{
 								System.out.println("Unsupported cmd received cmd="+cmd+ "rec="+rec);
 							}		
