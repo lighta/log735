@@ -47,11 +47,11 @@ public class Commande {
 		 */
 		TFSUC,
 		/**
-		 * suc->con, notification que le transfert est authorisé (commencé)
+		 * suc->con, notification que le transfert est authorisï¿½ (commencï¿½)
 		 */
 		TFACK,
 		/**
-		 * suc->con, notification que le transfert est effectué
+		 * suc->con, notification que le transfert est effectuï¿½
 		 */
 		TFDONE,
 		/**
@@ -105,10 +105,23 @@ public class Commande {
 		/**
 		 * 	con->suc authentificate console for succursale
 		 */
-		HELLO
-		
-		
-		
+		HELLO,
+		/**
+		 * 	con->suc|bnk get the list recorded on that node
+		 */
+		SHOWLIST,
+		/**
+		 * 	con->suc|bnk get the state of the node
+		 */
+		SHOWSTATE,
+		/**
+		 * 	suc->bnk recupere le montant total de la banque
+		 */
+		GETTOTAL,
+		/**
+		 * 	bnk->suc transmet le montant total
+		 */
+		TOTAL
 	}
 	
 	private CommandeType type;

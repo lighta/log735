@@ -115,7 +115,10 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 			break;
 		case GETLIST:
 			c = new Commande(CommandeType.LIST, ""	+ GetSuccursalesInfo());
-			break;		
+			break;
+		case GETTOTAL:
+			c = new Commande(CommandeType.TOTAL, ""	+ this.getTotalAmount());
+			break;
 		default:
 			System.out.println("Unrecognized Command !!!!!!!!!");
 		}

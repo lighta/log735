@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Random;
 
 import succursale.Transfert.transfert_state;
 import connexion.ConnexionInfo;
@@ -32,6 +33,7 @@ public class Succursale extends Thread implements ISuccursale {
 	private HashMap<Integer,Transfert> transferts;
 	
 	private SuccursalesInfo infos;
+	private int bank_total;
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
 		if (serverSocket==null || montant < 0) {
@@ -87,7 +89,7 @@ public class Succursale extends Thread implements ISuccursale {
 	}
 	
 	public boolean AuthorizeTransfert(Transfert tf){
-		if(tf.s1.equals(tf.s2)) //same node
+		if(tf.s1.getId() == tf.s2.getId()) //same node
 			return false;
 		//check in list
 		if(!(suc_Infos.containsValue(tf.s1) || suc_Infos.containsValue(tf.s2)))
@@ -430,9 +432,19 @@ public class Succursale extends Thread implements ISuccursale {
 							case "!MESS":{
 								System.out.println("Received mess="+part[1]);
 								break;
-							}	
-							case "!STATE":{
-								System.out.println("Suc_Info={"+infos+"}");
+							}
+							case "!TOTAL":{
+								bank_total = Integer.parseInt(part[1]);
+								final String bnk_total = "bank_total="+bank_total+"\n";
+								System.out.print(bnk_total);
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									tun.sendMsg(bnk_total.toString());
+								}
+								break;
+							}
+							case "!SHOWSTATE":{
+								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
 								Tunnel tun = connections.get(-2); //recupere la console
 								if(tun != null){
 									tun.sendMsg(infos.toString());
@@ -441,7 +453,7 @@ public class Succursale extends Thread implements ISuccursale {
 							}
 							case "!SHOWLIST":{
 								String list = FormatSuccursalesList("\n");
-								System.out.println("List={"+list+"}");
+								System.out.println("List={\n"+list+"}");
 								Tunnel tun = connections.get(-2); //recupere la console
 								if(tun != null){
 									tun.sendList(list);
@@ -479,11 +491,12 @@ public class Succursale extends Thread implements ISuccursale {
 		public void run() {
 			super.run();
 			this.running=true;
+			Random rand = new Random();
 				
 			while(this.running){
-				double rand = Math.random();
 				try {
-					Thread.sleep( (long) (10000*(rand+2)) ); //wait entre 10 et 30s
+					final int wait = rand.nextInt((30-10)*1000)+10000;
+					Thread.sleep( wait ); //wait entre 10 et 30s
 					getSystemStatus();
 				} catch (InterruptedException e) {
 					//e.printStackTrace();
@@ -509,18 +522,24 @@ public class Succursale extends Thread implements ISuccursale {
 		public void run() {
 			super.run();
 			this.running=true;
-					
+			Random rand = new Random();
+			
 			while(this.running){
-				final double rand = Math.random();	
-				final long wait = (long) (5000*(rand+1)); //wait entre 5 et 10s
+					
+				final long wait = rand.nextInt((10-5)*1000)+5000; //wait entre 5 et 10s
+				SuccursalesInfo suc = null;
+				int suc_indice=-1;
+				final int ssize = suc_Infos.size();
 				
-				System.out.println("ScheduleTf waiting for wait="+wait);
+				System.out.println("ScheduleTf waiting for wait="+wait+"ms");
 				try {
 					Thread.sleep( wait ); 
-					final int suc_indice = (int) (suc_Infos.size() * rand); //take a rnd indice
-					SuccursalesInfo suc = suc_Infos.get(suc_indice);
-					if(suc != null && suc.equals(infos) == false ){ //we need some othersuccursale for this 
-						final int montant = (int) ((int) 20 * (1+ 4*(rand) )); //entre 20 et 100
+					if(ssize > 1) {
+						while(suc == null || suc.getId() == infos.getId()) { //redo
+							suc_indice= rand.nextInt( ssize-1 )+1;
+							suc = suc_Infos.get(suc_indice);  //we need some othersuccursale for this 
+						}
+						final int montant = rand.nextInt(100-20)+20; //entre 20 et 100
 						System.out.println("ScheduleTf sending to suc_id="+suc_indice+" montant="+montant );
 						SendTransfert(suc_Infos.get(suc_indice),montant);
 					}
@@ -528,6 +547,7 @@ public class Succursale extends Thread implements ISuccursale {
 						System.out.println("No succursale available for TF");
 					}
 				} catch (InterruptedException e) {
+					System.err.println("Interrupted ScheduleTf sleep timer");
 					//e.printStackTrace();
 				}
 			}
