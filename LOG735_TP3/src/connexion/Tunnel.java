@@ -200,8 +200,8 @@ public class Tunnel extends Observable implements Observer{
 		sendCommande(new Commande(CommandeType.GETLIST,""));
 	}
 	
-	public void askTransfert(int id, int montant, transfert_state ack) {
-		sendCommande(new Commande(CommandeType.TFSUC, "" + id+":"+montant+":"+ack ));
+	public void askTransfert(int id, int montant, transfert_state ack, int transfert_id) {
+		sendCommande(new Commande(CommandeType.TFSUC, "" + id+":"+montant+":"+ack+":"+transfert_id ));
 	}
 	
 	private void askRegister(int montant) {
