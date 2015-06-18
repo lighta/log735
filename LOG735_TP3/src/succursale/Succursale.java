@@ -168,12 +168,21 @@ public class Succursale extends Thread implements ISuccursale {
 	}
 	
 	public void RegisterSuccursalesList(final String list){
-		final String[] sucs = list.split("|");
+		//System.out.println("Entering RegisterSuccursalesList list="+list);
+		final String[] sucs = list.split("$");
 		for (String sucstring : sucs) {
+			if(sucstring == null || sucstring.isEmpty())
+				break;
+			sucstring = sucstring.substring(0, sucstring.length()-1); //remove last
+			//System.out.println("sucstring="+sucstring);
 			final String[] part = sucstring.split(":");
+			//System.out.println("size sucs="+sucs.length+" size sucstring="+part.length);
+			
 			final int id = Integer.parseInt(part[0]);
 			final String host = part[1];
 			final int port = Integer.parseInt(part[2]);
+			
+			
 			SuccursalesInfo suc = new SuccursalesInfo(host, port, -1);
 			suc.setId(id);
 			suc_Infos.put(id, suc);
