@@ -8,6 +8,10 @@ import java.net.ServerSocket;
 import java.net.UnknownHostException;
 
 public class SuccursaleServer {
+	public static final String DEF_HOST = "0.0.0.0"; 
+	public static final int DEF_PORT = 9200;
+	public static final int DEF_MONTANT = 1000; //useless
+	
 	private ServerSocket serverSocket;
 	private Succursale sucursale;
 	
@@ -53,7 +57,16 @@ public class SuccursaleServer {
 		}
 	}
 	
-	public static void main(String[] args) throws IOException {				
-		SuccursaleServer suc_srv = new SuccursaleServer("0.0.0.0", 9200, 1000);	
+	public static void main(String[] args) throws IOException {
+		String host = DEF_HOST;
+		int port = DEF_PORT;
+		int montant = DEF_MONTANT;
+		
+		if(args.length > 2){ // host port montant
+			host = args[0];
+			port = Integer.parseInt(args[1]);
+			montant = Integer.parseInt(args[2]);
+		}			
+		SuccursaleServer suc_srv = new SuccursaleServer(host, port, montant);	
 	}
 }

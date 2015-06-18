@@ -31,7 +31,7 @@ public class Commande {
 		 */
 		STATE,
 		/**
-		 * bnk->suc, envoi la list des succursales
+		 * suc|bnk->suc, envoi la list des succursales
 		 */
 		LIST,	
 		/**
@@ -87,21 +87,24 @@ public class Commande {
 		 */
 		CRCON,
 		/**
-		 * suc->con, envoie la liste des succursale a la console
+		 * suc|bnk->con, envoie la liste des succursale a la console
 		 */
 		NLIST,
 		/**
-		 * Request Succ list
+		 * suc->bnk, Request Succ list
 		 */
 		GETLIST,
 		/**
-		 * notify new succ registered
+		 * bnk->suc, notify new succ registered
 		 */
 		ADDLIST,
 		/**
 		 * 	bnk->con send amountofnewsucc:totalamount
 		 */
 		HAM,
+		/**
+		 * 	con->suc authentificate console for succursale
+		 */
 		HELLO
 		
 		

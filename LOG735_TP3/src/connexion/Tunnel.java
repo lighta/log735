@@ -36,8 +36,8 @@ public class Tunnel extends Observable implements Observer{
 		out = new BufferedOutputStream(socket.getOutputStream());
 		in = new BufferedInputStream(socket.getInputStream());
 		
-		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
-		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
+		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostAddress(), socket.getPort());
+		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
 		
 		askRegister( s1.getMontant() ); //demande notre ID
 	}
@@ -51,8 +51,8 @@ public class Tunnel extends Observable implements Observer{
 		out = new BufferedOutputStream(socket.getOutputStream());
 		in = new BufferedInputStream(socket.getInputStream());
 		
-		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
-		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
+		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostAddress(), socket.getPort());
+		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
 		
 		
 		askTunnel(s1);
@@ -71,8 +71,8 @@ public class Tunnel extends Observable implements Observer{
 		out = new BufferedOutputStream(socket.getOutputStream());
 		log.message("Try to retrieve socket inputStream");
 		in = socket.getInputStream();
-		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostName(), socket.getPort());
-		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostName(), socket.getLocalPort());
+		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostAddress(), socket.getPort());
+		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
 		wMessService = new WaitMessageService(this, in);
 		wMessService.addObserver(this);
 		try {

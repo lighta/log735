@@ -3,6 +3,7 @@ package succursale;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.math.RoundingMode;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -86,6 +87,8 @@ public class Succursale extends Thread implements ISuccursale {
 	}
 	
 	public boolean AuthorizeTransfert(Transfert tf){
+		if(tf.s1.equals(tf.s2)) //same node
+			return false;
 		//check in list
 		if(!(suc_Infos.containsValue(tf.s1) || suc_Infos.containsValue(tf.s2)))
 			return false;
@@ -429,9 +432,22 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}	
 							case "!STATE":{
-								System.out.println("Suc_Info="+infos);
+								System.out.println("Suc_Info={"+infos+"}");
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									tun.sendMsg(infos.toString());
+								}
 								break;
-							}	
+							}
+							case "!SHOWLIST":{
+								String list = FormatSuccursalesList("\n");
+								System.out.println("List={"+list+"}");
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									tun.sendList(list);
+								}
+								break;
+							}
 							case "!BUG": //TODO
 							default:{
 								System.out.println("Unsupported cmd received cmd="+cmd+ "rec="+rec);
@@ -501,10 +517,10 @@ public class Succursale extends Thread implements ISuccursale {
 				System.out.println("ScheduleTf waiting for wait="+wait);
 				try {
 					Thread.sleep( wait ); 
-					if(suc_Infos.size()>1){ //we need some othersuccursale for this 
-						final int suc_indice = (int)((suc_Infos.size()-1) * rand); //take a rnd indice
+					final int suc_indice = (int) (suc_Infos.size() * rand); //take a rnd indice
+					SuccursalesInfo suc = suc_Infos.get(suc_indice);
+					if(suc != null && suc.equals(infos) == false ){ //we need some othersuccursale for this 
 						final int montant = (int) ((int) 20 * (1+ 4*(rand) )); //entre 20 et 100
-						
 						System.out.println("ScheduleTf sending to suc_id="+suc_indice+" montant="+montant );
 						SendTransfert(suc_Infos.get(suc_indice),montant);
 					}

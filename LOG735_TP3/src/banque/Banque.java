@@ -101,7 +101,6 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 			System.out.println("" + comm.getMessageContent());
 			break;
 		case REG:
-
 			SuccursalesInfo succ_info = new SuccursalesInfo(tun.getcInfoDist().getHostname(), 9200, Integer.parseInt(comm.getMessageContent()));
 			int succ_id = GenerateSuccursalId(succ_info);
 			succ_info.setId(succ_id);
