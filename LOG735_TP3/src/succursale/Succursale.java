@@ -133,14 +133,14 @@ public class Succursale extends Thread implements ISuccursale {
 		return true;	
 	}
 	
-	public boolean connectTo(SuccursalesInfo info){
+	public int connectTo(SuccursalesInfo info){
 		if(connections.get(info.getId()) != null)
-			return false; //already connected
+			return -1; //already connected
 		if(info.getId() == this.infos.getId()) //on refuse la connection a nous meme !
-			return false;
+			return -2;
 		if( serverSocket.getLocalPort() == info.getPort() 
 				&& serverSocket.getInetAddress().getHostName().equalsIgnoreCase(info.getHostname()) )
-			return false; //ourself again
+			return -2; //ourself again
 		
 		try {
 			System.out.println("Trying to connect to "+info);
@@ -153,18 +153,21 @@ public class Succursale extends Thread implements ISuccursale {
 			connections.put(info.getId(), tun);
 		} catch (IOException e) {
 			//e.printStackTrace();
-			return false;
+			return -3;
 		}
-		return true;
+		return 0;
 	}
 	
 	public boolean connectToOthers(){
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
 			SuccursalesInfo info = suc.getValue();		
 			if(info.getId() != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
-				if(connectTo(info)==false){
-					System.err.println("Connection fail for suc:"+info);
-					//return false;
+				final int res = connectTo(info);
+				switch(res){
+					case 0: break; //sucess
+					case -1: System.err.println("Already connected to :"+info+" skipping..."); break;
+					case -2: System.err.println("Can't connect to self skipping..."); break;
+					case -3: System.err.println("Fail to connect to :"+info); break;
 				}
 			}
 		}
