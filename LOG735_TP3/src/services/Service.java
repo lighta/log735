@@ -6,6 +6,12 @@ import java.util.Observable;
 
 import logs.Logger;
 
+/**
+ * like deamon 
+ * you can start and stop it
+ * @author MisterTim
+ *
+ */
 public abstract class Service extends Observable {
 
 	private static final Logger log = Logger.createLog(Service.class);
@@ -19,6 +25,11 @@ public abstract class Service extends Observable {
 		}
 	}
 	
+	/**
+	 * Start a service
+	 * @param s
+	 * @throws AlreadyStartException
+	 */
 	public static void startService(Service s) throws AlreadyStartException{
 		
 		log.message("Try to start service ( " + s.serviceName + " )");	
@@ -37,12 +48,20 @@ public abstract class Service extends Observable {
 		
 	}
 
+	/**
+	 * stop a service
+	 * @param s
+	 */
 	public static void stopService(Service s){
 		log.message("Stopping service ( " + s.serviceName + " )");
 		s.setCurrentState(ServiceState.ENDING);
 	}
 	
-	
+	/**
+	 * Available type for a service
+	 * @author MisterTim
+	 *
+	 */
 	public enum ServiceState {
 		STARTING,
 		STARTED,
