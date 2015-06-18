@@ -35,9 +35,9 @@ public class SuccursalesInfo extends ConnexionInfo {
 	@Override
 	public String toString() {
 		return  
-				"Id : "+Id+
-				"Host : "+hostname+
-				"Port : "+port+
-				"Montant : "+montant;	
+				"Id : "+Id+"\n"+
+				"Host : "+hostname+"\n"+
+				"Port : "+port+"\n"+
+				"Montant : "+montant+"\n";	
 	}
 }

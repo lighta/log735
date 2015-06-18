@@ -340,6 +340,7 @@ public class Succursale extends Thread implements ISuccursale {
 								final String host = msgpart[1];
 								final int port = Integer.parseInt(msgpart[2]);
 								SuccursalesInfo suc = new SuccursalesInfo(host, port, -1); //remove montant from succursale info
+								suc.setId(id);
 								suc_Infos.put(id, suc);
 								connectToOthers(); //check si deja connecter
 								Tunnel tun = connections.get(-2); //recupere la console
@@ -370,7 +371,7 @@ public class Succursale extends Thread implements ISuccursale {
 								boolean res = false;
 								
 								if(infos.getMontant() > montant){
-									Transfert tf = new Transfert(infos, dest_suc, montant); //todo later
+									Transfert tf = new Transfert(infos, dest_suc, montant); //TODO later
 									infos.addMontant(-montant);
 									tun.askTransfert(infos.getId(),montant,Transfert.transfert_state.INIT);
 									transferts.add(tf);
@@ -389,7 +390,7 @@ public class Succursale extends Thread implements ISuccursale {
 								
 								final int id = Integer.parseInt(msgpart[0]);
 								final int montant = Integer.parseInt(msgpart[1]);	
-								final String state = part[2];
+								final String state = msgpart[2];
 								
 								if( state.compareTo(transfert_state.ACK.toString()) == 0){
 									SuccursalesInfo dest_suc = suc_Infos.get(id);
@@ -399,6 +400,7 @@ public class Succursale extends Thread implements ISuccursale {
 									if(con != null){
 										con.sendTFDONE(id, true);
 									}
+									System.out.println("TF DONE Suc_Info="+infos);
 								}
 								else {
 									Tunnel tun = connections.get(id);
@@ -422,6 +424,10 @@ public class Succursale extends Thread implements ISuccursale {
 							}
 							case "!MESS":{
 								System.out.println("Received mess="+part[1]);
+								break;
+							}	
+							case "!STATE":{
+								System.out.println("Suc_Info="+infos);
 								break;
 							}	
 							case "!BUG": //TODO
