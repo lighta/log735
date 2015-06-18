@@ -284,8 +284,11 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "CON":{ //received a create connexion request
-								final String host = part[1];
-								int port = Integer.parseInt(part[2]);
+								final String msg = part[1];
+								final String msgpart[] = msg.split(":");
+								final String host = msgpart[0];
+								int port = Integer.parseInt(msgpart[1]);
+								
 								ConnexionInfo banqueCon = new ConnexionInfo(host, port);
 								boolean res = connectToBanque(banqueCon);
 								Tunnel tun = connections.get(-2); //recupere la console
@@ -310,9 +313,12 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "ADDLIST":{ //received a list from bank
-								final int id = Integer.parseInt(part[1]);
-								final String host = part[2];
-								final int port = Integer.parseInt(part[3]);
+								final String msg = part[1];
+								final String msgpart[] = msg.split(":");
+								
+								final int id = Integer.parseInt(msgpart[0]);
+								final String host = msgpart[1];
+								final int port = Integer.parseInt(msgpart[2]);
 								SuccursalesInfo suc = new SuccursalesInfo(host, port, -1); //remove montant from succursale info
 								suc_Infos.put(id, suc);
 								connectToOthers(); //check si deja connecter
@@ -334,8 +340,11 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "TFCON":{
-								final int id = Integer.parseInt(part[1]);
-								final int montant = Integer.parseInt(part[2]);
+								final String msg = part[1];
+								final String msgpart[] = msg.split(":");
+								
+								final int id = Integer.parseInt(msgpart[0]);
+								final int montant = Integer.parseInt(msgpart[1]);
 								Tunnel tun = connections.get(id);
 								SuccursalesInfo dest_suc = suc_Infos.get(id);
 								boolean res = false;
@@ -355,9 +364,13 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "TFSUC":{
-								final int id = Integer.parseInt(part[1]);
-								final int montant = Integer.parseInt(part[2]);
-								final String state = part[3];
+								final String msg = part[1];
+								final String msgpart[] = msg.split(":");
+								
+								final int id = Integer.parseInt(msgpart[0]);
+								final int montant = Integer.parseInt(msgpart[1]);	
+								final String state = part[2];
+								
 								if( state.compareTo(transfert_state.ACK.toString()) == 0){
 									SuccursalesInfo dest_suc = suc_Infos.get(id);
 									final Transfert tf = new Transfert(infos, dest_suc, montant);
