@@ -1,6 +1,5 @@
 package succursale;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,16 +21,16 @@ public class Succursale extends Thread implements ISuccursale {
 	private ScheduleTf sched_transfert;
 	private ScheduleState sched_state;
 	
+	private int transfert_id=1;
+	
 	//virez sucinfo?
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
 	
 	private List<SucHandler> clientjobs;
 	private HashMap<Integer,Tunnel> connections;
-	private List<Transfert> transferts;
+	private HashMap<Integer,Transfert> transferts;
 	
 	private SuccursalesInfo infos;
-	
-
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
 		if (serverSocket==null || montant < 0) {
@@ -46,7 +45,7 @@ public class Succursale extends Thread implements ISuccursale {
 		
 		suc_Infos = new HashMap<Integer,SuccursalesInfo>();
 		connections = new HashMap<Integer,Tunnel>();
-		transferts = new ArrayList<>();
+		transferts = new HashMap<Integer,Transfert>();
 		clientjobs = new ArrayList<>();
 	}
 	
@@ -90,17 +89,27 @@ public class Succursale extends Thread implements ISuccursale {
 		//check in list
 		if(!(suc_Infos.containsValue(tf.s1) || suc_Infos.containsValue(tf.s2)))
 			return false;
+		if(tf.montant < 0) //verifie montant positif
+			return false;
 		//check si on a le montant
 		return tf.montant < this.infos.montant;
 	}
 	
 	public boolean SendTransfert(SuccursalesInfo s2, int montant){
-		Transfert tf = new Transfert(this.infos,s2,montant);
-		if(AuthorizeTransfert(tf)){
-			transferts.add(tf);
-			tf.send();
+		Tunnel tun = connections.get(s2.getId());
+		transfert_id++;
+		transfert_id%=1000;
+		transfert_id+=infos.getId()*1000; // range of if per suc
+		
+		Transfert tf = new Transfert(this.infos,s2,montant,tun,transfert_id);
+		if(!AuthorizeTransfert(tf)){ //transfert non authorise
+			//tf.destroy();
 			return false;
-		}
+		}	
+		infos.addMontant(-montant);
+		transferts.put(transfert_id, tf);
+		tf.send();
+		tf.start();
 		return true;
 	}
 	
@@ -366,17 +375,9 @@ public class Succursale extends Thread implements ISuccursale {
 								
 								final int id = Integer.parseInt(msgpart[0]);
 								final int montant = Integer.parseInt(msgpart[1]);
-								Tunnel tun = connections.get(id);
-								SuccursalesInfo dest_suc = suc_Infos.get(id);
-								boolean res = false;
 								
-								if(infos.getMontant() > montant){
-									Transfert tf = new Transfert(infos, dest_suc, montant); //TODO later
-									infos.addMontant(-montant);
-									tun.askTransfert(infos.getId(),montant,Transfert.transfert_state.INIT);
-									transferts.add(tf);
-									res = true;
-								}
+								SuccursalesInfo dest_suc = suc_Infos.get(id);
+								boolean res = SendTransfert(dest_suc,montant);
 								
 								Tunnel con = connections.get(-2); //recupere la console
 								if(con != null){
@@ -391,11 +392,10 @@ public class Succursale extends Thread implements ISuccursale {
 								final int id = Integer.parseInt(msgpart[0]);
 								final int montant = Integer.parseInt(msgpart[1]);	
 								final String state = msgpart[2];
+								final int transfert_id = Integer.parseInt(msgpart[3]);
 								
 								if( state.compareTo(transfert_state.ACK.toString()) == 0){
-									SuccursalesInfo dest_suc = suc_Infos.get(id);
-									final Transfert tf = new Transfert(infos, dest_suc, montant);
-									transferts.remove(tf);  //retrait du transfert de notre liste
+									transferts.remove(transfert_id);  //retrait du transfert de notre liste
 									Tunnel con = connections.get(-2); //recupere la console
 									if(con != null){
 										con.sendTFDONE(id, true);
@@ -405,7 +405,9 @@ public class Succursale extends Thread implements ISuccursale {
 								else {
 									Tunnel tun = connections.get(id);
 									infos.addMontant(montant);
-									tun.askTransfert(infos.getId(),montant,Transfert.transfert_state.ACK);
+									Transfert tf = new Transfert(infos, suc_Infos.get(id), montant, tun, transfert_id);
+									tf.ack();
+									tf.start();
 								}
 								break;
 							}

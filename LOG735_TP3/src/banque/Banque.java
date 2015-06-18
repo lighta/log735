@@ -60,7 +60,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	public String GetSuccursalesInfo() {
 
 		if (suc_Infos != null)
-			return FormatSuccursalesList("-");
+			return FormatSuccursalesList("|");
 		else
 			throw new NullPointerException("null suc_info");
 
@@ -101,14 +101,13 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 			System.out.println("" + comm.getMessageContent());
 			break;
 		case REG:
-			int succ_id = GenerateSuccursalId();
-			SuccursalesInfo succ_info = new SuccursalesInfo(tun.getcInfoDist().getHostname(), tun.getcInfoDist().getPort(), Integer.parseInt(comm.getMessageContent()));
+
+			SuccursalesInfo succ_info = new SuccursalesInfo(tun.getcInfoDist().getHostname(), 9200, Integer.parseInt(comm.getMessageContent()));
+			int succ_id = GenerateSuccursalId(succ_info);
 			succ_info.setId(succ_id);
 			
-			printToConsoles("" + succ_info.getMontant()+":"+ this.getTotalAmount());
-			
 			this.suc_Infos.put(succ_id, succ_info);	//register succ
-			
+			printToConsoles("" + succ_info.getMontant()+":"+ this.getTotalAmount());			
 			c = new Commande(CommandeType.ID, "" + succ_id);	//send id to succ
 			notifyAllSuccOfNewOne(succ_info);
 			break;
@@ -140,7 +139,20 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		return amount;
 	}
 
-	public Integer GenerateSuccursalId() {
+	public Integer GenerateSuccursalId(ConnexionInfo info) {
+		
+		log.message("compare " + info + " to : ");
+		
+		for (Entry<Integer,SuccursalesInfo> sInfo : suc_Infos.entrySet()) {
+			log.message("--> " + info);
+			if(sInfo.getValue().getHostname().equalsIgnoreCase(info.getHostname())
+					&& sInfo.getValue().getPort() == info.getPort()
+					){
+				return sInfo.getKey();
+			}
+				
+		}	
+		
 		return sequenceCurrentValue++;
 	}
 
