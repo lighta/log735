@@ -176,8 +176,8 @@ public class Tunnel extends Observable implements Observer{
 		sendCommande(new Commande(CommandeType.NLIST,list));
 	}
 	
-	public void sendCONACK(int id) {
-		sendCommande(new Commande(CommandeType.CONACK,""+id));
+	public void sendCONACK(int id, boolean res) {
+		sendCommande(new Commande(CommandeType.CONACK,""+id+" "+(res?"Success":"Fail")));
 	}
 	
 	public void sendBUGACK(boolean res) {
@@ -192,8 +192,8 @@ public class Tunnel extends Observable implements Observer{
 		sendCommande(new Commande(CommandeType.TFDONE,id+":"+(res?"Success":"Fail")));
 	}
 	
-	public void sendSETMACK(boolean res) {
-		sendCommande(new Commande(CommandeType.SETMACK,""+(res?"Success":"Fail")));
+	public void sendSETMACK(int montant, boolean res) {
+		sendCommande(new Commande(CommandeType.SETMACK,(res?"Success":"Fail")+"\n New Montant="+montant));
 	}
 	
 	public void askList() {
@@ -210,6 +210,10 @@ public class Tunnel extends Observable implements Observer{
 	
 	private void askTunnel(SuccursalesInfo s1) {
 		sendCommande(new Commande(CommandeType.TUN, "" + s1.getId()));
+	}
+	
+	public void askTotal() {
+		sendCommande(new Commande(CommandeType.GETTOTAL, "" ));
 	}
 	
 	public void askStatus() {

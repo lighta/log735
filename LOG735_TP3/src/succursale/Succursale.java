@@ -18,6 +18,9 @@ import connexion.Tunnel;
 
 
 public class Succursale extends Thread implements ISuccursale {
+	private final static String DEF_BANK_IP = "10.196.113.184";
+	private final static int DEF_BANK_PORT = 9300;
+	
 	private ServerSocket serverSocket;
 	private boolean running;
 	private ScheduleTf sched_transfert;
@@ -320,17 +323,21 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "!CON":{ //received a create connexion request
-								final String msg = part[1];
-								final String msgpart[] = msg.split(":");
-								final String host = msgpart[0];
-								int port = Integer.parseInt(msgpart[1]);
+								String host = DEF_BANK_IP;
+								int port = DEF_BANK_PORT;
+								if(part.length > 1){
+									final String msg = part[1];
+									final String msgpart[] = msg.split(":");
+									host = msgpart[0];
+									port = Integer.parseInt(msgpart[1]);
+								}
 								
 								System.out.println("Creating connection to banque");
 								ConnexionInfo banqueCon = new ConnexionInfo(host, port);
 								boolean res = connectToBanque(banqueCon);
 								Tunnel tun = connections.get(-2); //recupere la console
 								if(tun != null){
-									tun.sendCONACK(infos.getId());
+									tun.sendCONACK(infos.getId(),res);
 								}
 								break;
 							}
@@ -428,7 +435,7 @@ public class Succursale extends Thread implements ISuccursale {
 								infos.setMontant(montant);
 								Tunnel con = connections.get(-2); //recupere la console
 								if(con != null){
-									con.sendSETMACK(true);
+									con.sendSETMACK(infos.getMontant(),true);
 								}
 								break;
 							}
@@ -448,6 +455,8 @@ public class Succursale extends Thread implements ISuccursale {
 							}
 							case "!SHOWSTATE":{
 								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
+								Tunnel tunbank = connections.get(-1); //recupere la console
+								tunbank.askTotal();
 								Tunnel tun = connections.get(-2); //recupere la console
 								if(tun != null){
 									tun.sendMsg(infos.toString());
@@ -463,7 +472,15 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "!BUG": //TODO
+							case "!BUG":{
+								int montant = Integer.parseInt(part[1]);
+								infos.setMontant(montant);
+								Tunnel con = connections.get(-2); //recupere la console
+								if(con != null){
+									con.sendSETMACK(infos.getMontant(),true);
+								}
+								break;
+							}
 							default:{
 								System.out.println("Unsupported cmd received cmd="+cmd+ "rec="+rec);
 							}		
