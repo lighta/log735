@@ -75,13 +75,18 @@ public class Succursale extends Thread implements ISuccursale {
 		return toString();
 	}
 	
-	public String getSystemStatus(){
-		String sysstatus = getStatus();
-		for(Entry<Integer,Tunnel> con : connections.entrySet()){
-			Tunnel tun = con.getValue();
-			tun.askStatus();
-		}
-		return sysstatus;
+	public void getSystemStatus(){
+		GlobalState gState = new GlobalState((++globalStateIdSequence) % 1000,infos.getId());
+		System.out.println("gstate ");
+		gState.getMyState().setMontant(infos.getMontant());
+		globalsStates.put(gState.getIdGlobalState(), gState);
+		broadcastStateStart(gState);
+//		String sysstatus = getStatus();
+//		for(Entry<Integer,Tunnel> con : connections.entrySet()){
+//			Tunnel tun = con.getValue();
+//			tun.askStatus();
+//		}
+//		return sysstatus;
 	}
 	
 	public boolean rmList(int id){
@@ -113,6 +118,8 @@ public class Succursale extends Thread implements ISuccursale {
 	}
 	
 	public boolean SendTransfert(SuccursalesInfo s2, int montant){
+		if(s2 == null) return false;
+		
 		Tunnel tun = connections.get(s2.getId());
 		if(tun == null) return false;
 			
@@ -285,6 +292,18 @@ public class Succursale extends Thread implements ISuccursale {
 	}
 
 	
+	private void broadcastStateStart(GlobalState gState) {
+		Tunnel tun = null;
+		Commande comm = new Commande(CommandeType.STATE_START, "" + gState.getIdGlobalState()+ ":" + gState.getIdInitiator() + ":" + infos.getId());
+		for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
+			if(conn.getKey() >= 0){
+				tun = conn.getValue();
+				tun.sendCommande(comm);
+			}
+		}		
+	}
+
+
 	private class SucHandler extends Thread {
 		//Socket clientSocket;
 		Tunnel tunnel;
@@ -512,11 +531,12 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "!GLOBST":{
-								
-								GlobalState gState = new GlobalState((++globalStateIdSequence) % 1000,infos.getId());
-								gState.getMyState().setMontant(infos.getMontant());
-								globalsStates.put(gState.getIdGlobalState(), gState);
-								broadcastStateStart(gState);
+								getSystemStatus();
+//								GlobalState gState = new GlobalState((++globalStateIdSequence) % 1000,infos.getId());
+//								System.out.println("gstate ");
+//								gState.getMyState().setMontant(infos.getMontant());
+//								globalsStates.put(gState.getIdGlobalState(), gState);
+//								broadcastStateStart(gState);
 
 								break;
 							}
@@ -631,17 +651,6 @@ public class Succursale extends Thread implements ISuccursale {
 			}
 			clientjobs.remove(this); //remove ourself	
 		}
-
-		private void broadcastStateStart(GlobalState gState) {
-			Tunnel tun = null;
-			Commande comm = new Commande(CommandeType.STATE_START, "" + gState.getIdGlobalState()+ ":" + gState.getIdInitiator() + ":" + infos.getId());
-			for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
-				if(conn.getKey() >= 0){
-					tun = conn.getValue();
-					tun.sendCommande(comm);
-				}
-			}		
-		}
 	}
 	
 	private class ScheduleState extends Thread {
@@ -669,6 +678,7 @@ public class Succursale extends Thread implements ISuccursale {
 					Thread.sleep( wait ); //wait entre 10 et 30s
 					getSystemStatus();
 				} catch (InterruptedException e) {
+					System.err.println("ScheduleState timer error");
 					//e.printStackTrace();
 				}
 			}

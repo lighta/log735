@@ -20,6 +20,7 @@ public class Transfert extends Thread {
 		    throw new IllegalArgumentException(
 		      String.format("Parameters can't be null: s1=%s, s1=%s, tun=%s", s1,s2,tun));
 		}
+		this.tun = tun;
 		state = transfert_state.INIT;
 	}
 

@@ -58,9 +58,13 @@ public class GlobalState implements Iterable<State> {
 		return myState;
 	}
 
+	/**
+	 * Les states n'ayant pas encore repondu, tjr dans l'etat rec
+	 * @return
+	 */
 	public int getRemainingState() {
 		for (Entry<Integer, State> states : states.entrySet()) {
-			if(states.getValue().getCurrentState() != global_state.State.states.REC)
+			if(states.getValue().getCurrentState() == global_state.State.states.REC)
 				remainingStates++;
 		}
 		
