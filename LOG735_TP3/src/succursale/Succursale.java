@@ -134,18 +134,7 @@ public class Succursale extends Thread implements ISuccursale {
 			}
 		
 			globalsStates.put(gState.getIdGlobalState(), gState);
-			(new Thread(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						Thread.sleep(5*1000);
-						broadcastStateStart(gState);
-					} catch (InterruptedException e) {
-						System.out.println("getSystemStatus timer fail");
-						//e.printStackTrace();
-					}
-				}
-			})).start();
+			broadcastStateStart(gState);
 		}
 	}
 	
@@ -355,12 +344,22 @@ public class Succursale extends Thread implements ISuccursale {
 
 	
 	private void broadcastStateStart(GlobalState gState) {
-		Tunnel tun = null;
-		Commande comm = new Commande(CommandeType.STATE_START, "" + gState.getIdGlobalState()+ ":" + gState.getIdInitiator() + ":" + infos.getId());
+		final Commande comm = new Commande(CommandeType.STATE_START, "" + gState.getIdGlobalState()+ ":" + gState.getIdInitiator() + ":" + infos.getId());
 		for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
 			if(conn.getKey() >= 0){
-				tun = conn.getValue();
-				tun.sendCommande(comm);
+				final Tunnel tun = conn.getValue();
+				(new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(5*1000);
+							tun.sendCommande(comm);
+						} catch (InterruptedException e) {
+							System.out.println("getSystemStatus timer fail");
+							//e.printStackTrace();
+						}
+					}
+				})).start();
 			}
 		}		
 	}
@@ -607,12 +606,56 @@ public class Succursale extends Thread implements ISuccursale {
 								final int idGlobalState = Integer.parseInt(msgpart[0]);
 								final int idSuccInit = Integer.parseInt(msgpart[1]);
 								final int idSuccSender = Integer.parseInt(msgpart[2]);
-								GlobalST glost_ = new GlobalST(idGlobalState, idSuccInit, idSuccSender);
-								try {
-									Service.startService(glost_);
-								} catch (AlreadyStartException e) {
-									// TODO Auto-generated catch block
-									e.printStackTrace();
+								GlobalState gState;
+								global_state.State succState;
+								
+								if((gState = globalsStates.get(idGlobalState)) != null)
+								{
+									if((succState = gState.getState(idSuccSender)) != null)
+									{
+										succState.setCurrentState(states.WAIT);
+									}
+								}
+								else
+								{
+									//first capture
+									gState = new GlobalState(idGlobalState,idSuccInit);
+									gState.getMyState().setMontant(infos.getMontant());
+									
+									for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
+										int id_con = conn.getKey();
+										if(id_con > 0){ //verif que c,est une suc
+											gState.addState(new global_state.State(gState.getIdGlobalState(), id_con));
+										}
+									}
+									global_state.State st = gState.getState(idSuccSender);
+									st.setCurrentState(states.WAIT);								
+									globalsStates.put(gState.getIdGlobalState(), gState);	
+								}
+								
+								//Envoi d'une reponse FIN ou Other Start
+								if(idSuccInit != infos.Id) {
+									System.out.println("sending ST_FIN  or Start to other");
+									if(gState.getRemainingState() == 0){
+										final Tunnel tun = connections.get(gState.getIdInitiator());
+										final Commande comm = new Commande(CommandeType.STATE_FIN, "" + gState.getIdGlobalState()+ ":" + infos.getId() + ":" + gState.getMyState().getMontant());
+										(new Thread(new Runnable() {
+											@Override
+											public void run() {
+												try {
+													Thread.sleep(5*1000);
+													tun.sendCommande(comm);
+												} catch (InterruptedException e) {
+													System.out.println("getSystemStatus timer fail");
+													//e.printStackTrace();
+												}
+											}
+										})).start();
+										globalsStates.remove(idGlobalState);
+									}
+									else {
+										broadcastStateStart(gState);
+									}
 								}
 								break;
 							}
@@ -696,76 +739,6 @@ public class Succursale extends Thread implements ISuccursale {
 				}
 			}
 			clientjobs.remove(this); //remove ourself	
-		}
-	}
-	
-	private class GlobalST extends Service {
-		final int idGlobalState;
-		final int idSuccInit;
-		final int idSuccSender;
-		
-	
-		public GlobalST(int idglobal, int sucinit, int sender) {
-			super("GlobalST"+idglobal);
-			idGlobalState = idglobal;
-			idSuccInit = sucinit;
-			idSuccSender = sender;
-		}
-		
-		@Override
-		public void loopAction() {
-			try {
-				Thread.sleep(5*1000);
-				GlobalState gState;
-				global_state.State succState;
-				if((gState = globalsStates.get(idGlobalState)) != null)
-				{
-					if((succState = gState.getState(idSuccSender)) != null)
-					{
-						succState.setCurrentState(states.WAIT);
-					}
-				}
-				else
-				{
-					//first capture
-					gState = new GlobalState(idGlobalState,idSuccInit);
-					gState.getMyState().setMontant(infos.getMontant());
-					
-					for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
-						int id_con = conn.getKey();
-						if(id_con > 0){ //verif que c,est une suc
-							gState.addState(new global_state.State(gState.getIdGlobalState(), id_con));
-						}
-					}
-					global_state.State st = gState.getState(idSuccSender);
-					st.setCurrentState(states.WAIT);								
-					globalsStates.put(gState.getIdGlobalState(), gState);	
-				}
-				
-				//check si fin ou other start
-				if(idSuccInit != infos.Id) {
-					System.out.println("sending ST_FIN  or Start to other");
-					if(gState.getRemainingState() == 0){
-						Tunnel tun = connections.get(gState.getIdInitiator());
-						Commande comm = new Commande(CommandeType.STATE_FIN, "" + gState.getIdGlobalState()+ ":" + infos.getId() + ":" + gState.getMyState().getMontant());
-						tun.sendCommande(comm);
-						globalsStates.remove(idGlobalState);
-					}
-					else {
-						broadcastStateStart(gState);
-					}
-				}
-			} catch (InterruptedException e) {
-				System.out.println("GlobalST timer fail");
-				// TODO Auto-generated catch block
-				//e.printStackTrace();
-			}
-		}
-		
-		@Override
-		protected void finalize() throws Throwable {
-			super.finalize();
-			System.out.println("Dealloc GlobalST");
 		}
 	}
 	
