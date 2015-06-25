@@ -611,7 +611,7 @@ public class Succursale extends Thread implements ISuccursale {
 												
 										c += "Somme connue par la Banque : " + bank_total + "$" + "\n\r"
 											+ "Somme detectee par la capture : " + sumSnapshot + "$" + "\n\r"
-											+ (sumSnapshot == bank_total?"ETAT GLOBAL COHERENT":"" + "\n\r");
+											+ "ETAT GLOBAL "+(sumSnapshot == bank_total?"COHERENT":"INCOHERENT" + "\n\r");
 										
 										Commande comm = new Commande(CommandeType.SHOWSTATE,c);
 										Tunnel tun = connections.get(-2); //recupere la console
