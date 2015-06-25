@@ -112,7 +112,7 @@ public class Commande {
 		/**
 		 * 	con->suc|bnk get the state of the node
 		 */
-		SHOW_STATE,
+		SHOWSTATE,
 		/**
 		 * 	suc->bnk recupere le montant total de la banque
 		 */
@@ -120,7 +120,8 @@ public class Commande {
 		/**
 		 * 	bnk->suc transmet le montant total
 		 */
-		TOTAL, STATE_START, STATE_FIN
+		TOTAL, 
+		GLOBST,STATE_START, STATE_FIN
 	}
 	
 	private CommandeType type;

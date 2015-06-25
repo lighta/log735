@@ -58,6 +58,7 @@ public class Succursale extends Thread implements ISuccursale {
 		transferts = new HashMap<Integer,Transfert>();
 		clientjobs = new ArrayList<>();
 		this.globalStateIdSequence = 0;
+		globalsStates = new HashMap<>();
 	}
 	
 	public String toString(){
@@ -473,13 +474,7 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "!SHOW_STATE":{
-								
-								GlobalState gState = new GlobalState((++globalStateIdSequence) % 1000,infos.getId());
-								gState.getMyState().setMontant(infos.getMontant());
-								globalsStates.put(gState.getIdGlobalState(), gState);
-								broadcastStateStart(gState);
-								
+							case "!SHOWSTATE":{
 								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
 								Tunnel tun = connections.get(-2); //recupere la console
 								if(tun != null){
@@ -487,7 +482,16 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "!STATE_ST":{
+							case "!GLOBST":{
+								
+								GlobalState gState = new GlobalState((++globalStateIdSequence) % 1000,infos.getId());
+								gState.getMyState().setMontant(infos.getMontant());
+								globalsStates.put(gState.getIdGlobalState(), gState);
+								broadcastStateStart(gState);
+
+								break;
+							}
+							case "!STATE_START":{
 								final String msg = part[1];
 								final String msgpart[] = msg.split(":");
 								final int idGlobalState = Integer.parseInt(msgpart[0]);
@@ -558,7 +562,7 @@ public class Succursale extends Thread implements ISuccursale {
 										+ "Somme d�tect�e par la capture : " + sumSnapshot + "$"
 										+ (sumSnapshot == bank_total?"�TAT GLOBAL COH�RENT":"");
 									
-									Commande comm = new Commande(CommandeType.SHOW_STATE,c);
+									Commande comm = new Commande(CommandeType.SHOWSTATE,c);
 									Tunnel tun = connections.get(-2); //recupere la console
 									if(tun != null){
 										
