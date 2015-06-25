@@ -23,7 +23,7 @@ import connexion.Tunnel;
 
 
 public class Succursale extends Thread implements ISuccursale {
-	private final static String DEF_BANK_IP = "10.196.113.184";
+	private final static String DEF_BANK_IP = "192.168.0.20";
 	private final static int DEF_BANK_PORT = 9300;
 	
 	private ServerSocket serverSocket;
@@ -144,10 +144,10 @@ public class Succursale extends Thread implements ISuccursale {
 	public boolean connectToBanque(ConnexionInfo banqueinfo){
 		try {
 			Tunnel tun = new Tunnel(this.infos,banqueinfo);
+			connections.put(-1, tun); //banque is -1
 			SucHandler job = new SucHandler(-1);
 			clientjobs.add(job);
 			job.start();
-			connections.put(-1, tun); //banque is -1
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return false;
@@ -168,18 +168,9 @@ public class Succursale extends Thread implements ISuccursale {
 			System.out.println("Trying to connect to "+info);
 			Tunnel tun = new Tunnel(this.infos,info);
 			connections.put(info.getId(), tun);
-			
-			
 			SucHandler job = new SucHandler(info.getId());
-			if(job == null){ //si thread as fail (qui devrait jamais arriver selon MrTim
-				connections.remove(info.getId());
-			}
-			else {
-				clientjobs.add(job);
-				job.start();
-			}
-			
-			
+			clientjobs.add(job);
+			job.start();
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return -3;
@@ -285,7 +276,6 @@ public class Succursale extends Thread implements ISuccursale {
 				SucHandler job = new SucHandler(-3);
 				clientjobs.add(job);
 				job.start();
-				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				System.out.println("Accept fail on Succursale");
@@ -303,8 +293,11 @@ public class Succursale extends Thread implements ISuccursale {
 		
 		public SucHandler(int id_suc) throws IOException {
 			tunnel = connections.get(id_suc);
-			if(tunnel!=null)
-				in = new BufferedReader(new InputStreamReader( tunnel.getIn() ) ); 
+			if(tunnel==null){
+				throw new IllegalArgumentException(
+					      String.format("No tunnel found for SucHandler id_suc%s", id_suc));
+			}
+			in = new BufferedReader(new InputStreamReader( tunnel.getIn() ) ); 
 		}
 		
 		@Override
