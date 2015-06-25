@@ -120,7 +120,8 @@ public class Commande {
 		/**
 		 * 	bnk->suc transmet le montant total
 		 */
-		TOTAL
+		TOTAL, 
+		GLOBST,STATE_START, STATE_FIN
 	}
 	
 	private CommandeType type;
