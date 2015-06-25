@@ -522,7 +522,9 @@ public class Succursale extends Thread implements ISuccursale {
 									gState.getMyState().setMontant(infos.getMontant());
 									
 									for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
-										gState.addState(new global_state.State(gState.getIdGlobalState(), conn.getKey()));
+										if(conn.getKey() >= 0){
+											gState.addState(new global_state.State(gState.getIdGlobalState(), conn.getKey()));
+										}
 									}
 									
 									globalsStates.put(gState.getIdGlobalState(), gState);
@@ -594,8 +596,10 @@ public class Succursale extends Thread implements ISuccursale {
 			Tunnel tun = null;
 			Commande comm = new Commande(CommandeType.STATE_START, "" + gState.getIdGlobalState()+ ":" + gState.getIdInitiator() + ":" + infos.getId());
 			for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
-				tun = conn.getValue();
-				tun.sendCommande(comm);
+				if(conn.getKey() >= 0){
+					tun = conn.getValue();
+					tun.sendCommande(comm);
+				}
 			}		
 		}
 	}
