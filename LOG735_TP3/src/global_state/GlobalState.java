@@ -3,6 +3,7 @@
  */
 package global_state;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -34,6 +35,7 @@ public class GlobalState implements Iterable<State> {
 		this.idInitiator = idInitiator;
 		this.states = new HashMap<Integer,State>();
 		this.myState = new State(idGlobalState, idInitiator);
+		this.myIncomingTransfert = new ArrayList<Transfert>();
 	}
 	
 	public State getState(int idState){
@@ -41,7 +43,8 @@ public class GlobalState implements Iterable<State> {
 	}
 	
 	public boolean addState(State state){
-		if(state.getIdGlobalState() != this.idGlobalState)
+		System.out.println("idst="+state.getIdGlobalState()+ " thisid="+this.idGlobalState);
+		if(state.getIdGlobalState() == this.idGlobalState)
 			return (states.put(state.getIdState(),state)) != null;
 		return false;
 	}
