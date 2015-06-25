@@ -424,6 +424,14 @@ public class Succursale extends Thread implements ISuccursale {
 									Tunnel tun = connections.get(id);
 									infos.addMontant(montant);
 									Transfert tf = new Transfert(infos, suc_Infos.get(id), montant, tun, transfert_id);
+									global_state.State succState;
+									for (Entry<Integer,GlobalState> gState : globalsStates.entrySet()){
+										if((succState = gState.getValue().getState(id)) != null){
+											if(succState.getCurrentState() == states.REC){
+												gState.getValue().addIncomingTransf(tf);
+											}
+										}
+									}
 									tf.ack();
 									tf.start();
 								}
@@ -534,21 +542,23 @@ public class Succursale extends Thread implements ISuccursale {
 									int sumSnapshot = 0;
 									
 									String c = ""
-										+ "Succursale d’origine de la capture : #" + gState.getIdInitiator()
+										+ "Succursale d'origine de la capture : #" + gState.getIdInitiator()
 										
-										+ "Succursale #1 : 1400$"
-										+ "Succursale #2 : 1800$"
-										+ "Succursale #3 : 2200$";
-									
-									c +=	"Canal S1-S2 : 400$"
-										+ "Canal S1-S3 : 200$";
-											
+										+ "Succursale #"+ gState.getIdInitiator() +" : "+ gState.getMyState().getMontant()+"$";
+										
+									for (global_state.State state : gState) {
+										c += "Succursale #"+state.getIdState()+" : "+state.getMontant() + "$";
+									}
+										
+									for (Transfert t : gState.getMyIncomingTransf()) {
+										c += "Canal S" + t.s1.getId()+"-S"+ t.s2.getId() +" : "+t.montant + "$";
+									}											
 											
 									c += "Somme connue par la Banque : " + bank_total + "$"
-										+ "Somme détectée par la capture : " + sumSnapshot + "$"
-										+ (sumSnapshot == bank_total?"ÉTAT GLOBAL COHÉRENT":"");
+										+ "Somme dï¿½tectï¿½e par la capture : " + sumSnapshot + "$"
+										+ (sumSnapshot == bank_total?"ï¿½TAT GLOBAL COHï¿½RENT":"");
 									
-									Commande comm = new Commande(CommandeType.SHOW_STATE,);
+									Commande comm = new Commande(CommandeType.SHOW_STATE,c);
 									Tunnel tun = connections.get(-2); //recupere la console
 									if(tun != null){
 										

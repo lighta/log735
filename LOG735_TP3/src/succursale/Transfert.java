@@ -5,7 +5,7 @@ import connexion.Tunnel;
 public class Transfert extends Thread {
 	public static enum transfert_state { INIT,SEND,ACK};
 	
-	SuccursalesInfo s1,s2;
+	public SuccursalesInfo s1,s2;
 	int montant;
 	transfert_state state;
 	Tunnel tun;

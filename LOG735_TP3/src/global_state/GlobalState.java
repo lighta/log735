@@ -4,13 +4,17 @@
 package global_state;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
+
+import succursale.Transfert;
 
 /**
  * @author MisterTim
  *
  */
-public class GlobalState {
+public class GlobalState implements Iterable<State> {
 
 	
 	
@@ -19,6 +23,7 @@ public class GlobalState {
 	private HashMap<Integer, State> states;
 	private State myState;
 	private int remainingStates;
+	private List<Transfert> myIncomingTransfert;
 
 	/**
 	 * @param idState 
@@ -60,6 +65,19 @@ public class GlobalState {
 		}
 		
 		return remainingStates;
+	}
+
+	public List<Transfert> getMyIncomingTransf() {
+		return this.myIncomingTransfert;
+	}
+	
+	public boolean addIncomingTransf(Transfert t) {
+		return this.myIncomingTransfert.add(t);
+	}
+
+	@Override
+	public Iterator<State> iterator() {
+		return this.states.values().iterator();
 	}
 
 }
