@@ -28,7 +28,7 @@ public class Transfert extends Thread {
 	public void run() {
 		super.run();
 		try {
-			Thread.sleep(1*1000);
+			Thread.sleep(5*1000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

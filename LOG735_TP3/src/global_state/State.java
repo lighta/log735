@@ -11,7 +11,8 @@ public class State {
 
 	public enum states{
 		REC,
-		WAIT
+		WAIT,
+		FIN
 	}
 	
 	private int idGlobalState, idState;

@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import services.Service;
+import services.Service.AlreadyStartException;
 import succursale.Transfert.transfert_state;
 import connexion.Commande;
 import connexion.Commande.CommandeType;
@@ -82,7 +84,7 @@ public class Succursale extends Thread implements ISuccursale {
 		if(connections.size() >= 2) {
 			System.out.println("starting gstate id="+this.globalStateIdSequence);
 			
-			GlobalState gState = new GlobalState(this.globalStateIdSequence,this.infos.getId());
+			final GlobalState gState = new GlobalState(this.globalStateIdSequence,this.infos.getId());
 			gState.getMyState().setMontant(infos.getMontant());
 			
 			for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
@@ -93,7 +95,18 @@ public class Succursale extends Thread implements ISuccursale {
 			}
 		
 			globalsStates.put(gState.getIdGlobalState(), gState);
-			broadcastStateStart(gState);
+			(new Thread(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						Thread.sleep(5*1000);
+						broadcastStateStart(gState);
+					} catch (InterruptedException e) {
+						System.out.println("getSystemStatus timer fail");
+						//e.printStackTrace();
+					}
+				}
+			})).start();
 		}
 	}
 	
@@ -539,6 +552,8 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "!GLOBST":{
+								Tunnel tunbank = connections.get(-1); //recupere la console
+								tunbank.askTotal();
 								getSystemStatus();
 								break;
 							}
@@ -548,48 +563,13 @@ public class Succursale extends Thread implements ISuccursale {
 								final int idGlobalState = Integer.parseInt(msgpart[0]);
 								final int idSuccInit = Integer.parseInt(msgpart[1]);
 								final int idSuccSender = Integer.parseInt(msgpart[2]);
-								
-								GlobalState gState;
-								global_state.State succState;
-								if((gState = globalsStates.get(idGlobalState)) != null)
-								{
-									
-									if((succState = gState.getState(idSuccSender)) != null)
-									{
-										succState.setCurrentState(states.WAIT);
-									}
+								GlobalST glost_ = new GlobalST(idGlobalState, idSuccInit, idSuccSender);
+								try {
+									Service.startService(glost_);
+								} catch (AlreadyStartException e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
 								}
-								else
-								{
-									//first capture
-									gState = new GlobalState(idGlobalState,idSuccInit);
-									gState.getMyState().setMontant(infos.getMontant());
-									
-									for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
-										int id_con = conn.getKey();
-										if(id_con > 0){ //verif que c,est une suc
-											gState.addState(new global_state.State(gState.getIdGlobalState(), id_con));
-										}
-									}
-									global_state.State st = gState.getState(idSuccSender);
-									st.setCurrentState(states.WAIT);								
-									globalsStates.put(gState.getIdGlobalState(), gState);	
-								}
-								
-								//check si fin ou other start
-								if(idSuccInit != infos.Id) {
-									System.out.println("sending ST_FIN  or Start to other");
-									if(gState.getRemainingState() == 0){
-										Tunnel tun = connections.get(gState.getIdInitiator());
-										Commande comm = new Commande(CommandeType.STATE_FIN, "" + gState.getIdGlobalState()+ ":" + infos.getId() + ":" + gState.getMyState().getMontant());
-										tun.sendCommande(comm);
-										globalsStates.remove(idGlobalState);
-									}
-									else {
-										broadcastStateStart(gState);
-									}
-								}
-								break;
 							}
 							case "!STATE_FIN":{
 								final String msg = part[1];
@@ -602,45 +582,49 @@ public class Succursale extends Thread implements ISuccursale {
 								global_state.State succState; //marker de MrTim
 								if((gState = globalsStates.get(idGlobalState)) != null)
 								{
-									global_state.State st = gState.getState(idSuccSender);
-									st.setMontant(montant); //maj du montant pour la suc
+									
+									if((succState = gState.getState(idSuccSender)) != null)
+									{
+										succState.setCurrentState(states.FIN);
+										global_state.State st = gState.getState(idSuccSender);
+										st.setMontant(montant); //maj du montant pour la suc
+									}
+									
+									if(gState.getRemainingState() == 0){
+										int sumSnapshot = gState.getMyState().getMontant();
+										
+										String c = ""
+											+ "Succursale d'origine de la capture : #" + gState.getIdInitiator() + "\n\r"
+											+ "Succursale #"+ gState.getIdInitiator() +" : "+ gState.getMyState().getMontant()+"$" + "\n\r";
+											
+										for (global_state.State state : gState) {
+											final int smontant = state.getMontant();
+											sumSnapshot += smontant;
+											c += "Succursale #"+state.getIdState()+" : "+ smontant + "$" + "\n\r";
+										}
+											
+										for (Transfert t : gState.getMyIncomingTransf()) {
+											final int smontant = t.montant;
+											sumSnapshot += smontant;
+											c += "Canal S" + t.s1.getId()+"-S"+ t.s2.getId() +" : "+t.montant + "$" + "\n\r";
+										}											
+												
+										c += "Somme connue par la Banque : " + bank_total + "$" + "\n\r"
+											+ "Somme detectee par la capture : " + sumSnapshot + "$" + "\n\r"
+											+ (sumSnapshot == bank_total?"ETAT GLOBAL COHERENT":"" + "\n\r");
+										
+										Commande comm = new Commande(CommandeType.SHOWSTATE,c);
+										Tunnel tun = connections.get(-2); //recupere la console
+										if(tun != null){
+											tun.sendCommande(comm);
+										}
+										globalsStates.remove(idGlobalState);
+									}
 								}
 								else
 								{
 									System.err.println("Global State Unknow");
 								}
-								
-								if(gState.getRemainingState() == 0){
-									int sumSnapshot = 0;
-									
-									String c = ""
-										+ "Succursale d'origine de la capture : #" + gState.getIdInitiator() + "\n\r"
-										+ "Succursale #"+ gState.getIdInitiator() +" : "+ gState.getMyState().getMontant()+"$" + "\n\r";
-										
-									for (global_state.State state : gState) {
-										final int smontant = state.getMontant();
-										sumSnapshot += smontant;
-										c += "Succursale #"+state.getIdState()+" : "+ smontant + "$" + "\n\r";
-									}
-										
-									for (Transfert t : gState.getMyIncomingTransf()) {
-										final int smontant = t.montant;
-										sumSnapshot += smontant;
-										c += "Canal S" + t.s1.getId()+"-S"+ t.s2.getId() +" : "+t.montant + "$" + "\n\r";
-									}											
-											
-									c += "Somme connue par la Banque : " + bank_total + "$" + "\n\r"
-										+ "Somme detectee par la capture : " + sumSnapshot + "$" + "\n\r"
-										+ (sumSnapshot == bank_total?"ETAT GLOBAL COHERENT":"" + "\n\r");
-									
-									Commande comm = new Commande(CommandeType.SHOWSTATE,c);
-									Tunnel tun = connections.get(-2); //recupere la console
-									if(tun != null){
-										tun.sendCommande(comm);
-									}
-									globalsStates.remove(idGlobalState);
-								}
-								
 								break;
 							}
 							case "!BUG":{
@@ -665,6 +649,77 @@ public class Succursale extends Thread implements ISuccursale {
 				}
 			}
 			clientjobs.remove(this); //remove ourself	
+		}
+	}
+	
+	private class GlobalST extends Service {
+		final int idGlobalState;
+		final int idSuccInit;
+		final int idSuccSender;
+		
+	
+		public GlobalST(int idglobal, int sucinit, int sender) {
+			super("GlobalST"+idglobal);
+			idGlobalState = idglobal;
+			idSuccInit = sucinit;
+			idSuccSender = sender;
+		}
+		
+		@Override
+		public void loopAction() {
+			try {
+				Thread.sleep(5*1000);
+				GlobalState gState;
+				global_state.State succState;
+				if((gState = globalsStates.get(idGlobalState)) != null)
+				{
+					
+					if((succState = gState.getState(idSuccSender)) != null)
+					{
+						succState.setCurrentState(states.WAIT);
+					}
+				}
+				else
+				{
+					//first capture
+					gState = new GlobalState(idGlobalState,idSuccInit);
+					gState.getMyState().setMontant(infos.getMontant());
+					
+					for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
+						int id_con = conn.getKey();
+						if(id_con > 0){ //verif que c,est une suc
+							gState.addState(new global_state.State(gState.getIdGlobalState(), id_con));
+						}
+					}
+					global_state.State st = gState.getState(idSuccSender);
+					st.setCurrentState(states.WAIT);								
+					globalsStates.put(gState.getIdGlobalState(), gState);	
+				}
+				
+				//check si fin ou other start
+				if(idSuccInit != infos.Id) {
+					System.out.println("sending ST_FIN  or Start to other");
+					if(gState.getRemainingState() == 0){
+						Tunnel tun = connections.get(gState.getIdInitiator());
+						Commande comm = new Commande(CommandeType.STATE_FIN, "" + gState.getIdGlobalState()+ ":" + infos.getId() + ":" + gState.getMyState().getMontant());
+						tun.sendCommande(comm);
+						globalsStates.remove(idGlobalState);
+					}
+					else {
+						broadcastStateStart(gState);
+					}
+				}
+			} catch (InterruptedException e) {
+				System.out.println("GlobalST timer fail");
+				// TODO Auto-generated catch block
+				//e.printStackTrace();
+			}
+		}
+		
+		@Override
+		protected void finalize() throws Throwable {
+			super.finalize();
+			System.out.println("Dealloc GlobalST");
 		}
 	}
 	
@@ -697,6 +752,13 @@ public class Succursale extends Thread implements ISuccursale {
 					//e.printStackTrace();
 				}
 			}
+			System.out.println("ScheduleTf ending loop");
+		}
+		
+		@Override
+		protected void finalize() throws Throwable {
+			super.finalize();
+			System.out.println("Dealloc ScheduleState");
 		}
 	}
 	
@@ -746,6 +808,13 @@ public class Succursale extends Thread implements ISuccursale {
 					//e.printStackTrace();
 				}
 			}
+			System.out.println("ScheduleTf ending loop");
+		}
+		
+		@Override
+		protected void finalize() throws Throwable {
+			super.finalize();
+			System.out.println("Dealloc ScheduleTf");
 		}
 	}
 }
