@@ -88,12 +88,12 @@ public class Succursale extends Thread implements ISuccursale {
 		int i=0;
 		final int ssize = this.suc_Infos.size();
 		
-		System.out.println("ScheduleTf waiting for wait="+wait+"ms");
+		//System.out.println("ScheduleTf waiting for wait="+wait+"ms");
 		try {
 			Thread.sleep( wait ); 
 			i=0;
 			if(ssize > 1) {
-				System.out.println("ScheduleTf searching valid target ssize="+ssize);
+				//System.out.println("ScheduleTf searching valid target ssize="+ssize);
 				while((suc == null 
 					|| suc.getId() == this.infos.getId())
 					&& (i++ < limit) ) 
@@ -103,7 +103,7 @@ public class Succursale extends Thread implements ISuccursale {
 				}
 				if(i < limit){
 					final int montant = rand.nextInt(100-20)+20; //entre 20 et 100
-					System.out.println("ScheduleTf sending to suc_id="+suc_indice+" montant="+montant );
+					System.out.println("ScheduleTf trying to send to suc_id="+suc_indice+" montant="+montant );
 					SendTransfert(suc,montant);
 				}
 			}
@@ -120,7 +120,7 @@ public class Succursale extends Thread implements ISuccursale {
 		this.globalStateIdSequence++;
 		//globalStateIdSequence %= 1000;
 		//globalStateIdSequence += infos.Id * 1000;
-		if(connections.size() >= 2) {
+		if(connections.size() >= 1) {
 			System.out.println("starting gstate id="+this.globalStateIdSequence);
 			
 			final GlobalState gState = new GlobalState(this.globalStateIdSequence,this.infos.getId());
@@ -532,7 +532,7 @@ public class Succursale extends Thread implements ISuccursale {
 									if(con != null){
 										con.sendTFDONE(id, true);
 									}
-									System.out.println("TF DONE Suc_Info="+infos);
+									System.out.println("TF DONE Suc_Info, new Montant="+infos.getMontant());
 								}
 								else {
 									Tunnel tun = connections.get(id);

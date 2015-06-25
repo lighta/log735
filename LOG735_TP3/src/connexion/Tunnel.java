@@ -223,7 +223,7 @@ public class Tunnel extends Observable implements Observer{
 	
 	public void sendCommande(Commande comm)
 	{
-		log.message("Try to send commande : " + comm);
+		//log.message("Try to send commande : " + comm);
 		try {
 			out.write(comm.getBytes());
 			out.flush();
