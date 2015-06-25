@@ -39,6 +39,8 @@ public class Succursale extends Thread implements ISuccursale {
 	private HashMap<Integer,SuccursalesInfo> suc_Infos;
 	
 	private List<SucHandler> clientjobs;
+	private Tunnel banqueCon = null;
+	private HashMap<Integer, Tunnel> consoles;
 	private HashMap<Integer,Tunnel> connections;
 	private HashMap<Integer,Transfert> transferts;
 	
@@ -60,6 +62,7 @@ public class Succursale extends Thread implements ISuccursale {
 		
 		suc_Infos = new HashMap<Integer,SuccursalesInfo>();
 		connections = new HashMap<Integer,Tunnel>();
+		consoles = new HashMap<Integer,Tunnel>();
 		transferts = new HashMap<Integer,Transfert>();
 		clientjobs = new ArrayList<>();
 		this.globalStateIdSequence = 0;
@@ -77,7 +80,43 @@ public class Succursale extends Thread implements ISuccursale {
 		return toString();
 	}
 	
-	public void getSystemStatus(){
+	private void DoRandomTF(Random rand){
+		final long wait = rand.nextInt((10-5)*1000)+5000; //wait entre 5 et 10s
+		SuccursalesInfo suc = null;
+		int suc_indice=-1;
+		final int limit=1000;
+		int i=0;
+		final int ssize = this.suc_Infos.size();
+		
+		System.out.println("ScheduleTf waiting for wait="+wait+"ms");
+		try {
+			Thread.sleep( wait ); 
+			i=0;
+			if(ssize > 1) {
+				System.out.println("ScheduleTf searching valid target ssize="+ssize);
+				while((suc == null 
+					|| suc.getId() == this.infos.getId())
+					&& (i++ < limit) ) 
+				{ //redo
+					suc_indice= rand.nextInt( ssize )+1;
+					suc = this.suc_Infos.get(suc_indice);  //we need some othersuccursale for this 
+				}
+				if(i < limit){
+					final int montant = rand.nextInt(100-20)+20; //entre 20 et 100
+					System.out.println("ScheduleTf sending to suc_id="+suc_indice+" montant="+montant );
+					SendTransfert(suc,montant);
+				}
+			}
+			else {
+				System.out.println("No succursale available for TF");
+			}
+		} catch (InterruptedException e) {
+			System.err.println("Interrupted ScheduleTf sleep timer");
+			//e.printStackTrace();
+		}
+	}
+	
+	private synchronized void getSystemStatus(){
 		this.globalStateIdSequence++;
 		//globalStateIdSequence %= 1000;
 		//globalStateIdSequence += infos.Id * 1000;
@@ -110,19 +149,19 @@ public class Succursale extends Thread implements ISuccursale {
 		}
 	}
 	
-	public boolean rmList(int id){
+	public synchronized boolean rmList(int id){
 		if(suc_Infos.containsKey(id)==false)
 			return false; //not  found
 		suc_Infos.remove(id);
 		return true;
 	}
-	public boolean addList(SuccursalesInfo infos){
+	public synchronized boolean addList(SuccursalesInfo infos){
 		if(suc_Infos.containsKey(infos.getId()))
 			return false; //duplicate key
 		suc_Infos.put(infos.getId(), infos);
 		return true;
 	}
-	public void updateList(HashMap<Integer,SuccursalesInfo> infos){
+	public synchronized void updateList(HashMap<Integer,SuccursalesInfo> infos){
 		suc_Infos = infos;
 	}
 	
@@ -169,11 +208,11 @@ public class Succursale extends Thread implements ISuccursale {
 	}
 	
 	
-	public boolean connectToBanque(ConnexionInfo banqueinfo){
+	public synchronized boolean connectToBanque(ConnexionInfo banqueinfo){
 		try {
 			Tunnel tun = new Tunnel(this.infos,banqueinfo);
-			connections.put(-1, tun); //banque is -1
-			SucHandler job = new SucHandler(-1);
+			banqueCon = tun;
+			SucHandler job = new SucHandler(tun);
 			clientjobs.add(job);
 			job.start();
 		} catch (IOException e) {
@@ -183,7 +222,7 @@ public class Succursale extends Thread implements ISuccursale {
 		return true;	
 	}
 	
-	public int connectTo(SuccursalesInfo info){
+	public synchronized int connectTo(SuccursalesInfo info){
 		if(connections.get(info.getId()) != null)
 			return -1; //already connected
 		if(info.getId() == this.infos.getId()) //on refuse la connection a nous meme !
@@ -232,7 +271,7 @@ public class Succursale extends Thread implements ISuccursale {
 		return sb_.toString();
 	}
 	
-	public void RegisterSuccursalesList(final String list){
+	public synchronized void RegisterSuccursalesList(final String list){
 		//System.out.println("Entering RegisterSuccursalesList list="+list);
 		String[] sucs = list.split("\\|");
 		for (int i=0; i<sucs.length; i++) {
@@ -251,7 +290,7 @@ public class Succursale extends Thread implements ISuccursale {
 			
 			SuccursalesInfo suc = new SuccursalesInfo(host, port, -1);
 			suc.setId(id);
-			suc_Infos.put(id, suc);
+			addList(suc);
 		}
 	}
 	
@@ -260,14 +299,21 @@ public class Succursale extends Thread implements ISuccursale {
 		this.globalStateIdSequence = infos.getId() * 1000;
 	}
 	
-	private void ScheduleTransfert(){
-		sched_transfert = new ScheduleTf();
-		sched_transfert.start();
+	private synchronized void ScheduleTransfert(){
+		if(sched_transfert == null){ //create
+			sched_transfert = new ScheduleTf();
+			sched_transfert.start();
+		}
 	}
 	
-	private void ScheduleGetSystemStatus(){
-		sched_state = new ScheduleState();
-		sched_state.start();
+	private synchronized void ScheduleGetSystemStatus(){
+		if(sched_state == null){ //create
+			sched_state = new ScheduleState();
+			sched_state.start();
+		}
+		//else { //maj de la list
+		//	sched_state.setSuccs(this.suc_Infos);
+		//}
 	}
 	
 	@Override
@@ -291,17 +337,12 @@ public class Succursale extends Thread implements ISuccursale {
 		
 		
 		this.running=true;
-		
-		ScheduleTransfert();
-		//ScheduleGetSystemStatus();
-		
 		while(this.running){
 			try {
 				System.out.println("Succursale listening on host="+infos.getHostname()+" and port="+infos.getPort());
 				clientSocket = serverSocket.accept();
-				Tunnel base = new Tunnel(clientSocket);
-				connections.put(-3, base);
-				SucHandler job = new SucHandler(-3);
+				Tunnel base = new Tunnel("SucServer",clientSocket);
+				SucHandler job = new SucHandler(base);
 				clientjobs.add(job);
 				job.start();
 			} catch (IOException e) {
@@ -324,22 +365,31 @@ public class Succursale extends Thread implements ISuccursale {
 		}		
 	}
 
-
 	private class SucHandler extends Thread {
 		//Socket clientSocket;
 		Tunnel tunnel;
 		BufferedReader in;
 		boolean running;
+		int id_suc=-3;
 		
 		public SucHandler(int id_suc) throws IOException {
-			tunnel = connections.get(id_suc);
-			if(tunnel==null){
+			this.id_suc = id_suc;
+			init(connections.get(id_suc));
+		}
+		
+		public SucHandler(Tunnel tun) throws IOException {
+			init(tun);		
+		}
+		
+		private void init(Tunnel tun) throws IOException{
+			if(tun==null){
 				throw new IllegalArgumentException(
 					      String.format("No tunnel found for SucHandler id_suc%s", id_suc));
 			}
-			in = new BufferedReader(new InputStreamReader( tunnel.getIn() ) ); 
+			tunnel = tun;
+			in = new BufferedReader(new InputStreamReader( tunnel.getIn() ) );
 		}
-		
+
 		@Override
 		public void interrupt() {	
 			super.interrupt();
@@ -382,8 +432,8 @@ public class Succursale extends Thread implements ISuccursale {
 							case "!HELLO":{ //received a create connexion request
 								// save tunnel
 								//Tunnel tun = new Tunnel("CONSOLE",clientSocket);
-								connections.put(-2, tunnel);
-								tunnel.sendMsg("Welcome !");
+								consoles.put(-2, tunnel);
+								tunnel.sendMsg("Welcome ! to Succursale");
 								break;
 							}
 							case "!CON":{ //received a create connexion request
@@ -397,12 +447,9 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								
 								System.out.println("Creating connection to banque");
-								ConnexionInfo banqueCon = new ConnexionInfo(host, port);
-								boolean res = connectToBanque(banqueCon);
-								Tunnel tun = connections.get(-2); //recupere la console
-								if(tun != null){
-									tun.sendCONACK(infos.getId(),res);
-								}
+								ConnexionInfo banqueConn = new ConnexionInfo(host, port);
+								boolean res = connectToBanque(banqueConn);
+								tunnel.sendCONACK(infos.getId(),res);
 								break;
 							}
 							case "!TUN":{ //received a tunnel connexion request
@@ -413,39 +460,48 @@ public class Succursale extends Thread implements ISuccursale {
 								break;
 							}
 							case "!ID":{ //received an ID assignation
-								int id = Integer.parseInt(part[1]);
-								System.out.println("id="+id);
-								setId(id);
-								
-								Tunnel tun = connections.get(-1); //recupere le tunnel de la banque
-								tun.askList(); //demande de la list
+								if(tunnel == banqueCon){ //must come from bank
+									int id = Integer.parseInt(part[1]);
+									System.out.println("id="+id);
+									setId(id);
+									banqueCon.askList(); //demande de la list
+								}
 								break;
 							}
 							case "!ADDLIST":{ //received a list from bank
-								final String msg = part[1];
-								final String msgpart[] = msg.split(":");
-								
-								final int id = Integer.parseInt(msgpart[0]);
-								final String host = msgpart[1];
-								final int port = Integer.parseInt(msgpart[2]);
-								SuccursalesInfo suc = new SuccursalesInfo(host, port, -1); //remove montant from succursale info
-								suc.setId(id);
-								suc_Infos.put(id, suc);
-								connectToOthers(); //check si deja connecter
-								Tunnel tun = connections.get(-2); //recupere la console
-								if(tun != null){
-									String list = FormatSuccursalesList("\n");
-									tun.sendNList(list);
+								if(tunnel == banqueCon){ //must come from bank
+									final String msg = part[1];
+									final String msgpart[] = msg.split(":");
+									
+									final int id = Integer.parseInt(msgpart[0]);
+									final String host = msgpart[1];
+									final int port = Integer.parseInt(msgpart[2]);
+									SuccursalesInfo suc = new SuccursalesInfo(host, port, -1); //remove montant from succursale info
+									suc.setId(id);
+									addList(suc);
+									connectToOthers(); //check si deja connecter
+									
+									ScheduleTransfert();
+									//ScheduleGetSystemStatus();
+	
+									Tunnel tun = consoles.get(-2); //recupere la console
+									if(tun != null){
+										String list = FormatSuccursalesList("\n");
+										tun.sendNList(list);
+									}
+									
 								}
 								break;
 							}
 							case "!LIST":{ //received a list from bank
-								RegisterSuccursalesList(part[1]); //enregistrement des autres succursale dans notre list
-								connectToOthers(); //check si deja connecter
-								Tunnel tun = connections.get(-2); //recupere la console
-								if(tun != null){
-									String list = FormatSuccursalesList("\n");
-									tun.sendList(list);
+								if(tunnel == banqueCon){ //must come from bank
+									RegisterSuccursalesList(part[1]); //enregistrement des autres succursale dans notre list
+									connectToOthers(); //check si deja connecter
+									Tunnel tun = consoles.get(-2); //recupere la console
+									if(tun != null){
+										String list = FormatSuccursalesList("\n");
+										tun.sendList(list);
+									}
 								}
 								break;
 							}
@@ -459,10 +515,7 @@ public class Succursale extends Thread implements ISuccursale {
 								SuccursalesInfo dest_suc = suc_Infos.get(id);
 								boolean res = SendTransfert(dest_suc,montant);
 								
-								Tunnel con = connections.get(-2); //recupere la console
-								if(con != null){
-									con.sendTFACK(id, res);
-								}
+								tunnel.sendTFACK(id, res);
 								break;
 							}
 							case "!TFSUC":{
@@ -476,7 +529,7 @@ public class Succursale extends Thread implements ISuccursale {
 								
 								if( state.compareTo(transfert_state.ACK.toString()) == 0){
 									transferts.remove(transfert_id);  //retrait du transfert de notre liste
-									Tunnel con = connections.get(-2); //recupere la console
+									Tunnel con = consoles.get(-2); //recupere la console
 									if(con != null){
 										con.sendTFDONE(id, true);
 									}
@@ -512,10 +565,7 @@ public class Succursale extends Thread implements ISuccursale {
 									break;
 								}
 								infos.setMontant(montant);
-								Tunnel con = connections.get(-2); //recupere la console
-								if(con != null){
-									con.sendSETMACK(infos.getMontant(),true);
-								}
+								tunnel.sendSETMACK(infos.getMontant(),true);
 								break;
 							}
 							case "!MESS":{
@@ -526,7 +576,7 @@ public class Succursale extends Thread implements ISuccursale {
 								bank_total = Integer.parseInt(part[1]);
 								final String bnk_total = "bank_total="+bank_total+"\n";
 								System.out.print(bnk_total);
-								Tunnel tun = connections.get(-2); //recupere la console
+								Tunnel tun = consoles.get(-2); //recupere la console
 								if(tun != null){
 									tun.sendMsg(bnk_total.toString());
 								}
@@ -535,25 +585,19 @@ public class Succursale extends Thread implements ISuccursale {
 							case "!SHOWLIST":{
 								String list = FormatSuccursalesList("\n");
 								System.out.println("List={\n"+list+"}");
-								Tunnel tun = connections.get(-2); //recupere la console
-								if(tun != null){
-									tun.sendList(list);
-								}
+								tunnel.sendList(list);
 								break;
 							}
 							case "!SHOWSTATE":{
 								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
-								Tunnel tunbank = connections.get(-1); //recupere la console
-								tunbank.askTotal();
-								Tunnel tun = connections.get(-2); //recupere la console
-								if(tun != null){
-									tun.sendMsg(infos.toString());
-								}
+								if(banqueCon!=null)
+									banqueCon.askTotal();
+								tunnel.sendMsg(infos.toString());
 								break;
 							}
 							case "!GLOBST":{
-								Tunnel tunbank = connections.get(-1); //recupere la console
-								tunbank.askTotal();
+								if(banqueCon!=null)
+									banqueCon.askTotal();
 								getSystemStatus();
 								break;
 							}
@@ -570,6 +614,7 @@ public class Succursale extends Thread implements ISuccursale {
 									// TODO Auto-generated catch block
 									e.printStackTrace();
 								}
+								break;
 							}
 							case "!STATE_FIN":{
 								final String msg = part[1];
@@ -614,7 +659,7 @@ public class Succursale extends Thread implements ISuccursale {
 											+ "ETAT GLOBAL "+(sumSnapshot == bank_total?"COHERENT":"INCOHERENT" + "\n\r");
 										
 										Commande comm = new Commande(CommandeType.SHOWSTATE,c);
-										Tunnel tun = connections.get(-2); //recupere la console
+										Tunnel tun = consoles.get(-2); //recupere la console
 										if(tun != null){
 											tun.sendCommande(comm);
 										}
@@ -630,10 +675,7 @@ public class Succursale extends Thread implements ISuccursale {
 							case "!BUG":{
 								int montant = Integer.parseInt(part[1]);
 								infos.setMontant(montant);
-								Tunnel con = connections.get(-2); //recupere la console
-								if(con != null){
-									con.sendSETMACK(infos.getMontant(),true);
-								}
+								tunnel.sendSETMACK(infos.getMontant(),true);
 								break;
 							}
 							default:{
@@ -643,8 +685,13 @@ public class Succursale extends Thread implements ISuccursale {
 					}
 				} catch (IOException e) {
 					System.err.print("BufferStream as an error, Please reconnect to ="+tunnel.getSocket());
-					
-					break;
+					if(tunnel == banqueCon)
+						banqueCon = null;
+					else if (consoles.get(-2) == tunnel){
+						consoles.remove(-2);
+					}
+					else connections.remove(id_suc);
+					break; //stop handler
 					//e.printStackTrace();
 				}
 			}
@@ -673,7 +720,6 @@ public class Succursale extends Thread implements ISuccursale {
 				global_state.State succState;
 				if((gState = globalsStates.get(idGlobalState)) != null)
 				{
-					
 					if((succState = gState.getState(idSuccSender)) != null)
 					{
 						succState.setCurrentState(states.WAIT);
@@ -725,11 +771,7 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	private class ScheduleState extends Thread {
 		boolean running;
-		
-		public ScheduleState() {
-			// TODO Auto-generated constructor stub
-		}
-		
+
 		@Override
 		public void interrupt() {
 			super.interrupt();
@@ -752,7 +794,7 @@ public class Succursale extends Thread implements ISuccursale {
 					//e.printStackTrace();
 				}
 			}
-			System.out.println("ScheduleTf ending loop");
+			System.err.println("ScheduleState ending loop");
 		}
 		
 		@Override
@@ -764,9 +806,9 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	private class ScheduleTf extends Thread {
 		boolean running;
-		
+
 		public ScheduleTf() {
-			// TODO Auto-generated constructor stub
+			//auto
 		}
 		
 		@Override
@@ -775,40 +817,20 @@ public class Succursale extends Thread implements ISuccursale {
 			this.running=false;
 		}
 		
+		
+		
 		@Override
 		public void run() {
 			super.run();
 			this.running=true;
 			Random rand = new Random();
-			
-			while(this.running){
-					
-				final long wait = rand.nextInt((10-5)*1000)+5000; //wait entre 5 et 10s
-				SuccursalesInfo suc = null;
-				int suc_indice=-1;
-				final int ssize = suc_Infos.size();
 				
-				System.out.println("ScheduleTf waiting for wait="+wait+"ms");
-				try {
-					Thread.sleep( wait ); 
-					if(ssize > 1) {
-						while(suc == null || suc.getId() == infos.getId()) { //redo
-							suc_indice= rand.nextInt( ssize-1 )+1;
-							suc = suc_Infos.get(suc_indice);  //we need some othersuccursale for this 
-						}
-						final int montant = rand.nextInt(100-20)+20; //entre 20 et 100
-						System.out.println("ScheduleTf sending to suc_id="+suc_indice+" montant="+montant );
-						SendTransfert(suc_Infos.get(suc_indice),montant);
-					}
-					else {
-						System.out.println("No succursale available for TF");
-					}
-				} catch (InterruptedException e) {
-					System.err.println("Interrupted ScheduleTf sleep timer");
-					//e.printStackTrace();
-				}
+			while(this.running){
+				synchronized (suc_Infos) {
+					DoRandomTF(rand) ;
+				} 
 			}
-			System.out.println("ScheduleTf ending loop");
+			System.err.println("ScheduleTf ending loop");
 		}
 		
 		@Override
