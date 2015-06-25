@@ -80,7 +80,8 @@ public class Tunnel extends Observable implements Observer{
 			Service.startService(wMessService);
 		} catch (AlreadyStartException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			//e.printStackTrace();
+			log.message("Already started service ( " + wMessService.getName() + " )");
 		}
 		
 	}

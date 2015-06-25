@@ -148,12 +148,19 @@ public class Succursale extends Thread implements ISuccursale {
 		try {
 			System.out.println("Trying to connect to "+info);
 			Tunnel tun = new Tunnel(this.infos,info);
-			
-			SucHandler job = new SucHandler(tun.getSocket());
-			clientjobs.add(job);
-			job.start();
-			
 			connections.put(info.getId(), tun);
+			
+			
+			SucHandler job = new SucHandler(info.getId());
+			if(job == null){ //si thread as fail (qui devrait jamais arriver selon MrTim
+				connections.remove(info.getId());
+			}
+			else {
+				clientjobs.add(job);
+				job.start();
+			}
+			
+			
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return -3;
@@ -267,13 +274,15 @@ public class Succursale extends Thread implements ISuccursale {
 
 	
 	private class SucHandler extends Thread {
-		Socket clientSocket;
+		//Socket clientSocket;
+		Tunnel tunnel;
 		BufferedReader in;
 		boolean running;
 		
-		public SucHandler(Socket clientSocket) throws IOException {
-			this.clientSocket = clientSocket;
-			in = new BufferedReader(new InputStreamReader( clientSocket.getInputStream())); 
+		public SucHandler(int id_suc) throws IOException {
+			tunnel = connections.get(id_suc);
+			if(tunnel!=null)
+				in = new BufferedReader(new InputStreamReader( tunnel.getIn() ) ); 
 		}
 		
 		@Override
@@ -420,9 +429,14 @@ public class Succursale extends Thread implements ISuccursale {
 								else {
 									Tunnel tun = connections.get(id);
 									infos.addMontant(montant);
-									Transfert tf = new Transfert(infos, suc_Infos.get(id), montant, tun, transfert_id);
-									tf.ack();
-									tf.start();
+									try {
+										Transfert tf = new Transfert(infos, suc_Infos.get(id), montant, tun, transfert_id);
+										tf.ack();
+										tf.start();
+									}
+									catch (IllegalArgumentException e) {
+										System.out.println("Fail to create Transfert : "+e.getMessage());
+									}
 								}
 								break;
 							}
@@ -487,7 +501,10 @@ public class Succursale extends Thread implements ISuccursale {
 						}
 					}
 				} catch (IOException e) {
-					e.printStackTrace();
+					System.err.print("BufferStream as an error, Please reconnect to ="+clientSocket);
+					
+					break;
+					//e.printStackTrace();
 				}
 			}
 			clientjobs.remove(this); //remove ourself	

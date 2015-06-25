@@ -15,9 +15,11 @@ public class Transfert extends Thread {
 		this.s1 = s1;
 		this.s2 = s2;
 		this.montant = montant;
-		this.tun = tun;
 		this.transfert_id=transfert_id;
-		
+		if ( tun == null || s1 == null || s2 == null) {
+		    throw new IllegalArgumentException(
+		      String.format("Parameters can't be null: s1=%s, s1=%s, tun=%s", s1,s2,tun));
+		}
 		state = transfert_state.INIT;
 	}
 

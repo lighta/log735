@@ -127,7 +127,8 @@ public class AccesPoint extends Observable implements Observer {
 					setChanged();
 					notifyObservers(t);
 				} catch (IOException e) {
-					e.printStackTrace();
+					log.message("Fail to connect ");
+					//e.printStackTrace();
 				}
 			
 			}
