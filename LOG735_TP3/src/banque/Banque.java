@@ -19,7 +19,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 
 	private static Logger log = Logger.createLog(Banque.class);
 	
-	private final static String _CONSOLE_CONNECTION_HOSTNAME = "localhost";
+	private final static String _CONSOLE_CONNECTION_HOSTNAME = "0.0.0.0";
 	private final static int _CONSOLE_CONNECTION_PORT = 9100;
 	
 	private final static String _SUCC_CONNECTION_HOSTNAME = "0.0.0.0";
@@ -89,7 +89,7 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 		
 		switch (comm.getType()) {
 		case HELLO:
-			c = new Commande(CommandeType.MESS, "Welcome !!!");
+			c = new Commande(CommandeType.MESS, "Welcome To Bank Charly!!!");
 			break;
 		case BUG:
 			System.out.println("Not supported yet !!!!!!!!!!!!");

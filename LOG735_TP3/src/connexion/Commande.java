@@ -1,6 +1,5 @@
 package connexion;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -113,7 +112,7 @@ public class Commande {
 		/**
 		 * 	con->suc|bnk get the state of the node
 		 */
-		SHOWSTATE,
+		SHOW_STATE,
 		/**
 		 * 	suc->bnk recupere le montant total de la banque
 		 */
@@ -121,7 +120,7 @@ public class Commande {
 		/**
 		 * 	bnk->suc transmet le montant total
 		 */
-		TOTAL
+		TOTAL, STATE_START, STATE_FIN
 	}
 	
 	private CommandeType type;

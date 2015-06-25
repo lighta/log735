@@ -1,18 +1,23 @@
 package succursale;
 
+import global_state.GlobalState;
+import global_state.State.states;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.RoundingMode;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
 import succursale.Transfert.transfert_state;
+import connexion.Commande;
+import connexion.Commande.CommandeType;
 import connexion.ConnexionInfo;
 import connexion.Tunnel;
 
@@ -34,6 +39,8 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	private SuccursalesInfo infos;
 	private int bank_total;
+	private int globalStateIdSequence;
+	Map<Integer, GlobalState> globalsStates;
 	
 	public Succursale(ServerSocket serverSocket, int montant) {
 		if (serverSocket==null || montant < 0) {
@@ -50,6 +57,7 @@ public class Succursale extends Thread implements ISuccursale {
 		connections = new HashMap<Integer,Tunnel>();
 		transferts = new HashMap<Integer,Transfert>();
 		clientjobs = new ArrayList<>();
+		this.globalStateIdSequence = 0;
 	}
 	
 	public String toString(){
@@ -209,6 +217,7 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	public void setId(int id){
 		infos.setId(id);
+		this.globalStateIdSequence = (infos.getId() * 1000);
 	}
 	
 	private void ScheduleTransfert(){
@@ -345,6 +354,7 @@ public class Succursale extends Thread implements ISuccursale {
 								int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
 								setId(id);
+								
 								Tunnel tun = connections.get(-1); //recupere le tunnel de la banque
 								tun.askList(); //demande de la list
 								break;
@@ -446,14 +456,6 @@ public class Succursale extends Thread implements ISuccursale {
 								}
 								break;
 							}
-							case "!SHOWSTATE":{
-								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
-								Tunnel tun = connections.get(-2); //recupere la console
-								if(tun != null){
-									tun.sendMsg(infos.toString());
-								}
-								break;
-							}
 							case "!SHOWLIST":{
 								String list = FormatSuccursalesList("\n");
 								System.out.println("List={\n"+list+"}");
@@ -461,6 +463,104 @@ public class Succursale extends Thread implements ISuccursale {
 								if(tun != null){
 									tun.sendList(list);
 								}
+								break;
+							}
+							case "!SHOW_STATE":{
+								
+								GlobalState gState = new GlobalState((++globalStateIdSequence) % 1000,infos.getId());
+								gState.getMyState().setMontant(infos.getMontant());
+								globalsStates.put(gState.getIdGlobalState(), gState);
+								broadcastStateStart(gState);
+								
+								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
+								Tunnel tun = connections.get(-2); //recupere la console
+								if(tun != null){
+									tun.sendMsg(infos.toString());
+								}
+								break;
+							}
+							case "!STATE_ST":{
+								final String msg = part[1];
+								final String msgpart[] = msg.split(":");
+								final int idGlobalState = Integer.parseInt(msgpart[0]);
+								final int idSuccInit = Integer.parseInt(msgpart[1]);
+								final int idSuccSender = Integer.parseInt(msgpart[2]);
+								
+								GlobalState gState;
+								global_state.State succState;
+								if((gState = globalsStates.get(idGlobalState)) != null)
+								{
+									
+									if((succState = gState.getState(idSuccSender)) != null)
+									{
+										succState.setCurrentState(states.WAIT);
+									}
+									
+									if(gState.getRemainingState() == 0){
+										Tunnel tun = connections.get(gState.getIdInitiator());
+										Commande comm = new Commande(CommandeType.STATE_FIN, "" + gState.getIdGlobalState()+ ":" + ":" + infos.getId() + ":" + gState.getMyState().getMontant());
+										tun.sendCommande(comm);
+										globalsStates.remove(idGlobalState);
+									}
+								}
+								else
+								{
+									//first capture
+									gState = new GlobalState(idGlobalState,idSuccInit);
+									gState.getMyState().setMontant(infos.getMontant());
+									
+									for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
+										gState.addState(new global_state.State(gState.getIdGlobalState(), conn.getKey()));
+									}
+									
+									globalsStates.put(gState.getIdGlobalState(), gState);
+									broadcastStateStart(gState);
+								}
+								
+								
+								break;
+							}
+							case "!STATE_FIN":{
+								final String msg = part[1];
+								final String msgpart[] = msg.split(":");
+								final int idGlobalState = Integer.parseInt(msgpart[0]);
+								final int idSuccSender = Integer.parseInt(msgpart[1]);
+								final int montant = Integer.parseInt(msgpart[2]);
+								
+								GlobalState gState;
+								global_state.State succState;
+								if((gState = globalsStates.get(idGlobalState)) != null)
+								{
+									int sumSnapshot = 0;
+									
+									String c = ""
+										+ "Succursale d’origine de la capture : #" + gState.getIdInitiator()
+										
+										+ "Succursale #1 : 1400$"
+										+ "Succursale #2 : 1800$"
+										+ "Succursale #3 : 2200$";
+									
+									c +=	"Canal S1-S2 : 400$"
+										+ "Canal S1-S3 : 200$";
+											
+											
+									c += "Somme connue par la Banque : " + bank_total + "$"
+										+ "Somme détectée par la capture : " + sumSnapshot + "$"
+										+ (sumSnapshot == bank_total?"ÉTAT GLOBAL COHÉRENT":"");
+									
+									Commande comm = new Commande(CommandeType.SHOW_STATE,);
+									Tunnel tun = connections.get(-2); //recupere la console
+									if(tun != null){
+										
+										tun.sendCommande(comm);
+									}
+									break;
+								}
+								else
+								{
+									System.out.println("Global State Unknow");
+								}
+								
 								break;
 							}
 							case "!BUG": //TODO
@@ -474,6 +574,15 @@ public class Succursale extends Thread implements ISuccursale {
 				}
 			}
 			clientjobs.remove(this); //remove ourself	
+		}
+
+		private void broadcastStateStart(GlobalState gState) {
+			Tunnel tun = null;
+			Commande comm = new Commande(CommandeType.STATE_START, "" + gState.getIdGlobalState()+ ":" + gState.getIdInitiator() + ":" + infos.getId());
+			for (Entry<Integer, Tunnel> conn : connections.entrySet()) {
+				tun = conn.getValue();
+				tun.sendCommande(comm);
+			}		
 		}
 	}
 	
