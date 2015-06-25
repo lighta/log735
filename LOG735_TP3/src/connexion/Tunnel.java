@@ -13,7 +13,6 @@ import connexion.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
-import succursale.Transfert;
 import succursale.Transfert.transfert_state;
 
 public class Tunnel extends Observable implements Observer{

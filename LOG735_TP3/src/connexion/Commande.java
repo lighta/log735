@@ -1,6 +1,5 @@
 package connexion;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -168,10 +167,6 @@ public class Commande {
 			String comm = "";
 			String content = "";
 			
-
-			
-			
-			
 			String rec;
 			log.message("Reading ..." );
 			while ((rec = in.readLine()) != null){
@@ -196,17 +191,6 @@ public class Commande {
 					
 					CommandeType ctype = CommandeType.valueOf(comm);
 					
-//					if( CommandeType.TUN.name().equals(comm))
-//						ctype =  CommandeType.TUN;
-//					else if( CommandeType.ID.name().equals(comm))
-//						ctype =  CommandeType.ID;
-//					else if( CommandeType.STATE.name().equals(comm))
-//						ctype =  CommandeType.STATE;
-//					else if( CommandeType.LIST.name().equals(comm))
-//						ctype =  CommandeType.LIST;
-//					else if( CommandeType.MESS.name().equals(comm))
-//						ctype =  CommandeType.MESS;
-//					else
 					if(ctype == null){
 						log.message("Unknown Commande Type : " + comm );
 						return null;

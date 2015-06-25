@@ -105,19 +105,29 @@ public class Succursale extends Thread implements ISuccursale {
 	
 	public boolean SendTransfert(SuccursalesInfo s2, int montant){
 		Tunnel tun = connections.get(s2.getId());
+		if(tun == null) return false;
+			
 		transfert_id++;
 		transfert_id%=1000;
 		transfert_id+=infos.getId()*1000; // range of if per suc
 		
-		Transfert tf = new Transfert(this.infos,s2,montant,tun,transfert_id);
-		if(!AuthorizeTransfert(tf)){ //transfert non authorise
-			//tf.destroy();
+		try {
+			Transfert tf = new Transfert(this.infos,s2,montant,tun,transfert_id);
+			if(!AuthorizeTransfert(tf)){ //transfert non authorise
+				//tf.destroy();
+				return false;
+			}
+			
+			infos.addMontant(-montant);
+			transferts.put(transfert_id, tf);
+			tf.send();
+			tf.start();
+		}
+		catch (IllegalArgumentException e) {
+			System.out.println("Fail to create transfert");
 			return false;
-		}	
-		infos.addMontant(-montant);
-		transferts.put(transfert_id, tf);
-		tf.send();
-		tf.start();
+		}
+		
 		return true;
 	}
 	
@@ -125,7 +135,7 @@ public class Succursale extends Thread implements ISuccursale {
 	public boolean connectToBanque(ConnexionInfo banqueinfo){
 		try {
 			Tunnel tun = new Tunnel(this.infos,banqueinfo);
-			SucHandler job = new SucHandler(tun.getSocket());
+			SucHandler job = new SucHandler(-1);
 			clientjobs.add(job);
 			job.start();
 			connections.put(-1, tun); //banque is -1
@@ -260,14 +270,16 @@ public class Succursale extends Thread implements ISuccursale {
 			try {
 				System.out.println("Succursale listening on host="+infos.getHostname()+" and port="+infos.getPort());
 				clientSocket = serverSocket.accept();
-				
-				SucHandler job = new SucHandler(clientSocket);
+				Tunnel base = new Tunnel(clientSocket);
+				connections.put(-3, base);
+				SucHandler job = new SucHandler(-3);
 				clientjobs.add(job);
 				job.start();
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				System.out.println("Accept fail on Succursale");
+				//e.printStackTrace();
 			}
 		}
 	}
@@ -326,9 +338,9 @@ public class Succursale extends Thread implements ISuccursale {
 						switch(cmd){
 							case "!HELLO":{ //received a create connexion request
 								// save tunnel
-								Tunnel tun = new Tunnel("CONSOLE",clientSocket);
-								connections.put(-2, tun);
-								tun.sendMsg("Welcome !");
+								//Tunnel tun = new Tunnel("CONSOLE",clientSocket);
+								connections.put(-2, tunnel);
+								tunnel.sendMsg("Welcome !");
 								break;
 							}
 							case "!CON":{ //received a create connexion request
@@ -353,7 +365,7 @@ public class Succursale extends Thread implements ISuccursale {
 							case "!TUN":{ //received a tunnel connexion request
 								final int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
-								Tunnel tun = new Tunnel("SUC"+id,clientSocket);
+								Tunnel tun = new Tunnel("SUC"+id,tunnel.getSocket());
 								connections.put(id, tun);
 								break;
 							}
@@ -501,7 +513,7 @@ public class Succursale extends Thread implements ISuccursale {
 						}
 					}
 				} catch (IOException e) {
-					System.err.print("BufferStream as an error, Please reconnect to ="+clientSocket);
+					System.err.print("BufferStream as an error, Please reconnect to ="+tunnel.getSocket());
 					
 					break;
 					//e.printStackTrace();

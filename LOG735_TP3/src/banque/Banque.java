@@ -58,12 +58,10 @@ public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 
 	@Override
 	public String GetSuccursalesInfo() {
-
 		if (suc_Infos != null)
 			return FormatSuccursalesList("|");
 		else
 			throw new NullPointerException("null suc_info");
-
 	}
 
 	public String FormatSuccursalesList(String separator){
