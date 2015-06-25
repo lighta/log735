@@ -300,9 +300,6 @@ public class Succursale extends Thread implements ISuccursale {
 			sched_state = new ScheduleState();
 			sched_state.start();
 		}
-		//else { //maj de la list
-		//	sched_state.setSuccs(this.suc_Infos);
-		//}
 	}
 	
 	@Override
@@ -480,8 +477,10 @@ public class Succursale extends Thread implements ISuccursale {
 									addList(suc);
 									connectToOthers(); //check si deja connecter
 									
+									banqueCon.askTotal();
+									
 									ScheduleTransfert();
-									//ScheduleGetSystemStatus();
+									ScheduleGetSystemStatus();
 	
 									Tunnel tun = consoles.get(-2); //recupere la console
 									if(tun != null){
@@ -589,14 +588,10 @@ public class Succursale extends Thread implements ISuccursale {
 							}
 							case "!SHOWSTATE":{
 								System.out.print("Suc_Info={\n"+infos+"}\n"+"bank_total="+bank_total+"\n");
-								if(banqueCon!=null)
-									banqueCon.askTotal();
 								tunnel.sendMsg(infos.toString());
 								break;
 							}
 							case "!GLOBST":{
-								if(banqueCon!=null)
-									banqueCon.askTotal();
 								getSystemStatus();
 								break;
 							}
