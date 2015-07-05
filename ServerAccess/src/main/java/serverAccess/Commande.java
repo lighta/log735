@@ -37,7 +37,15 @@ public class Commande {
 		/**
 		 * 
 		 */
-		ALIVE
+		ALIVE, 
+		/**
+		 * 
+		 */
+		MESS,
+		/**
+		 * Enable or disable tunnel
+		 */
+		EN_TUN
 	}
 	
 	
