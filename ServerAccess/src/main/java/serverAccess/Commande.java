@@ -15,8 +15,13 @@ public class Commande {
 	private final static String DELIMITER_CHARACTER_END = "";
 	
 	private static Logger log = Logger.getLogger(Commande.class);
-		
-	public enum CommandeType 
+	
+	public interface CommandType{
+		public String name();
+		int ordinal();
+	};
+	
+	public enum ServerCommandeType implements CommandType
 	{
 		/**
 		 * 
@@ -37,22 +42,35 @@ public class Commande {
 		/**
 		 * 
 		 */
-		ALIVE, 
-		/**
-		 * 
-		 */
 		MESS,
 		/**
 		 * Enable or disable tunnel
 		 */
-		EN_TUN
+		EN_TUN, 
+		/**
+		 * 
+		 */
+		ASKID, 
+		/**
+		 *  
+		 */
+		ID,
+		ALIVE 
 	}
 	
 	
-	private CommandeType type;
+	enum internalCommandType implements CommandType
+	{
+		/**
+		 * 
+		 */
+		ALIVE 
+	}
+	
+	private ServerCommandeType type;
 	private String message;
 
-	public Commande(CommandeType type, String mess) {
+	public Commande(ServerCommandeType type, String mess) {
 		this.type = type;
 		this.message = mess;
 	}
@@ -116,7 +134,7 @@ public class Commande {
 					
 					log.debug("Commande type separator found : " + comm );
 					
-					CommandeType ctype = CommandeType.valueOf(comm);
+					ServerCommandeType ctype = ServerCommandeType.valueOf(comm);
 					
 					if(ctype == null){
 						log.debug("Unknown Commande Type : " + comm );
@@ -150,7 +168,7 @@ public class Commande {
 		return "" + DELIMITER_CHARACTER_START + this.type + "#" + this.message + DELIMITER_CHARACTER_END;
 	}
 
-	public CommandeType getType() {
+	public ServerCommandeType getType() {
 		return this.type;
 	}
 	

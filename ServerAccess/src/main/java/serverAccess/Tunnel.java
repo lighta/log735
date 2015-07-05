@@ -9,7 +9,8 @@ import java.util.Observer;
 
 import org.apache.log4j.Logger;
 
-import serverAccess.Commande.CommandeType;
+import serverAccess.Commande.ServerCommandeType;
+import serverAccess.Commande.internalCommandType;
 import service.Service;
 import service.Service.AlreadyStartException;
 
@@ -181,7 +182,7 @@ public class Tunnel extends Observable implements Observer{
 						}
 						else
 						{
-							if(!c.getType().equals(CommandeType.ALIVE)){
+							if(!c.getType().equals(internalCommandType.ALIVE)){
 								log.debug("Notify new commande : " + c );
 								setChanged();
 								notifyObservers(c);
@@ -223,7 +224,7 @@ public class Tunnel extends Observable implements Observer{
 				try {
 					
 					super.wait(WAKEUP_TIMEOUT);
-					this.tun.sendCommande(new Commande(CommandeType.ALIVE, ""));
+					this.tun.sendCommande(new Commande(ServerCommandeType.ALIVE, ""));
 					
 				} catch (InterruptedException e) {
 					log.debug("InterruptedException", e);
