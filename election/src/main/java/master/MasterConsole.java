@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -42,19 +43,14 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	
 	/**
 	 * @param masterConsole 
+	 * @throws IOException 
+	 * @throws UnknownHostException 
 	 * 
 	 */
-	public MasterConsole(ConnexionInfo masterConsoleInfo) {
+	public MasterConsole(ConnexionInfo masterConsoleInfo) throws UnknownHostException, IOException {
 		
-		try {
-			super.openAccesPoint("myBind", masterConsoleInfo);
-			this.myCInfo = masterConsoleInfo;
-			
-		} catch (IOException e) {
-			log.debug("IOException", e);
-			log.info("something went wrong, need to terminate");
-			System.exit(CANNOT_OPEN_ALL_CONNEXION_EXIT_CODE);
-		}
+		super.openAccesPoint("myBind", masterConsoleInfo);
+		this.myCInfo = masterConsoleInfo;
 
 	}
 
@@ -102,46 +98,62 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	 */
 	public static void main(String[] args) {
 		
-		
-		
-		
-		ConnexionInfo masterConsoleInfo = null;	
-		
-		if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
-			masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
-		else{
+		try {
+			ConnexionInfo masterConsoleInfo = null;	
+			System.out.println("use default bind ?");
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+			String use_default = in.readLine();
 			
-			System.out.println("bind ip address ?");
-			String host;
-			
-			while(true){
-				try {
-					host = in.readLine();
-					masterConsoleInfo = parseBindAddress(host);
-					break;
-				} catch (IOException e) {
-					continue;
+			if(!use_default.equalsIgnoreCase("N")){
+				Properties configFile = new Properties();
+				
+				configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("master/hostname.properties"));
+				String hostname = configFile.getProperty("bind_hostname");
+				int port = Integer.parseInt(configFile.getProperty("bind_port"));
+				masterConsoleInfo = new ConnexionInfo(hostname, port);
+				
+			}else if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
+				masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
+			else{
+				
+				
+				System.out.println("bind ip address ?");
+				String host;
+				
+				while(true){
+					try {
+						host = in.readLine();
+						masterConsoleInfo = parseBindAddress(host);
+						break;
+					} catch (IOException e) {
+						continue;
+					}
+					
 				}
+	
+				int port = -1;
+				while(masterConsoleInfo == null){
+					System.out.println("bind port ?");
+					try {
+						port = Integer.parseInt(in.readLine());
+						break;
+					} catch (NumberFormatException | IOException e) {
+						continue;
+					}
+				}
+				if(masterConsoleInfo == null)
+					masterConsoleInfo = new ConnexionInfo(host,port);
 				
 			}
-
-			int port = -1;
-			while(masterConsoleInfo == null){
-				System.out.println("bind port ?");
-				try {
-					port = Integer.parseInt(in.readLine());
-					break;
-				} catch (NumberFormatException | IOException e) {
-					continue;
-				}
-			}
-			if(masterConsoleInfo == null)
-				masterConsoleInfo = new ConnexionInfo(host,port);
 			
+			new MasterConsole(masterConsoleInfo);
+			
+		} catch (IOException e) {
+			log.debug("IOException", e);
+			log.info("something went wrong, need to terminate");
+			System.exit(CANNOT_OPEN_ALL_CONNEXION_EXIT_CODE);
 		}
-		new MasterConsole(masterConsoleInfo);
-
+		
 	}
 	
 	private static ConnexionInfo parseBindAddress(String s) {
