@@ -15,13 +15,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Random;
 
+import server_access.Commande;
+import server_access.ConnexionInfo;
+import server_access.Tunnel;
+import server_access.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.Transfert.transfert_state;
-import connexion.Commande;
-import connexion.Commande.CommandeType;
-import connexion.ConnexionInfo;
-import connexion.Tunnel;
 
 
 public class Succursale extends Thread implements ISuccursale {
@@ -237,7 +237,7 @@ public class Succursale extends Thread implements ISuccursale {
 	public boolean connectToOthers(){
 		for(Entry<Integer,SuccursalesInfo> suc : suc_Infos.entrySet()){
 			SuccursalesInfo info = suc.getValue();		
-			if(info.getId() != this.infos.getId()){ //on evite le cas d'erreur dela connexion a nous meme
+			if(info.getId() != this.infos.getId()){ //on evite le cas d'erreur dela server_access a nous meme
 				final int res = connectTo(info);
 				switch(res){
 					case 0: break; //sucess
@@ -425,14 +425,14 @@ public class Succursale extends Thread implements ISuccursale {
 						}
 						
 						switch(cmd){
-							case "!HELLO":{ //received a create connexion request
+							case "!HELLO":{ //received a create server_access request
 								// save tunnel
 								//Tunnel tun = new Tunnel("CONSOLE",clientSocket);
 								consoles.put(-2, tunnel);
 								tunnel.sendMsg("Welcome ! to Succursale");
 								break;
 							}
-							case "!CON":{ //received a create connexion request
+							case "!CON":{ //received a create server_access request
 								String host = DEF_BANK_IP;
 								int port = DEF_BANK_PORT;
 								if(part.length > 1){
@@ -448,7 +448,7 @@ public class Succursale extends Thread implements ISuccursale {
 								tunnel.sendCONACK(infos.getId(),res);
 								break;
 							}
-							case "!TUN":{ //received a tunnel connexion request
+							case "!TUN":{ //received a tunnel server_access request
 								final int id = Integer.parseInt(part[1]);
 								System.out.println("id="+id);
 								Tunnel tun = new Tunnel("SUC"+id,tunnel.getSocket());

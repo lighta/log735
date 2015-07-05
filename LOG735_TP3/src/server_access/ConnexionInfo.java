@@ -1,4 +1,4 @@
-package connexion;
+package server_access;
 
 public class ConnexionInfo {
 	

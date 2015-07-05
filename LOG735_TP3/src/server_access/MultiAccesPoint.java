@@ -1,7 +1,7 @@
 /**
  * 
  */
-package connexion;
+package server_access;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -42,7 +42,7 @@ public abstract class MultiAccesPoint implements Observer {
 	}
 	
 	/**
-	 * start service connexion acceptation
+	 * start service server_access acceptation
 	 * @param name
 	 * @param LocalcInfo
 	 * @throws UnknownHostException

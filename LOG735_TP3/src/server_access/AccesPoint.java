@@ -1,4 +1,4 @@
-package connexion;
+package server_access;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
+
 
 import logs.Logger;
 import services.Service;

@@ -1,4 +1,4 @@
-package connexion;
+package server_access;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -9,7 +9,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import logs.Logger;
-import connexion.Commande.CommandeType;
+import server_access.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
