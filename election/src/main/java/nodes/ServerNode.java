@@ -121,10 +121,7 @@ public class ServerNode extends MultiAccesPoint {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
-		
-		PropertyConfigurator.configure("config/log4j.conf");
-		
+				
 		ConnexionInfo masterConsoleInfo;
 		
 		String host = "";
@@ -134,7 +131,7 @@ public class ServerNode extends MultiAccesPoint {
 		
 		ConnexionInfo myCInfo = null;
 		
-		if(args.length>=MASTER_CONSOLE_INDEX_ARGS-1)		
+		if(args.length>MASTER_CONSOLE_INDEX_ARGS)	// don't use 	args.length>=MASTER_CONSOLE_INDEX_ARGS-1
 			masterConsoleInfo = parseBindAddress(args[BIND_ADDRESS_INDEX_ARGS]);
 		else{
 
@@ -144,14 +141,13 @@ public class ServerNode extends MultiAccesPoint {
 				try {
 					host = in.readLine();
 					myCInfo = parseBindAddress(host);
-					if(myCInfo != null)
-						break;
+					break;
 				} catch (IOException e) {
 					continue;
 				}
 			}
 
-			while(true){
+			while(myCInfo == null){
 				System.out.println("bind port ?");
 				try {
 					port = Integer.parseInt(in.readLine());
@@ -169,7 +165,7 @@ public class ServerNode extends MultiAccesPoint {
 		host = "";
 		port = -1;
 		
-		if(args.length>=MASTER_CONSOLE_INDEX_ARGS-1)		
+		if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
 			masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
 		else{
 			
@@ -179,14 +175,13 @@ public class ServerNode extends MultiAccesPoint {
 				try {
 					host = in.readLine();
 					masterConsoleInfo = parseBindAddress(host);
-					if(masterConsoleInfo != null)
-						break;
+					break;
 				} catch (IOException e) {
 					continue;
 				}
 			}
 
-			while(true){
+			while(masterConsoleInfo ==  null){
 				System.out.println("masterConsole port ?");
 				try {
 					port = Integer.parseInt(in.readLine());
@@ -215,7 +210,8 @@ public class ServerNode extends MultiAccesPoint {
 	private static ConnexionInfo parseBindAddress(String s) {
 		
 		String[] info = s.split(IP_PORT_DELIMITER);
-		
+		if(info.length != 2)
+			return null;
 		if(info[0] != null){
 			String hostname = info[0];
 			if(info[1] != null){
