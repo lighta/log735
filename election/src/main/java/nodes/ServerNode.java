@@ -17,11 +17,14 @@ import master.MasterConsole;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import console.ConsoleService;
 import serverAccess.Commande;
-import serverAccess.Commande.CommandeType;
+import serverAccess.Commande.ServerCommandeType;
 import serverAccess.ConnexionInfo;
 import serverAccess.MultiAccesPoint;
 import serverAccess.Tunnel;
+import service.Service;
+import service.Service.AlreadyStartException;
 
 
 /**
@@ -39,7 +42,7 @@ public class ServerNode extends MultiAccesPoint {
 	private final static int MASTER_CONSOLE_INDEX_ARGS = 0;
 	private final static int BIND_ADDRESS_INDEX_ARGS = 1;
 	
-	
+	private String id;
 	private ConnexionInfo myCInfo;
 	private ConnexionInfo masterConsoleCInfo; 
 	private Tunnel masterConsoleTunnel;
@@ -49,16 +52,17 @@ public class ServerNode extends MultiAccesPoint {
 	
 	
 	/**
+	 * @throws IOException 
 	 * 
 	 */
 	public ServerNode(ConnexionInfo masterConsoleInfo, ConnexionInfo myCInfo,
-			List<ConnexionInfo> neighboursCInfo) {
+			List<ConnexionInfo> neighboursCInfo) throws IOException {
 		
-		try {
+		
 			super.openAccesPoint("myBind", myCInfo);
 			this.myCInfo = myCInfo;
 			
-			super.connectTo("masterConsole", masterConsoleInfo);
+			masterConsoleTunnel = super.connectTo("masterConsole", masterConsoleInfo);
 			this.masterConsoleCInfo = masterConsoleInfo;
 			
 			this.neighboursCInfo = new HashMap<String, ConnexionInfo>();
@@ -67,17 +71,20 @@ public class ServerNode extends MultiAccesPoint {
 				this.neighboursCInfo.put(connexionInfo.getHostname(), connexionInfo);
 			}
 			
-		} catch (IOException e) {
-			log.debug("IOException", e);
-			log.info("something went wrong, need to terminate");
-			System.exit(CANNOT_OPEN_ALL_CONNEXION_EXIT_CODE);
-		}
-		
-		
+			askId();
+			
+			startDefaultConsole();
 		
 	}
 
 	
+	private void askId() throws IOException {
+		Commande c = new Commande(ServerCommandeType.ASKID,"");
+		masterConsoleTunnel.sendCommande(c);
+	}
+	
+
+
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		if(this.neighboursCInfo.containsKey(tun.getcInfoDist().getHostname()))
@@ -91,7 +98,7 @@ public class ServerNode extends MultiAccesPoint {
 		Commande c = null;
 		switch (comm.getType()) {
 			case HELLO:
-				c= new Commande(CommandeType.MESS, "HELLO");
+				c= new Commande(ServerCommandeType.MESS, "HELLO");
 				break;
 			case RESTART:
 				
@@ -104,8 +111,10 @@ public class ServerNode extends MultiAccesPoint {
 				break;
 			case EN_TUN:
 				
+				break;				
+			case ID:
+				this.id = comm.getMessageContent();
 				break;
-	
 			default:
 				break;
 		}
@@ -120,6 +129,19 @@ public class ServerNode extends MultiAccesPoint {
 	}
 	
 	
+	private void startDefaultConsole() {
+		
+		Service defaultConsoleService = new ConsoleService("Console for me");
+			try {
+				Service.startService(defaultConsoleService);
+			} catch (AlreadyStartException e) {
+				// TODO Auto-generated catch block
+				log.debug("AlreadyStartException",e);
+			}
+
+	}
+
+
 	/**
 	 * @param args
 	 */

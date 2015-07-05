@@ -21,7 +21,7 @@ import serverAccess.Commande;
 import serverAccess.ConnexionInfo;
 import serverAccess.MultiAccesPoint;
 import serverAccess.Tunnel;
-import serverAccess.Commande.CommandeType;
+import serverAccess.Commande.ServerCommandeType;
 
 /**
  * @author MisterTim
@@ -65,7 +65,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		Commande c = null;
 		switch (comm.getType()) {
 			case HELLO:
-				c= new Commande(CommandeType.MESS, "HELLO");
+				c= new Commande(ServerCommandeType.MESS, "HELLO");
 				break;
 			case RESTART:
 				
