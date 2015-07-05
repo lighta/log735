@@ -32,6 +32,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="/log4j"/>
+	<classpathentry kind="lib" path="/Ressources/libs"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
