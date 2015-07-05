@@ -1,4 +1,4 @@
-package server_access;
+package serverAccess;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -10,13 +10,18 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 
-import logs.Logger;
-import services.Service;
-import services.Service.AlreadyStartException;
+
+
+
+
+import org.apache.log4j.Logger;
+
+import service.Service;
+import service.Service.AlreadyStartException;
 
 public class AccesPoint extends Observable implements Observer {
 	
-	private static Logger log = Logger.createLog(AccesPoint.class);
+	private static Logger log = Logger.getLogger(AccesPoint.class);
 	
 	private AcceptConnexionService acceptServ;
 	private List<CreateConnexionService> createConnServices;
@@ -33,7 +38,7 @@ public class AccesPoint extends Observable implements Observer {
 	public AccesPoint(String name,ConnexionInfo localcInfo){
 		this(name);
 		this.localcInfo = localcInfo;
-		log.message("Acces point created");
+		log.debug("Acces point created");
 	}
 	
 	public void finalyze(){
@@ -49,25 +54,25 @@ public class AccesPoint extends Observable implements Observer {
 	
 	public void acceptConnexion() throws UnknownHostException, IOException {
 		
-		log.message("create service AcceptConnexionService");
+		log.debug("create service AcceptConnexionService");
 		acceptServ = new AcceptConnexionService(name, localcInfo.getHostname(), localcInfo.getPort());
 		acceptServ.addObserver(this);
 		try {
-			log.message("Try to start service ( " + acceptServ.getName() + " )");
+			log.debug("Try to start service ( " + acceptServ.getName() + " )");
 			Service.startService(acceptServ);
 		} catch (AlreadyStartException e) {
-			e.printStackTrace();
+			log.debug("", e);
 		}
 
 	}
 	
 	public Tunnel connectTo(ConnexionInfo cInfo) throws IOException
 	{
-		log.message("Try to connect to " + cInfo);
+		log.debug("Try to connect to " + cInfo);
 		Socket clientSocket = new Socket(cInfo.getHostname(), cInfo.getPort());
-		log.message("Connected to " + cInfo);
+		log.debug("Connected to " + cInfo);
 		Tunnel t = new Tunnel("@tun-"+Math.random(),(Socket) clientSocket);
-		log.message("Tunnel communication created ( " + t + " )");
+		log.debug("Tunnel communication created ( " + t + " )");
 		return t;
 	}
 	
@@ -92,7 +97,7 @@ public class AccesPoint extends Observable implements Observer {
 		if(o instanceof AcceptConnexionService){
 			//AcceptConnexionService acs = (AcceptConnexionService) o;
 			if(arg instanceof Tunnel){
-				log.message("new tunnel created "+ arg);
+				log.debug("new tunnel created "+ arg);
 				setChanged();
 				notifyObservers(arg);
 
@@ -127,7 +132,7 @@ public class AccesPoint extends Observable implements Observer {
 					setChanged();
 					notifyObservers(t);
 				} catch (IOException e) {
-					log.message("Fail to connect ");
+					log.debug("Fail to connect ",e);
 					//e.printStackTrace();
 				}
 			
