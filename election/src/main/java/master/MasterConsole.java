@@ -7,12 +7,14 @@ package master;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.UnknownHostException;
+import java.net.URL;
 import java.util.Map;
+import java.util.Properties;
 
 import nodes.ServerNode;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
 import serverAccess.Commande;
 import serverAccess.ConnexionInfo;
@@ -94,17 +96,18 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 			}
 		}
 	}
-	
-	
-	
+		
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 		
+		
+		
+		
 		ConnexionInfo masterConsoleInfo = null;	
 		
-		if(args.length>=MASTER_CONSOLE_INDEX_ARGS-1)		
+		if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
 			masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
 		else{
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
@@ -116,15 +119,15 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				try {
 					host = in.readLine();
 					masterConsoleInfo = parseBindAddress(host);
-					if(masterConsoleInfo != null)
-						break;
+					break;
 				} catch (IOException e) {
 					continue;
 				}
+				
 			}
 
 			int port = -1;
-			while(true){
+			while(masterConsoleInfo == null){
 				System.out.println("bind port ?");
 				try {
 					port = Integer.parseInt(in.readLine());
@@ -144,7 +147,8 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	private static ConnexionInfo parseBindAddress(String s) {
 		
 		String[] info = s.split(IP_PORT_DELIMITER);
-		
+		if(info.length != 2)
+			return null;
 		if(info[0] != null){
 			String hostname = info[0];
 			if(info[1] != null){
