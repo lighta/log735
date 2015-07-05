@@ -9,6 +9,7 @@ import java.util.Observer;
 
 import org.apache.log4j.Logger;
 
+import serverAccess.Commande.CommandeType;
 import service.Service;
 import service.Service.AlreadyStartException;
 
@@ -86,14 +87,6 @@ public class Tunnel extends Observable implements Observer{
 		return name_id;
 	}
 	
-	/**
-	 * @deprecated instead of destroy let the garbage collector do the clean up with finalize() 
-	 */
-	@Deprecated 
-	public void destroy(){ //clean up all ressource
-		closeSocket();
-	}
-	
 	private void closeSocket() {
 		try {
 			if (out != null)
@@ -118,24 +111,7 @@ public class Tunnel extends Observable implements Observer{
 
 	@Override
 	protected void finalize() throws Throwable {
-		try {
-			if (out != null)
-				out.close();
-		} catch (Exception e) {
-			// On ignore
-		}
-		try {
-			if (in != null)
-				in.close();
-		} catch (Exception e) {
-			// On ignore
-		}
-		try {
-			if (socket != null)
-				socket.close();
-		} catch (Exception e) {
-			// On ignore
-		}
+		closeSocket();
 		super.finalize();
 	}
 	
@@ -168,9 +144,9 @@ public class Tunnel extends Observable implements Observer{
 		if(o instanceof WaitMessageService){
 			//AcceptConnexionService acs = (AcceptConnexionService) o;
 			if(arg instanceof Commande){
-					log.debug("Commande receive : " + arg +" notifyObservers");
-					setChanged();
-					notifyObservers(arg);
+				log.debug("Commande receive : " + arg +" notifyObservers");
+				setChanged();
+				notifyObservers(arg);
 			}
 			
 		}
@@ -198,17 +174,18 @@ public class Tunnel extends Observable implements Observer{
 				try {
 					if(inputStream.available() > 1){
 						
-						Commande m = Commande.ParseCommande(inputStream);
-						if(m == null)
+						Commande c = Commande.ParseCommande(inputStream);
+						if(c == null)
 						{
 							log.debug("null Commande" );
 						}
 						else
 						{
-							log.debug("Notify new commande : " + m );
-							setChanged();
-							notifyObservers(m);
-							
+							if(!c.getType().equals(CommandeType.ALIVE)){
+								log.debug("Notify new commande : " + c );
+								setChanged();
+								notifyObservers(c);
+							}
 						}
 					}
 					
@@ -232,9 +209,11 @@ public class Tunnel extends Observable implements Observer{
 
 		private Logger log = Logger.getLogger(WaitMessageService.class);
 				
+		private Tunnel tun;
+		
 		public AliveService(Tunnel tun) {
 			super("AliveService for tunnel " + tun.toString() );
-			
+			this.tun = tun;
 		}
 
 		@Override
@@ -242,9 +221,15 @@ public class Tunnel extends Observable implements Observer{
 			while(super.getCurrentState() != ServiceState.ENDING)
 			{
 				try {
+					
 					super.wait(WAKEUP_TIMEOUT);
+					this.tun.sendCommande(new Commande(CommandeType.ALIVE, ""));
+					
 				} catch (InterruptedException e) {
-					log.debug("", e);
+					log.debug("InterruptedException", e);
+				} catch (IOException e) {
+					log.debug("IOException", e);
+					Service.stopService(this);
 				}
 			}
 		}
