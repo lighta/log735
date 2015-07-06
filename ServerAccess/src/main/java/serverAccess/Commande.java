@@ -90,7 +90,7 @@ public class Commande {
 	 * @return new Message or null if an error occurs
 	 * @throws IOException 
 	 */
-	static Commande ParseCommande(InputStream inputStream) throws IOException
+	public static Commande ParseCommande(InputStream inputStream) throws IOException
 	{
 		log.debug("Try to parse commande" );
 		
@@ -100,9 +100,9 @@ public class Commande {
 			return null;
 		}
 		
-		if(inputStream.available() < 1){
-			return null;
-		}
+//		if(inputStream.available() < 1){
+//			return null;
+//		}
 		
 		try {
 			

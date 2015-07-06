@@ -9,7 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Properties;
 
 import nodes.ServerNode;
@@ -17,11 +19,15 @@ import nodes.ServerNode;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import console.ConsoleService;
+import serverAccess.AccesPoint;
 import serverAccess.Commande;
 import serverAccess.ConnexionInfo;
 import serverAccess.MultiAccesPoint;
 import serverAccess.Tunnel;
 import serverAccess.Commande.ServerCommandeType;
+import service.Service;
+import service.Service.AlreadyStartException;
 
 /**
  * @author MisterTim
@@ -36,6 +42,8 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	private final static String IP_PORT_DELIMITER = ":";
 	
 	private final static int MASTER_CONSOLE_INDEX_ARGS = 0;
+
+	private static int currentNodeId = 0;
 	
 	private ConnexionInfo myCInfo;
 	
@@ -51,13 +59,61 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		
 		super.openAccesPoint("myBind", masterConsoleInfo);
 		this.myCInfo = masterConsoleInfo;
-
+		
+		this.nodesTunnel = new HashMap<>();
+		
+		startDefaultConsole();
+		
 	}
 
+	private void startDefaultConsole() {
+		
+			try {
+				Service defaultConsoleService = new ConsoleService("Console for me");
+				Service.startService(defaultConsoleService);
+				defaultConsoleService.addObserver(this);
+			} catch (AlreadyStartException e) {
+				// TODO Auto-generated catch block
+				log.debug("AlreadyStartException",e);
+			}
+			
+	}
+	
+	@Override
+	public void update(Observable obj, Object arg) {
+		
+		if(obj instanceof ConsoleService){
+			ConsoleService cs = (ConsoleService) obj;
+			
+				if(arg instanceof Commande){
+					Commande c = (Commande) arg;
+					String[] content = c.getMessageContent().split(":");
+					
+					if(content[0].equals("0"))
+						commandeReceiveFrom(c, null);
+					else
+						for (Tunnel tunn : this.nodesTunnel.values()) {
+							try {
+								
+								tunn.sendCommande(c);
+								
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								log.debug("IOException",e);
+							}
+						}
+										
+				}
+		}else{
+			
+			super.update(obj, arg);
+			
+		}
+	}
 	
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
-		
+		this.nodesTunnel.put(tun.getcInfoDist().getHostname(), tun);
 	}
 
 	@Override
@@ -68,19 +124,21 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				c= new Commande(ServerCommandeType.MESS, "HELLO");
 				break;
 			case RESTART:
-				
+				System.out.println("RESTART");
 				break;
 			case STATE:
-				
+				System.out.println("STATE");
 				break;
 			case STOP:
-				
+				System.out.println("STOP");
 				break;
 			case EN_TUN:
-				
+				System.out.println("STOP");
 				break;
-	
+			case ASKID:
+				c = new Commande(ServerCommandeType.ID, generateID());
 			default:
+				System.out.println(comm.getType().name());
 				break;
 		}
 		
@@ -93,6 +151,10 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		}
 	}
 		
+	private String generateID() {
+		return "" + ++MasterConsole.currentNodeId ;
+	}
+
 	/**
 	 * @param args
 	 */
@@ -147,6 +209,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 			}
 			
 			new MasterConsole(masterConsoleInfo);
+			
 			
 		} catch (IOException e) {
 			log.debug("IOException", e);
