@@ -4,14 +4,14 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.Scanner;
 
+import server_access.AccesPoint;
+import server_access.Commande;
+import server_access.ConnexionInfo;
+import server_access.MultiAccesPoint;
+import server_access.Tunnel;
+import server_access.Commande.CommandeType;
 import banque.Banque;
 import logs.Logger;
-import connexion.AccesPoint;
-import connexion.Commande;
-import connexion.Commande.CommandeType;
-import connexion.ConnexionInfo;
-import connexion.MultiAccesPoint;
-import connexion.Tunnel;
 
 public class ConsoleInterpreter extends MultiAccesPoint {
 

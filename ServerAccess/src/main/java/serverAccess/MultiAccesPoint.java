@@ -1,7 +1,7 @@
 /**
  * 
  */
-package connexion;
+package serverAccess;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -11,7 +11,8 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
-import logs.Logger;
+import org.apache.log4j.Logger;
+
 
 /**
  * @author AJ98150
@@ -19,7 +20,7 @@ import logs.Logger;
  */
 public abstract class MultiAccesPoint implements Observer {
 	
-	private static Logger log = Logger.createLog(MultiAccesPoint.class);
+	private static Logger log = Logger.getLogger(MultiAccesPoint.class);
 	
 	private Map<String,AccesPoint> _accesPoints;
 	
@@ -42,14 +43,14 @@ public abstract class MultiAccesPoint implements Observer {
 	}
 	
 	/**
-	 * start service connexion acceptation
+	 * start service server_access acceptation
 	 * @param name
 	 * @param LocalcInfo
 	 * @throws UnknownHostException
 	 * @throws IOException
 	 */
 	public void openAccesPoint(String name,ConnexionInfo LocalcInfo) throws UnknownHostException, IOException {
-		log.message("Try to open access point");
+		log.debug("Try to open access point");
 		AccesPoint ap = new AccesPoint(name,LocalcInfo);
 		ap.addObserver(this);
 		ap.acceptConnexion();
@@ -91,7 +92,7 @@ public abstract class MultiAccesPoint implements Observer {
 			if(arg instanceof Tunnel){
 
 				Tunnel tun = (Tunnel) arg;
-				log.message("new tunnel "+ tun + " arg created from " + ap);
+				log.debug("new tunnel "+ tun + " arg created from " + ap);
 				
 				int localPort = tun.getcInfoLocal().getPort();
 				useLocalPort(localPort);
@@ -105,7 +106,7 @@ public abstract class MultiAccesPoint implements Observer {
 			useLocalPort(tun.getcInfoLocal().getPort());
 			
 			if(arg instanceof Commande){
-				log.message("Commande " + arg + " receive from tunnel" + tun);
+				log.debug("Commande " + arg + " receive from tunnel" + tun);
 				Commande comm = (Commande) arg;
 				commandeReceiveFrom(comm,tun);
 			}

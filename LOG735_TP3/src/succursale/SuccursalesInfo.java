@@ -1,5 +1,5 @@
 package succursale;
-import connexion.ConnexionInfo;
+import server_access.ConnexionInfo;
 
 public class SuccursalesInfo extends ConnexionInfo {
 	int Id = 0; //undefined

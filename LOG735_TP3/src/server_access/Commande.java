@@ -1,4 +1,4 @@
-package connexion;
+package server_access;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -18,7 +18,7 @@ public class Commande {
 	public enum CommandeType
 	{
 		/**
-		 * suc->suc, receive connexion request
+		 * suc->suc, receive server_access request
 		 */
 		TUN,
 		/**
@@ -54,7 +54,7 @@ public class Commande {
 		 */
 		TFDONE,
 		/**
-		 * con->suc, demande d'une creation de connexion de la succursale a la banque
+		 * con->suc, demande d'une creation de server_access de la succursale a la banque
 		 */
 		CON,
 		/**
@@ -82,7 +82,7 @@ public class Commande {
 		 */
 		SETMACK,
 		/**
-		 * con->bnk, demande de creation de connexion entre succursale et banque
+		 * con->bnk, demande de creation de server_access entre succursale et banque
 		 */
 		CRCON,
 		/**

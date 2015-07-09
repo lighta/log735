@@ -1,6 +1,6 @@
 package succursale;
 
-import connexion.Tunnel;
+import server_access.Tunnel;
 
 public class Transfert extends Thread {
 	public static enum transfert_state { INIT,SEND,ACK};

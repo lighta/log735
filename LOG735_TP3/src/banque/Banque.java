@@ -5,14 +5,14 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import logs.Logger;
+import server_access.Commande;
+import server_access.ConnexionInfo;
+import server_access.MultiAccesPoint;
+import server_access.Tunnel;
+import server_access.Commande.CommandeType;
 import services.Service;
 import services.Service.AlreadyStartException;
 import succursale.SuccursalesInfo;
-import connexion.Commande;
-import connexion.Commande.CommandeType;
-import connexion.ConnexionInfo;
-import connexion.MultiAccesPoint;
-import connexion.Tunnel;
 
 public class Banque extends MultiAccesPoint implements IBanque, IConsoleBanque {
 	private HashMap<Integer, SuccursalesInfo> suc_Infos;
