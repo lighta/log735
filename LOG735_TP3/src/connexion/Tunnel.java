@@ -29,7 +29,7 @@ public class Tunnel extends Observable implements Observer{
 	private WaitMessageService wMessService = null;
 	
 	//connection entre succursale et banque
-	public Tunnel(SuccursalesInfo s1,ConnexionInfo s2) throws IOException {
+	public Tunnel(ConnexionInfo s1,ConnexionInfo s2) throws IOException {
 		super();
 		this.socket = new Socket(s2.getHostname(), s2.getPort());
 		out = new BufferedOutputStream(socket.getOutputStream());
@@ -37,24 +37,6 @@ public class Tunnel extends Observable implements Observer{
 		
 		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostAddress(), socket.getPort());
 		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
-		
-		askRegister( s1.getMontant() ); //demande notre ID
-	}
-
-	
-
-	//constructeur pour emetteur
-	public Tunnel(SuccursalesInfo s1, SuccursalesInfo s2) throws IOException {
-		super();
-		this.socket = new Socket(s2.getHostname(), s2.getPort());
-		out = new BufferedOutputStream(socket.getOutputStream());
-		in = new BufferedInputStream(socket.getInputStream());
-		
-		cInfoDist = new ConnexionInfo(socket.getInetAddress().getHostAddress(), socket.getPort());
-		cInfoLocal = new ConnexionInfo(socket.getLocalAddress().getHostAddress(), socket.getLocalPort());
-		
-		
-		askTunnel(s1);
 	}
 	
 	/**
@@ -204,12 +186,12 @@ public class Tunnel extends Observable implements Observer{
 		sendCommande(new Commande(CommandeType.TFSUC, "" + id+":"+montant+":"+ack+":"+transfert_id ));
 	}
 	
-	private void askRegister(int montant) {
+	public void askRegister(int montant) {
 		sendCommande(new Commande(CommandeType.REG, "" + montant ));
 	}
 	
-	private void askTunnel(SuccursalesInfo s1) {
-		sendCommande(new Commande(CommandeType.TUN, "" + s1.getId()));
+	public void askTunnel(int id) {
+		sendCommande(new Commande(CommandeType.TUN, "" +id));
 	}
 	
 	public void askTotal() {

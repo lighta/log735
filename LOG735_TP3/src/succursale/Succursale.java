@@ -204,6 +204,7 @@ public class Succursale extends Thread implements ISuccursale {
 			SucHandler job = new SucHandler(tun);
 			clientjobs.add(job);
 			job.start();
+			banqueCon.askRegister( this.infos.getMontant() ); //demande notre ID
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return false;
@@ -227,6 +228,7 @@ public class Succursale extends Thread implements ISuccursale {
 			SucHandler job = new SucHandler(info.getId());
 			clientjobs.add(job);
 			job.start();
+			tun.askTunnel(this.infos.getId());
 		} catch (IOException e) {
 			//e.printStackTrace();
 			return -3;
@@ -300,9 +302,6 @@ public class Succursale extends Thread implements ISuccursale {
 			sched_state = new ScheduleState();
 			sched_state.start();
 		}
-		//else { //maj de la list
-		//	sched_state.setSuccs(this.suc_Infos);
-		//}
 	}
 	
 	@Override
@@ -481,7 +480,7 @@ public class Succursale extends Thread implements ISuccursale {
 									connectToOthers(); //check si deja connecter
 									
 									ScheduleTransfert();
-									//ScheduleGetSystemStatus();
+									ScheduleGetSystemStatus();
 	
 									Tunnel tun = consoles.get(-2); //recupere la console
 									if(tun != null){
