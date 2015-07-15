@@ -83,14 +83,11 @@ public class ServerNode extends MultiAccesPoint {
 		masterConsoleTunnel.sendCommande(c);
 	}
 	
-
-
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		if(this.neighboursCInfo.containsKey(tun.getcInfoDist().getHostname()))
 			this.neighboursTunnel.put(tun.getcInfoDist().getHostname(), tun);
 	}
-
 
 	@Override
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
@@ -98,7 +95,7 @@ public class ServerNode extends MultiAccesPoint {
 		Commande c = null;
 		switch (comm.getType()) {
 			case HELLO:
-				c= new Commande(ServerCommandeType.MESS, "HELLO");
+				c= new Commande(ServerCommandeType.MESS, "HELLO !!!");
 				break;
 			case RESTART:
 				
@@ -132,6 +129,7 @@ public class ServerNode extends MultiAccesPoint {
 	private void startDefaultConsole() {
 		
 		Service defaultConsoleService = new ConsoleService("Console for me");
+		defaultConsoleService.addObserver(this);
 			try {
 				Service.startService(defaultConsoleService);
 			} catch (AlreadyStartException e) {
@@ -206,8 +204,8 @@ public class ServerNode extends MultiAccesPoint {
 				Properties configFile = new Properties();
 				
 				configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
-				hostname = configFile.getProperty("bind_hostname");
-				port = Integer.parseInt(configFile.getProperty("bind_port"));
+				hostname = configFile.getProperty("masterConsole_hostname");
+				port = Integer.parseInt(configFile.getProperty("masterConsole_port"));
 				masterConsoleInfo = new ConnexionInfo(hostname, port);
 				
 			}else if(args.length>MASTER_CONSOLE_INDEX_ARGS)		

@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.concurrent.Callable;
+import java.util.concurrent.FutureTask;
 
 import org.apache.log4j.Logger;
 
@@ -71,6 +73,7 @@ public abstract class MultiAccesPoint implements Observer {
 		AccesPoint ap = new AccesPoint(name_id,cInfo);
 		
 		Tunnel tun = ap.connectTo(cInfo);
+		tun.addObserver(this);
 		useLocalPort(tun.getcInfoLocal().getPort());
 		return tun;
 	}
@@ -92,6 +95,7 @@ public abstract class MultiAccesPoint implements Observer {
 			if(arg instanceof Tunnel){
 
 				Tunnel tun = (Tunnel) arg;
+				tun.addObserver(this);
 				log.debug("new tunnel "+ tun + " arg created from " + ap);
 				
 				int localPort = tun.getcInfoLocal().getPort();

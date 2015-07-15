@@ -11,6 +11,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Observable;
 import java.util.Properties;
 
@@ -70,8 +71,8 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		
 			try {
 				Service defaultConsoleService = new ConsoleService("Console for me");
-				Service.startService(defaultConsoleService);
 				defaultConsoleService.addObserver(this);
+				Service.startService(defaultConsoleService);
 			} catch (AlreadyStartException e) {
 				// TODO Auto-generated catch block
 				log.debug("AlreadyStartException",e);
@@ -91,18 +92,20 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 					
 					if(content[0].equals("0"))
 						commandeReceiveFrom(c, null);
-					else
-						for (Tunnel tunn : this.nodesTunnel.values()) {
+					else{
+						log.debug("starting to broadcast ... ");
+						for (Entry<String, Tunnel> tunn : this.nodesTunnel.entrySet()) {
 							try {
 								
-								tunn.sendCommande(c);
+								log.debug("Sending to : " + tunn.getKey());
+								tunn.getValue().sendCommande(c);
 								
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								log.debug("IOException",e);
 							}
 						}
-										
+					}				
 				}
 		}else{
 			
@@ -113,6 +116,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
+		log.debug("put new node tunnel : " + tun.getcInfoDist().getHostname());
 		this.nodesTunnel.put(tun.getcInfoDist().getHostname(), tun);
 	}
 
@@ -121,7 +125,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		Commande c = null;
 		switch (comm.getType()) {
 			case HELLO:
-				c= new Commande(ServerCommandeType.MESS, "HELLO");
+				c= new Commande(ServerCommandeType.MESS, "HELLO !!!");
 				break;
 			case RESTART:
 				System.out.println("RESTART");
@@ -136,6 +140,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				System.out.println("STOP");
 				break;
 			case ASKID:
+				log.debug("reply ID");
 				c = new Commande(ServerCommandeType.ID, generateID());
 			default:
 				System.out.println(comm.getType().name());
