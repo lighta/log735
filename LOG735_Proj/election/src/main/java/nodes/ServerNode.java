@@ -29,7 +29,6 @@ import service.Service.AlreadyStartException;
 
 /**
  * @author MisterTim
- *
  */
 public class ServerNode extends MultiAccesPoint {
 
@@ -52,12 +51,19 @@ public class ServerNode extends MultiAccesPoint {
 	
 	
 	/**
-	 * @throws IOException 
+	 * ServerNode constructor
+	 * ???
+	 * Creer un accesspoint sur myCInfo, 
+	 * se connectes a tous ses voisins 
+	 * puis demande un ID et demarre une console
 	 * 
+	 * @param masterConsoleInfo : adresse de la masterconsole 
+	 * @param myCInfo : adresse de bind du node
+	 * @param neighboursCInfo : liste d'adresse des voisins
+	 * @throws IOException 
 	 */
 	public ServerNode(ConnexionInfo masterConsoleInfo, ConnexionInfo myCInfo,
 			List<ConnexionInfo> neighboursCInfo) throws IOException {
-		
 		
 			super.openAccesPoint("myBind", myCInfo);
 			this.myCInfo = myCInfo;
@@ -71,63 +77,73 @@ public class ServerNode extends MultiAccesPoint {
 				this.neighboursCInfo.put(connexionInfo.getHostname(), connexionInfo);
 			}
 			
-			askId();
-			
+			askId();	
 			startDefaultConsole();
-		
 	}
 
-	
+	/**
+	 * Demande au masterConsoleTunnel son ID
+	 * @throws IOException
+	 */
 	private void askId() throws IOException {
-		Commande c = new Commande(ServerCommandeType.ASKID,"");
+		final Commande c = new Commande(ServerCommandeType.ASKID,"");
 		masterConsoleTunnel.sendCommande(c);
 	}
 	
+	/**
+	 * ??
+	 * Rajoute le tun dans la liste des nodes voisin si non present (gere les doublon)
+	 * @FIXME le check sur hostname creera de nombreux false positif (lighta)
+	 * @param tun : tunnel a rajouter dans liste des voisin 
+	 */
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		if(this.neighboursCInfo.containsKey(tun.getcInfoDist().getHostname()))
 			this.neighboursTunnel.put(tun.getcInfoDist().getHostname(), tun);
 	}
 
+	
+	/**
+	 * Node command acceptor Handler
+	 * @param comm : Command received to handle
+	 * @param tun : Tunnel from which the command was received
+	 */
 	@Override
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
-		
-		Commande c = null;
+		Commande awnserc = null; //if we want to respond to tun
 		switch (comm.getType()) {
 			case HELLO:
-				c= new Commande(ServerCommandeType.MESS, "HELLO !!!");
+				awnserc= new Commande(ServerCommandeType.MESS, "HELLO !!!");
 				break;
-			case RESTART:
-				
+			case RESTART:		
 				break;
 			case STATE:
-				
 				break;
 			case STOP:
-				
 				break;
 			case EN_TUN:
-				
 				break;				
 			case ID:
 				this.id = comm.getMessageContent();
 				break;
 			default:
+				log.debug("Unhandled command received: "+comm);
 				break;
 		}
 		
-		if(c != null){
+		if(awnserc != null){
 			try {
-				tun.sendCommande(c);
+				tun.sendCommande(awnserc);
 			} catch (IOException e) {
 				log.debug("IOException", e);
 			}
 		}
 	}
 	
-	
+	/**
+	 * Fonction to start a DefaultConsole as a deamon
+	 */
 	private void startDefaultConsole() {
-		
 		Service defaultConsoleService = new ConsoleService("Console for me");
 		defaultConsoleService.addObserver(this);
 			try {
@@ -141,110 +157,71 @@ public class ServerNode extends MultiAccesPoint {
 
 
 	/**
-	 * @param args
+	 * ServerNode Entry point
+	 * @param args : Programs arguments
+	 * 				format : myadr:port <adrn1:port adrn2:port adrn3:port ...>
 	 */
 	public static void main(String[] args) {
 		
 		try {
 			ConnexionInfo masterConsoleInfo = null;
 			ConnexionInfo myCInfo = null;
-			String hostname = "";
-			int port = -1;
-						
-			System.out.println("use default bind ?");
 			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-			String use_default = in.readLine();
 			
-			if(!use_default.equalsIgnoreCase("N")){
-				Properties configFile = new Properties();
-				
-				configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
-				hostname = configFile.getProperty("bind_hostname");
-				port = Integer.parseInt(configFile.getProperty("bind_port"));
-				myCInfo = new ConnexionInfo(hostname, port);
-				
-			}else if(args.length>BIND_ADDRESS_INDEX_ARGS)	// don't use 	args.length>=MASTER_CONSOLE_INDEX_ARGS-1
+			//read myCInfo from, args,console or ressource
+			if(args.length>BIND_ADDRESS_INDEX_ARGS)	// don't use 	args.length>=MASTER_CONSOLE_INDEX_ARGS-1
 				myCInfo = parseBindAddress(args[BIND_ADDRESS_INDEX_ARGS]);
 			else{
-	
-				System.out.println("bind ip address ?");
+				System.out.println("use default bind ?");
+				final String use_default = in.readLine();
 				
-				while(true){
-					try {
-						hostname = in.readLine();
-						myCInfo = parseBindAddress(hostname);
-						break;
-					} catch (IOException e) {
-						continue;
-					}
+				if(!use_default.equalsIgnoreCase("N")){
+					Properties configFile = new Properties();
+					
+					configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
+					final String hostname = configFile.getProperty("bind_hostname");
+					final int port = Integer.parseInt(configFile.getProperty("bind_port"));
+					myCInfo = new ConnexionInfo(hostname, port);
+					
 				}
-	
-				while(myCInfo == null){
-					System.out.println("bind port ?");
-					try {
-						port = Integer.parseInt(in.readLine());
-						break;
-					} catch (NumberFormatException | IOException e) {
-						continue;
-					}
+				else {
+					System.out.println("bind ip address ?");
+					final String failquestion = "Parsing fail, please reinter in proper format (host:port) : ";
+					myCInfo = readAddress(in,failquestion);
 				}
-				if(myCInfo == null)
-					myCInfo = new ConnexionInfo(hostname,port);
 			
-			}
+			}	
 			
-			
-			hostname = "";
-			port = -1;
-			
-			System.out.println("use default master ?");
-			use_default = in.readLine();
-			
-			if(!use_default.equalsIgnoreCase("N")){
-				Properties configFile = new Properties();
-				
-				configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
-				hostname = configFile.getProperty("masterConsole_hostname");
-				port = Integer.parseInt(configFile.getProperty("masterConsole_port"));
-				masterConsoleInfo = new ConnexionInfo(hostname, port);
-				
-			}else if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
-				masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
-			else{
-				
-				System.out.println("masterConsole ip address ?");
-				
-				while(true){
-					try {
-						hostname = in.readLine();
-						masterConsoleInfo = parseBindAddress(hostname);
-						break;
-					} catch (IOException e) {
-						continue;
-					}
-				}
-	
-				while(masterConsoleInfo ==  null){
-					System.out.println("masterConsole port ?");
-					try {
-						port = Integer.parseInt(in.readLine());
-						break;
-					} catch (NumberFormatException | IOException e) {
-						continue;
-					}
-				}
-				if(masterConsoleInfo == null)
-					masterConsoleInfo = new ConnexionInfo(hostname,port);
-			
-			}
+			//read masterConsoleInfo from, args,console or ressource
 			List<ConnexionInfo> neighboursCInfo = new ArrayList<ConnexionInfo>();
+			if(args.length>MASTER_CONSOLE_INDEX_ARGS) {	
+				masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
+				
+				ConnexionInfo cInfo;
+				//lecture des autre noeuds et ajout dans liste
+				for (int i = BIND_ADDRESS_INDEX_ARGS+1; i < args.length; i++) {
+					cInfo = parseBindAddress(args[i]);
+					if(cInfo != null)
+						neighboursCInfo.add(cInfo);
+				}
+			} else { //no args given
+				System.out.println("use default master ?");
+				final String use_default = in.readLine();
 			
-			ConnexionInfo cInfo;
-			for (int i = BIND_ADDRESS_INDEX_ARGS+1; i < args.length; i++) {
-				cInfo = parseBindAddress(args[i]);
-				if(cInfo != null)
-				neighboursCInfo.add(cInfo);
-			}
+				if(!use_default.equalsIgnoreCase("N")){	
+					Properties configFile = new Properties();
+					configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
+					final String hostname = configFile.getProperty("masterConsole_hostname");
+					final int port = Integer.parseInt(configFile.getProperty("masterConsole_port"));
+					masterConsoleInfo = new ConnexionInfo(hostname, port);
+				}
+				else{
+					System.out.println("masterConsole ip address ? (host:port)");
+					final String failquestion = "Parsing fail, please reinter in proper format (host:port) : ";
+					//demande une ip valide sur le reseau
+					masterConsoleInfo = readAddress(in,failquestion);
+				}
+			} 
 			
 			new ServerNode(masterConsoleInfo,myCInfo,neighboursCInfo);
 			
@@ -255,21 +232,41 @@ public class ServerNode extends MultiAccesPoint {
 		}
 	}
 	
+	/**
+	 * Lis une entree host:port, et cree une nouvelle ConnexionInfo avec
+	 * @param s : String a lire
+	 * @return ConnexionInfo or null
+	 */
 	private static ConnexionInfo parseBindAddress(String s) {
-		
 		String[] info = s.split(IP_PORT_DELIMITER);
 		if(info.length != 2)
-			return null;
-		if(info[0] != null){
-			String hostname = info[0];
-			if(info[1] != null){
-				int port = Integer.parseInt(info[1]);
-				return new ConnexionInfo(hostname, port);
-			}
-		}
-		return null;
+			return null; //not enough info
+		String hostname = info[0];
+		int port = Integer.parseInt(info[1]);
+		return new ConnexionInfo(hostname, port);
 	}
 
+	/**
+	 * Get input for a valid hostname:port
+	 * retry till a valid ConnexionInfo is found
+	 * @param in : Buffer to read data from
+	 * @param failquestion : String to display when failing before reask
+	 * @return
+	 */
+	private static ConnexionInfo readAddress(final BufferedReader in,final String failquestion){
+		ConnexionInfo coninfo = null;
+		while(coninfo==null){
+			try {
+				String hostname = in.readLine();
+				coninfo = parseBindAddress(hostname);
+				break;
+			} catch (IOException e) {
+				System.out.println(failquestion);
+				continue;
+			}
+		}
+		return coninfo;
+	}
 
 
 }

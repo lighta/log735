@@ -38,16 +38,12 @@ public class MasterConsole extends MultiAccesPoint {
 
 private final static Logger log = Logger.getLogger(ServerNode.class);
 	
-	private final static int CANNOT_OPEN_ALL_CONNEXION_EXIT_CODE = 1000;
-	
+	private final static int CANNOT_OPEN_ALL_CONNEXION_EXIT_CODE = 1000;	
 	private final static String IP_PORT_DELIMITER = ":";
-	
 	private final static int MASTER_CONSOLE_INDEX_ARGS = 0;
 
 	private static int currentNodeId = 0;
-	
 	private ConnexionInfo myCInfo;
-	
 	private Map<String,Tunnel> nodesTunnel;
 	
 	/**
@@ -67,17 +63,18 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		
 	}
 
+	/**
+	 * 
+	 */
 	private void startDefaultConsole() {
-		
-			try {
-				Service defaultConsoleService = new ConsoleService("Console for me");
-				defaultConsoleService.addObserver(this);
-				Service.startService(defaultConsoleService);
-			} catch (AlreadyStartException e) {
-				// TODO Auto-generated catch block
-				log.debug("AlreadyStartException",e);
-			}
-			
+		try {
+			Service defaultConsoleService = new ConsoleService("Console for me");
+			defaultConsoleService.addObserver(this);
+			Service.startService(defaultConsoleService);
+		} catch (AlreadyStartException e) {
+			// TODO Auto-generated catch block
+			log.debug("AlreadyStartException",e);
+		}
 	}
 	
 	@Override

@@ -9,8 +9,9 @@ import org.apache.log4j.Logger;
 
 
 /**
- * like deamon 
- * you can start and stop it
+ * Classe gerant un ensemble de service
+ * service are like deamon, you can start and stop them
+ * serviceName must be unique
  * @author MisterTim
  *
  */
@@ -29,7 +30,7 @@ public abstract class Service extends Observable {
 	
 	/**
 	 * Start a service
-	 * @param s
+	 * @param s : service to start
 	 * @throws AlreadyStartException
 	 */
 	public static void startService(Service s) throws AlreadyStartException{
@@ -52,7 +53,7 @@ public abstract class Service extends Observable {
 
 	/**
 	 * stop a service
-	 * @param s
+	 * @param s : service to stop
 	 */
 	public static void stopService(Service s){
 		log.debug("Stopping service ( " + s.serviceName + " )");
@@ -76,8 +77,11 @@ public abstract class Service extends Observable {
 	private Runnable serviceLoopAction;
 	private ServiceState currentState;
 	
+	/**
+	 * Creation et lancement d'un service
+	 * @param serviceName
+	 */
 	public Service(final String serviceName) {
-		
 		this.serviceName = serviceName;
 		
 		currentState = ServiceState.NOT_STARTED;
@@ -98,14 +102,26 @@ public abstract class Service extends Observable {
 		
 	}
 
+	/**
+	 * Donne le nom du service
+	 * @return serviceName
+	 */
 	public String getName() {
 		return serviceName;
 	}
 	
+	/**
+	 * Donne l'etat actuelle du service cf (enum ServiceState)
+	 * @return currentState
+	 */
 	public ServiceState getCurrentState() {
 		return currentState;
 	}
 
+	/**
+	 * Definit l'etat actuelle d'un service
+	 * @param currentState
+	 */
 	private void setCurrentState(ServiceState currentState) {
 		this.currentState = currentState;
 	}
