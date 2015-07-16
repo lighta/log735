@@ -20,6 +20,8 @@ import nodes.ServerNode;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import common.utils;
+
 import console.ConsoleService;
 import serverAccess.AccesPoint;
 import serverAccess.Commande;
@@ -47,7 +49,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	private Map<String,Tunnel> nodesTunnel;
 	
 	/**
-	 * @param masterConsole 
+	 * @param masterConsoleInfo : Information de connection de masterConsole 
 	 * @throws IOException 
 	 * @throws UnknownHostException 
 	 * 
@@ -64,7 +66,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	}
 
 	/**
-	 * 
+	 * Demare une DefaultConsole comme un service
 	 */
 	private void startDefaultConsole() {
 		try {
@@ -77,12 +79,13 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		}
 	}
 	
+	/**
+	 * Recoit une commande par observation
+	 */
 	@Override
 	public void update(Observable obj, Object arg) {
-		
 		if(obj instanceof ConsoleService){
-			ConsoleService cs = (ConsoleService) obj;
-			
+			ConsoleService cs = (ConsoleService) obj;		
 				if(arg instanceof Commande){
 					Commande c = (Commande) arg;
 					String[] content = c.getMessageContent().split(":");
@@ -93,10 +96,8 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 						log.debug("starting to broadcast ... ");
 						for (Entry<String, Tunnel> tunn : this.nodesTunnel.entrySet()) {
 							try {
-								
 								log.debug("Sending to : " + tunn.getKey());
 								tunn.getValue().sendCommande(c);
-								
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								log.debug("IOException",e);
@@ -104,19 +105,23 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 						}
 					}				
 				}
-		}else{
-			
+		}else{	
 			super.update(obj, arg);
-			
 		}
 	}
 	
+	/**
+	 * Ajoute le tunnel dans la liste des nodetunnels
+	 */
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		log.debug("put new node tunnel : " + tun.getcInfoDist().getHostname());
 		this.nodesTunnel.put(tun.getcInfoDist().getHostname(), tun);
 	}
 
+	/**
+	 * Handler de la masterCommand
+	 */
 	@Override
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande c = null;
@@ -153,6 +158,11 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		}
 	}
 		
+	/**
+	 * Genere un ID unique, et le retourne sous forme de string
+	 * @FIXME srsly a string ??...
+	 * @return
+	 */
 	private String generateID() {
 		return "" + ++MasterConsole.currentNodeId ;
 	}
@@ -160,59 +170,31 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
-		
+	public static void main(String[] args) {		
 		try {
 			ConnexionInfo masterConsoleInfo = null;	
-			System.out.println("use default bind ?");
-			BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-			String use_default = in.readLine();
-			
-			if(!use_default.equalsIgnoreCase("N")){
-				Properties configFile = new Properties();
-				
-				configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("master/hostname.properties"));
-				String hostname = configFile.getProperty("bind_hostname");
-				int port = Integer.parseInt(configFile.getProperty("bind_port"));
-				masterConsoleInfo = new ConnexionInfo(hostname, port);
-				
-			}else if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
-				masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
+
+			if(args.length>MASTER_CONSOLE_INDEX_ARGS)		
+				masterConsoleInfo = utils.parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS],IP_PORT_DELIMITER);
 			else{
+				BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+				final String use_default = in.readLine();
+				System.out.println("use default bind ?");
 				
-				
-				System.out.println("bind ip address ?");
-				String host;
-				
-				while(true){
-					try {
-						host = in.readLine();
-						masterConsoleInfo = parseBindAddress(host);
-						break;
-					} catch (IOException e) {
-						continue;
-					}
+				if(!use_default.equalsIgnoreCase("N")){
+					Properties configFile = new Properties();
 					
+					configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("master/hostname.properties"));
+					final String hostname = configFile.getProperty("bind_hostname");
+					final int port = Integer.parseInt(configFile.getProperty("bind_port"));
+					masterConsoleInfo = new ConnexionInfo(hostname, port);		
 				}
-	
-				int port = -1;
-				while(masterConsoleInfo == null){
-					System.out.println("bind port ?");
-					try {
-						port = Integer.parseInt(in.readLine());
-						break;
-					} catch (NumberFormatException | IOException e) {
-						continue;
-					}
+				else {
+					System.out.println("bind ip address ?");
+					masterConsoleInfo = utils.readAddress(in, IP_PORT_DELIMITER, "fail, bind ip address ?");
 				}
-				if(masterConsoleInfo == null)
-					masterConsoleInfo = new ConnexionInfo(host,port);
-				
 			}
-			
 			new MasterConsole(masterConsoleInfo);
-			
-			
 		} catch (IOException e) {
 			log.debug("IOException", e);
 			log.info("something went wrong, need to terminate");
@@ -220,19 +202,5 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		}
 		
 	}
-	
-	private static ConnexionInfo parseBindAddress(String s) {
-		
-		String[] info = s.split(IP_PORT_DELIMITER);
-		if(info.length != 2)
-			return null;
-		if(info[0] != null){
-			String hostname = info[0];
-			if(info[1] != null){
-				int port = Integer.parseInt(info[1]);
-				return new ConnexionInfo(hostname, port);
-			}
-		}
-		return null;
-	}
+
 }

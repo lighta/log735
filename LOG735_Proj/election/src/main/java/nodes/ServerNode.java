@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 
 import master.MasterConsole;
+import common.utils;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
@@ -170,7 +171,7 @@ public class ServerNode extends MultiAccesPoint {
 			
 			//read myCInfo from, args,console or ressource
 			if(args.length>BIND_ADDRESS_INDEX_ARGS)	// don't use 	args.length>=MASTER_CONSOLE_INDEX_ARGS-1
-				myCInfo = parseBindAddress(args[BIND_ADDRESS_INDEX_ARGS]);
+				myCInfo = utils.parseBindAddress(args[BIND_ADDRESS_INDEX_ARGS],IP_PORT_DELIMITER);
 			else{
 				System.out.println("use default bind ?");
 				final String use_default = in.readLine();
@@ -187,7 +188,7 @@ public class ServerNode extends MultiAccesPoint {
 				else {
 					System.out.println("bind ip address ?");
 					final String failquestion = "Parsing fail, please reinter in proper format (host:port) : ";
-					myCInfo = readAddress(in,failquestion);
+					myCInfo = utils.readAddress(in,IP_PORT_DELIMITER,failquestion);
 				}
 			
 			}	
@@ -195,12 +196,12 @@ public class ServerNode extends MultiAccesPoint {
 			//read masterConsoleInfo from, args,console or ressource
 			List<ConnexionInfo> neighboursCInfo = new ArrayList<ConnexionInfo>();
 			if(args.length>MASTER_CONSOLE_INDEX_ARGS) {	
-				masterConsoleInfo = parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS]);
+				masterConsoleInfo = utils.parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS],IP_PORT_DELIMITER);
 				
 				ConnexionInfo cInfo;
 				//lecture des autre noeuds et ajout dans liste
 				for (int i = BIND_ADDRESS_INDEX_ARGS+1; i < args.length; i++) {
-					cInfo = parseBindAddress(args[i]);
+					cInfo = utils.parseBindAddress(args[i],IP_PORT_DELIMITER);
 					if(cInfo != null)
 						neighboursCInfo.add(cInfo);
 				}
@@ -219,7 +220,7 @@ public class ServerNode extends MultiAccesPoint {
 					System.out.println("masterConsole ip address ? (host:port)");
 					final String failquestion = "Parsing fail, please reinter in proper format (host:port) : ";
 					//demande une ip valide sur le reseau
-					masterConsoleInfo = readAddress(in,failquestion);
+					masterConsoleInfo = utils.readAddress(in,IP_PORT_DELIMITER,failquestion);
 				}
 			} 
 			
@@ -232,41 +233,9 @@ public class ServerNode extends MultiAccesPoint {
 		}
 	}
 	
-	/**
-	 * Lis une entree host:port, et cree une nouvelle ConnexionInfo avec
-	 * @param s : String a lire
-	 * @return ConnexionInfo or null
-	 */
-	private static ConnexionInfo parseBindAddress(String s) {
-		String[] info = s.split(IP_PORT_DELIMITER);
-		if(info.length != 2)
-			return null; //not enough info
-		String hostname = info[0];
-		int port = Integer.parseInt(info[1]);
-		return new ConnexionInfo(hostname, port);
-	}
 
-	/**
-	 * Get input for a valid hostname:port
-	 * retry till a valid ConnexionInfo is found
-	 * @param in : Buffer to read data from
-	 * @param failquestion : String to display when failing before reask
-	 * @return
-	 */
-	private static ConnexionInfo readAddress(final BufferedReader in,final String failquestion){
-		ConnexionInfo coninfo = null;
-		while(coninfo==null){
-			try {
-				String hostname = in.readLine();
-				coninfo = parseBindAddress(hostname);
-				break;
-			} catch (IOException e) {
-				System.out.println(failquestion);
-				continue;
-			}
-		}
-		return coninfo;
-	}
+
+
 
 
 }
