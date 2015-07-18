@@ -187,8 +187,7 @@ public class ServerNode extends MultiAccesPoint {
 				}
 				else {
 					System.out.println("bind ip address ?");
-					final String failquestion = "Parsing fail, please reinter in proper format (host:port) : ";
-					myCInfo = utils.readAddress(in,IP_PORT_DELIMITER,failquestion);
+					myCInfo = utils.readAddress(in,IP_PORT_DELIMITER,"Parsing fail, please reinter in proper format (host:port) : ");
 				}
 			
 			}	

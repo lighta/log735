@@ -178,8 +178,8 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				masterConsoleInfo = utils.parseBindAddress(args[MASTER_CONSOLE_INDEX_ARGS],IP_PORT_DELIMITER);
 			else{
 				BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
-				final String use_default = in.readLine();
 				System.out.println("use default bind ?");
+				final String use_default = in.readLine();
 				
 				if(!use_default.equalsIgnoreCase("N")){
 					Properties configFile = new Properties();
@@ -190,8 +190,8 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 					masterConsoleInfo = new ConnexionInfo(hostname, port);		
 				}
 				else {
-					System.out.println("bind ip address ?");
-					masterConsoleInfo = utils.readAddress(in, IP_PORT_DELIMITER, "fail, bind ip address ?");
+					System.out.println("bind ip address (adr:port) ?");
+					masterConsoleInfo = utils.readAddress(in, IP_PORT_DELIMITER, "fail, bind ip address (adr:port) ?");
 				}
 			}
 			new MasterConsole(masterConsoleInfo);

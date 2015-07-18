@@ -2,6 +2,8 @@ package common;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import serverAccess.ConnexionInfo;
 
@@ -19,11 +21,10 @@ public class utils {
 			try {
 				String hostname = in.readLine();
 				coninfo = parseBindAddress(hostname,delimiter);
-				break;
 			} catch (IOException e) {
-				System.out.println(failquestion);
 				continue;
 			}
+			if(coninfo==null) System.out.println(failquestion);
 		}
 		return coninfo;
 	}
@@ -35,10 +36,24 @@ public class utils {
 	 */
 	public static ConnexionInfo parseBindAddress(String s, String delimiter) {
 		String[] info = s.split(delimiter);
-		if(info.length != 2)
+		int port;
+		String hostname;
+		if(info.length != 2 || info[0].isEmpty() || info[1].isEmpty())
 			return null; //not enough info
-		String hostname = info[0];
-		int port = Integer.parseInt(info[1]);
+		try {
+            InetAddress.getByName(info[0]);  //perhaps save as Inet
+            hostname = info[0];
+        } catch (UnknownHostException ex) {
+        	System.out.println("Bad input for hostname");
+        	return null;
+        }
+		try {
+			port = Integer.parseInt(info[1]);
+		} catch (NumberFormatException e) {
+			System.out.println("Bad input number for port");
+			return null;
+		}
 		return new ConnexionInfo(hostname, port);
+		
 	}
 }
