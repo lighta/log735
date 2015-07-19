@@ -50,11 +50,13 @@ public class Commande {
 		/**
 		 * 
 		 */
-		ASKID, 
+		ASKID,
+		ASKLIST,
 		/**
 		 *  
 		 */
 		ID,
+		LIST,
 		ALIVE 
 	}
 	

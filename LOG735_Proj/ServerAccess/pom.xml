@@ -6,6 +6,13 @@
 		<version>1.0.0</version>
 	</parent>
 
+	<repositories>
+		<repository>
+			<id>log735</id>
+			<url>file://../Ressources/libs/</url>
+		</repository>
+	</repositories>
+	
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>serverAccess</groupId>
 	<artifactId>serverAccess</artifactId>

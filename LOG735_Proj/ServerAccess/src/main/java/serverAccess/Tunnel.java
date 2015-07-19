@@ -175,7 +175,7 @@ public class Tunnel extends Observable implements Observer{
 				try {
 					if(inputStream.available() > 1){
 						
-						Commande c = Commande.ParseCommande(inputStream);
+						final Commande c = Commande.ParseCommande(inputStream);
 						if(c == null)
 						{
 							log.debug("null Commande" );
@@ -185,7 +185,7 @@ public class Tunnel extends Observable implements Observer{
 							if(!c.getType().equals(internalCommandType.ALIVE)){
 								log.debug("Notify new commande : " + c );
 								setChanged();
-								notifyObservers(c);
+								notifyObservers(c);							
 							}
 						}
 					}

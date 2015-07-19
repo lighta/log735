@@ -151,7 +151,8 @@ public class AccesPoint extends Observable implements Observer {
 		
 		public CreateConnexionService(String name, String hostname, int port) throws UnknownHostException, IOException {
 			super("CreateConnexion" + (name == null ? "" : " for " + name) + " over "  + hostname + " on port " + port);
-
+			this.hostname=hostname;
+			this.port=port;
 		}
 		
 		@Override
@@ -165,7 +166,8 @@ public class AccesPoint extends Observable implements Observer {
 					notifyObservers(t);
 					Service.stopService(this);
 				} catch (IOException e) {
-					e.printStackTrace();
+					log.debug("Tryed con to hostname="+hostname+" port="+port,e);
+					System.exit(1002);
 				}
 			}
 			

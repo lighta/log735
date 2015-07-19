@@ -32,8 +32,6 @@ public abstract class MultiAccesPoint implements Observer {
 	private Map<Integer,Map<String,Tunnel>> _tunnels;
 	
 	public MultiAccesPoint() {
-		// TODO Auto-generated constructor stub
-		
 		_accesPoints = new HashMap<>();
 		_tunnels = new HashMap<>();
 	}
@@ -108,7 +106,7 @@ public abstract class MultiAccesPoint implements Observer {
 		}else if(obj instanceof Tunnel){
 			Tunnel tun = (Tunnel) obj;
 			useLocalPort(tun.getcInfoLocal().getPort());
-			
+			log.debug("receive from tunnel" + tun);
 			if(arg instanceof Commande){
 				log.debug("Commande " + arg + " receive from tunnel" + tun);
 				Commande comm = (Commande) arg;

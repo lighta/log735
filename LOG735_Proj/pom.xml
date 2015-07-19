@@ -7,7 +7,7 @@
 	<repositories>
 		<repository>
 			<id>log735</id>
-			<url>file://.Ressources/libs/</url>
+			<url>file://./Ressources/libs/</url>
 		</repository>
 	</repositories>
 	<url>http://maven.apache.org</url>

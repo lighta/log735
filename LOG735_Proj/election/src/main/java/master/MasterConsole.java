@@ -7,9 +7,10 @@ package master;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Observable;
@@ -18,12 +19,9 @@ import java.util.Properties;
 import nodes.ServerNode;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
 import common.utils;
-
 import console.ConsoleService;
-import serverAccess.AccesPoint;
 import serverAccess.Commande;
 import serverAccess.ConnexionInfo;
 import serverAccess.MultiAccesPoint;
@@ -47,6 +45,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	private static int currentNodeId = 0;
 	private ConnexionInfo myCInfo;
 	private Map<String,Tunnel> nodesTunnel;
+	private List<String> nodesCon;
 	
 	/**
 	 * @param masterConsoleInfo : Information de connection de masterConsole 
@@ -60,6 +59,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		this.myCInfo = masterConsoleInfo;
 		
 		this.nodesTunnel = new HashMap<>();
+		this.nodesCon = new ArrayList<>();
 		
 		startDefaultConsole();
 		
@@ -116,7 +116,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		log.debug("put new node tunnel : " + tun.getcInfoDist().getHostname());
-		this.nodesTunnel.put(tun.getcInfoDist().getHostname(), tun);
+		this.nodesTunnel.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(), tun);
 	}
 
 	/**
@@ -143,7 +143,13 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				break;
 			case ASKID:
 				log.debug("reply ID");
+				nodesCon.add(comm.getMessageContent());
 				c = new Commande(ServerCommandeType.ID, generateID());
+				break;
+			case ASKLIST:
+				log.debug("reply LIST");
+				c = new Commande(ServerCommandeType.LIST, generateLIST());
+				break;
 			default:
 				System.out.println(comm.getType().name());
 				break;
@@ -158,6 +164,16 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		}
 	}
 		
+	//private Map<String,Tunnel> nodesTunnel;
+	//tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort()
+	private String generateLIST() {
+		StringBuilder _sb = new StringBuilder();
+		for ( String curkey : this.nodesCon  ) {
+			_sb.append(curkey+"#");
+		}	
+		return _sb.toString();
+	}
+
 	/**
 	 * Genere un ID unique, et le retourne sous forme de string
 	 * @FIXME srsly a string ??...
@@ -169,6 +185,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 
 	/**
 	 * @param args
+	 * 	format : mastercsnl:port
 	 */
 	public static void main(String[] args) {		
 		try {

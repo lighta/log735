@@ -6,11 +6,13 @@ package nodes;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Map.Entry;
 
 import master.MasterConsole;
 import common.utils;
@@ -47,8 +49,8 @@ public class ServerNode extends MultiAccesPoint {
 	private ConnexionInfo masterConsoleCInfo; 
 	private Tunnel masterConsoleTunnel;
 	
-	private Map<String,ConnexionInfo> neighboursCInfo;
-	private Map<String,Tunnel> neighboursTunnel;
+	private List<ConnexionInfo> neighboursCInfo; 	//list of nodes to connect to
+	private Map<String,Tunnel> neighboursTunnel;	//list de tunnel creer (on est sur d'etre co)
 	
 	
 	/**
@@ -72,14 +74,25 @@ public class ServerNode extends MultiAccesPoint {
 			masterConsoleTunnel = super.connectTo("masterConsole", masterConsoleInfo);
 			this.masterConsoleCInfo = masterConsoleInfo;
 			
-			this.neighboursCInfo = new HashMap<String, ConnexionInfo>();
-			for (ConnexionInfo connexionInfo : neighboursCInfo) {
-				super.connectToWithoutWaiting("neighb" + connexionInfo, connexionInfo);
-				this.neighboursCInfo.put(connexionInfo.getHostname(), connexionInfo);
-			}
+			this.neighboursCInfo = new ArrayList<>();
+			neighboursTunnel = new HashMap<>();
+			ConnInfos(neighboursCInfo);
 			
-			askId();	
+			askId();
 			startDefaultConsole();
+	}
+
+	private void ConnInfos(List<ConnexionInfo> neighboursCInfo) throws UnknownHostException, IOException{
+		for (ConnexionInfo connexionInfo : neighboursCInfo) {
+			if(connexionInfo.equals(myCInfo)) continue;
+			super.connectToWithoutWaiting("neighb" + connexionInfo, connexionInfo);
+			this.neighboursCInfo.add(connexionInfo);
+		}
+	}
+	
+	private void askList() throws IOException {
+		final Commande c = new Commande(ServerCommandeType.ASKLIST,"");
+		masterConsoleTunnel.sendCommande(c);
 	}
 
 	/**
@@ -87,20 +100,18 @@ public class ServerNode extends MultiAccesPoint {
 	 * @throws IOException
 	 */
 	private void askId() throws IOException {
-		final Commande c = new Commande(ServerCommandeType.ASKID,"");
+		final Commande c = new Commande(ServerCommandeType.ASKID,""+myCInfo);
 		masterConsoleTunnel.sendCommande(c);
 	}
 	
 	/**
 	 * ??
 	 * Rajoute le tun dans la liste des nodes voisin si non present (gere les doublon)
-	 * @FIXME le check sur hostname creera de nombreux false positif (lighta)
 	 * @param tun : tunnel a rajouter dans liste des voisin 
 	 */
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
-		if(this.neighboursCInfo.containsKey(tun.getcInfoDist().getHostname()))
-			this.neighboursTunnel.put(tun.getcInfoDist().getHostname(), tun);
+		this.neighboursTunnel.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(), tun);
 	}
 
 	
@@ -126,6 +137,25 @@ public class ServerNode extends MultiAccesPoint {
 				break;				
 			case ID:
 				this.id = comm.getMessageContent();
+				try {
+					askList();
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					log.debug("IOException",e1);
+				}
+				break;
+			case LIST:
+				log.debug("List received: "+comm.getMessageContent());
+				List<ConnexionInfo> conList = parsenList(comm.getMessageContent());
+				try {
+					ConnInfos(conList);
+				} catch (UnknownHostException e1) {
+					// TODO Auto-generated catch block
+					log.debug("UnknownHostException",e1);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					log.debug("IOException",e1);
+				}
 				break;
 			default:
 				log.debug("Unhandled command received: "+comm);
@@ -141,6 +171,19 @@ public class ServerNode extends MultiAccesPoint {
 		}
 	}
 	
+	
+	
+	private List<ConnexionInfo> parsenList(String messageContent) {
+		String nodeinfos[] = messageContent.split("#");
+		List<ConnexionInfo> listConInfo = new ArrayList<>();
+		for(String conInfo : nodeinfos){
+			ConnexionInfo con = utils.parseBindAddress(conInfo,":");
+			if(con != null)
+				listConInfo.add(con);
+		}
+		return listConInfo;
+	}
+
 	/**
 	 * Fonction to start a DefaultConsole as a deamon
 	 */
@@ -160,7 +203,7 @@ public class ServerNode extends MultiAccesPoint {
 	/**
 	 * ServerNode Entry point
 	 * @param args : Programs arguments
-	 * 				format : myadr:port <adrn1:port adrn2:port adrn3:port ...>
+	 * 				format : mastercnsl:port myadr:port <adrn1:port adrn2:port adrn3:port ...>
 	 */
 	public static void main(String[] args) {
 		
