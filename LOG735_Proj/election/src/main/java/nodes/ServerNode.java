@@ -53,6 +53,10 @@ public class ServerNode extends MultiAccesPoint {
 	private Map<String,Tunnel> neighboursTunnel;	//list de tunnel creer (on est sur d'etre co)
 	
 	
+	public static enum NodeStateElec { prestart,started,chilling }
+	private List<ConnexionInfo> waitNodesEle;
+	private NodeStateElec state_ele;
+	
 	/**
 	 * ServerNode constructor
 	 * ???
@@ -124,6 +128,35 @@ public class ServerNode extends MultiAccesPoint {
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande awnserc = null; //if we want to respond to tun
 		switch (comm.getType()) {
+			case ASKELE:
+				if(state_ele == NodeStateElec.started) 
+					break; //already in election mode
+				waitNodesEle = neighboursCInfo;
+				state_ele = NodeStateElec.prestart;
+				log.debug("prestarting election");
+				break;
+			case ST_ELE:
+				state_ele = NodeStateElec.started;
+				if(state_ele == NodeStateElec.prestart){
+					waitNodesEle = null; //no more waiting, an election is already ongoing	
+				}
+				log.debug("voting to election");
+				//next step of election
+				break;
+			case ALIVE: //keep alive
+				if(state_ele == NodeStateElec.prestart){
+					ConnexionInfo cid = tun.getcInfoDist(); //doubt is the good one
+					log.debug("cid="+cid);
+					if(waitNodesEle.contains(cid)){
+						waitNodesEle.remove(cid);
+						if(waitNodesEle.isEmpty()){ //nomore node to wait, we can launch election
+							state_ele = NodeStateElec.started;
+							log.debug("starting election");
+							//start election
+						}
+					}
+				}
+				break;			
 			case HELLO:
 				awnserc= new Commande(ServerCommandeType.MESS, "HELLO !!!");
 				break;

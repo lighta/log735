@@ -19,7 +19,7 @@ public class Tunnel extends Observable implements Observer{
 	
 	private static Logger log = Logger.getLogger(Tunnel.class);
 	
-	private final static int SOCKET_TIMEOUT = 30000;
+	private final static int SOCKET_TIMEOUT = 5000;
 	
 	private final BufferedOutputStream out;
 	private final InputStream in;
@@ -182,11 +182,11 @@ public class Tunnel extends Observable implements Observer{
 						}
 						else
 						{
-							if(!c.getType().equals(internalCommandType.ALIVE)){
+							//if(!c.getType().equals(internalCommandType.ALIVE)){
 								log.debug("Notify new commande : " + c );
 								setChanged();
 								notifyObservers(c);							
-							}
+							//}
 						}
 					}
 					
@@ -221,11 +221,9 @@ public class Tunnel extends Observable implements Observer{
 		public void loopAction() {
 			while(super.getCurrentState() != ServiceState.ENDING)
 			{
-				try {
-					
+				try {	
 					super.wait(WAKEUP_TIMEOUT);
 					this.tun.sendCommande(new Commande(ServerCommandeType.ALIVE, ""));
-					
 				} catch (InterruptedException e) {
 					log.debug("InterruptedException", e);
 				} catch (IOException e) {

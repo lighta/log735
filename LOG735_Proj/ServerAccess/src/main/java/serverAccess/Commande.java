@@ -57,7 +57,12 @@ public class Commande {
 		 */
 		ID,
 		LIST,
-		ALIVE 
+		ALIVE, 
+		/**
+		 * 
+		 */
+		ASKELE,
+		ST_ELE
 	}
 	
 	
