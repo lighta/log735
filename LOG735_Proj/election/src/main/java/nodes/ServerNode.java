@@ -54,8 +54,12 @@ public class ServerNode extends MultiAccesPoint {
 	
 	
 	public static enum NodeStateElec { prestart,started,chilling }
+	public static enum NodeModeElec { bully,ring }
 	private List<ConnexionInfo> waitNodesEle;
 	private NodeStateElec state_ele;
+	private NodeModeElec mode_ele;
+	int nm1=-1,np1=-1; //noeuds voisin pour methode anneau
+	int score = 0; //score for election
 	
 	/**
 	 * ServerNode constructor
@@ -88,10 +92,11 @@ public class ServerNode extends MultiAccesPoint {
 
 	private void ConnInfos(List<ConnexionInfo> neighboursCInfo) throws UnknownHostException, IOException{
 		for (ConnexionInfo connexionInfo : neighboursCInfo) {
-			if(connexionInfo.equals(myCInfo)) continue;
+			if(connexionInfo.equals(myCInfo)) continue; //skip self
 			super.connectToWithoutWaiting("neighb" + connexionInfo, connexionInfo);
 			this.neighboursCInfo.add(connexionInfo);
 		}
+		ChoixVoisinAnneau();
 	}
 	
 	private void askList() throws IOException {
@@ -106,6 +111,66 @@ public class ServerNode extends MultiAccesPoint {
 	private void askId() throws IOException {
 		final Commande c = new Commande(ServerCommandeType.ASKID,""+myCInfo);
 		masterConsoleTunnel.sendCommande(c);
+	}
+	
+	private void voteHandle(String messageContent) {
+		final String[] part = messageContent.split(":");
+		if(part.length < 2) //bad format
+			return;
+		final int idrec = Integer.parseInt(part[0]);
+		final int scorerec = Integer.parseInt(part[1]);
+		
+		Commande c = null;
+		if(scorerec < score)
+			c = new Commande(ServerCommandeType.ELE_VOTE,id+":"+score);
+		else {
+			c = new Commande(ServerCommandeType.ELE_VOTE,idrec+":"+scorerec);
+		}
+		sendEleScore(c);
+	}
+	
+	private void sendEleScore(final Commande c) {
+		switch(mode_ele){
+			case bully: //rere
+				break;
+			case ring:
+				final ConnexionInfo cnext = neighboursCInfo.get(np1); //recupe l'info du prochain noeud
+				final Tunnel tnext = neighboursTunnel.get(cnext);
+				try {
+					tnext.sendCommande(c);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					log.debug("IOException",e);
+				}
+				break;
+		}
+	}
+	
+	/**
+	 * Fonction servant a chercher quel est notre numero d'index dans notre liste de node
+	 * @return
+	 */
+	private int SearchSelfIndex(){
+		for(int i=0; i<neighboursCInfo.size(); i++){
+			if( neighboursCInfo.get(i).equals(myCInfo))
+				return i;
+		}
+		return -1;
+	}
+	
+	private void ChoixVoisinAnneau(){
+		final int sz = neighboursCInfo.size();
+		final int cur = SearchSelfIndex();
+		if(sz >= 2){ //nos voisin sont different
+			nm1 = (sz+cur-1)%sz;
+			np1 = (cur+1)%sz;
+			//attention si sz==2 nm1==np1
+			if(sz == 2)
+				nm1 = -1;
+		}
+		else {
+			; //on est seul (sob)
+		}
 	}
 	
 	/**
@@ -128,6 +193,21 @@ public class ServerNode extends MultiAccesPoint {
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande awnserc = null; //if we want to respond to tun
 		switch (comm.getType()) {
+			//demandes manuelles
+			case ASKID: 
+				try {
+					askId();
+				} catch (IOException e2) {
+					log.debug("IOException",e2);
+				} 
+				break;
+			case ASKLIST: 
+				try {
+					askList();
+				} catch (IOException e2) {
+					log.debug("IOException",e2);
+				} 
+				break;
 			case ASKELE:
 				if(state_ele == NodeStateElec.started) 
 					break; //already in election mode
@@ -135,13 +215,22 @@ public class ServerNode extends MultiAccesPoint {
 				state_ele = NodeStateElec.prestart;
 				log.debug("prestarting election");
 				break;
+			case HELLO:
+				awnserc= new Commande(ServerCommandeType.MESS, "HELLO !!!");
+				break;
+				
+				
+			case ELE_VOTE: voteHandle(comm.getMessageContent()); break;
+				
 			case ST_ELE:
+				if(state_ele == NodeStateElec.started)
+					break;
 				state_ele = NodeStateElec.started;
 				if(state_ele == NodeStateElec.prestart){
 					waitNodesEle = null; //no more waiting, an election is already ongoing	
 				}
 				log.debug("voting to election");
-				//next step of election
+				voteHandle(comm.getMessageContent()); //next step of election
 				break;
 			case ALIVE: //keep alive
 				if(state_ele == NodeStateElec.prestart){
@@ -157,9 +246,7 @@ public class ServerNode extends MultiAccesPoint {
 					}
 				}
 				break;			
-			case HELLO:
-				awnserc= new Commande(ServerCommandeType.MESS, "HELLO !!!");
-				break;
+
 			case RESTART:		
 				break;
 			case STATE:
@@ -203,9 +290,7 @@ public class ServerNode extends MultiAccesPoint {
 			}
 		}
 	}
-	
-	
-	
+
 	private List<ConnexionInfo> parsenList(String messageContent) {
 		String nodeinfos[] = messageContent.split("#");
 		List<ConnexionInfo> listConInfo = new ArrayList<>();
