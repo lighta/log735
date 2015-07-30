@@ -3,7 +3,6 @@
  */
 package console;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 
 import org.apache.log4j.Logger;

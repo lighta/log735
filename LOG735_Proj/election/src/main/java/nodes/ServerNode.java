@@ -12,14 +12,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Map.Entry;
-
 import master.MasterConsole;
 import common.utils;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-
 import console.ConsoleService;
 import serverAccess.Commande;
 import serverAccess.Commande.ServerCommandeType;
