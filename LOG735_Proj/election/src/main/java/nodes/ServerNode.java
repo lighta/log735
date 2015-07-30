@@ -4,6 +4,7 @@
 package nodes;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
@@ -12,13 +13,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Map.Entry;
 
 import master.MasterConsole;
 import common.utils;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 
 import console.ConsoleService;
 import serverAccess.Commande;
@@ -349,7 +348,8 @@ public class ServerNode extends MultiAccesPoint {
 				if(!use_default.equalsIgnoreCase("N")){
 					Properties configFile = new Properties();
 					
-					configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
+					//configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
+					configFile.load(new FileReader("./target/classes/nodes/hostname.properties"));
 					final String hostname = configFile.getProperty("bind_hostname");
 					final int port = Integer.parseInt(configFile.getProperty("bind_port"));
 					myCInfo = new ConnexionInfo(hostname, port);
@@ -380,7 +380,8 @@ public class ServerNode extends MultiAccesPoint {
 			
 				if(!use_default.equalsIgnoreCase("N")){	
 					Properties configFile = new Properties();
-					configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
+					//configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("nodes/hostname.properties"));
+					configFile.load(new FileReader("./target/classes/nodes/hostname.properties"));
 					final String hostname = configFile.getProperty("masterConsole_hostname");
 					final int port = Integer.parseInt(configFile.getProperty("masterConsole_port"));
 					masterConsoleInfo = new ConnexionInfo(hostname, port);

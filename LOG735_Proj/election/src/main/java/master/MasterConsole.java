@@ -5,6 +5,8 @@ package master;
 
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
@@ -201,7 +203,10 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				if(!use_default.equalsIgnoreCase("N")){
 					Properties configFile = new Properties();
 					
-					configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("master/hostname.properties"));
+					//configFile.load(MasterConsole.class.getClassLoader().getResourceAsStream("master/hostname.properties"));
+					//System.out.println("getAbsolutePath()" + new File("./target/classes/master/test.t").getAbsolutePath());
+					//System.out.println("getPath()" + new File("./target/classes/master/test.t").getPath());
+					configFile.load(new FileReader("./target/classes/master/hostname.properties"));
 					final String hostname = configFile.getProperty("bind_hostname");
 					final int port = Integer.parseInt(configFile.getProperty("bind_port"));
 					masterConsoleInfo = new ConnexionInfo(hostname, port);		
