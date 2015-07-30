@@ -58,8 +58,12 @@ public class ServerNode extends MultiAccesPoint {
 	private List<ConnexionInfo> waitNodesEle;
 	private NodeStateElec state_ele;
 	private NodeModeElec mode_ele;
-	int nm1=-1,np1=-1; //noeuds voisin pour methode anneau
 	int score = 0; //score for election
+	
+	//variable methode anneau
+	int nm1=-1,np1=-1; //noeuds voisin pour methode anneau
+	boolean participant = false;
+	boolean elu = false;
 	
 	/**
 	 * ServerNode constructor
@@ -184,6 +188,11 @@ public class ServerNode extends MultiAccesPoint {
 	}
 
 	
+	private void startingElection(){
+		participant = true;
+		voteHandle("msg");
+	}
+	
 	/**
 	 * Node command acceptor Handler
 	 * @param comm : Command received to handle
@@ -241,7 +250,7 @@ public class ServerNode extends MultiAccesPoint {
 						if(waitNodesEle.isEmpty()){ //nomore node to wait, we can launch election
 							state_ele = NodeStateElec.started;
 							log.debug("starting election");
-							//start election
+							startingElection(); //start election
 						}
 					}
 				}
