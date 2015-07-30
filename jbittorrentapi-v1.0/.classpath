@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="ext/ant.jar"/>
+	<classpathentry kind="lib" path="ext/freemarker.jar"/>
+	<classpathentry kind="lib" path="ext/groovy.jar"/>
+	<classpathentry kind="lib" path="ext/jaxen-core.jar"/>
+	<classpathentry kind="lib" path="ext/jaxen-jdom.jar"/>
+	<classpathentry kind="lib" path="ext/jdom.jar"/>
+	<classpathentry kind="lib" path="ext/kxml.jar"/>
+	<classpathentry kind="lib" path="ext/saxpath.jar"/>
+	<classpathentry kind="lib" path="ext/simple-upload-0.3.4.jar"/>
+	<classpathentry kind="lib" path="ext/velocity.jar"/>
+	<classpathentry kind="lib" path="ext/xalan.jar"/>
+	<classpathentry kind="lib" path="ext/xerces.jar"/>
+	<classpathentry kind="lib" path="ext/xml-apis.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
