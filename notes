@@ -1,0 +1,20 @@
+[lighta@localhost jbittorrentapi-v1.0] $ tree example
+example
+├── client1
+│   ├── funvideo05.wmv
+│   ├── funvideo.torrent
+│   └── Thumbs.db
+├── client2
+│   └── funvideo.torrent
+├── client3
+│   └── funvideo.torrent
+├── client4
+└── tracker
+    ├── files
+    │   ├── peers.xml
+    │   ├── torrentsFile
+    │   │   └── BE86A0C7D0451A235AFD517C74DC3EBFD86C55A4.torrent
+    │   └── torrents.xml
+    └── Mapper.xml
+
+7 directories, 9 files
