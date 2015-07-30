@@ -18,3 +18,19 @@ example
     └── Mapper.xml
 
 7 directories, 9 files
+
+#git clone ssh://lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/
+scp lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/*.jar ./
+scp lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/example/client1/The.Hobbit.The.Battle.of.the.Five.Armies.2014.FRENCH.BRRip.XviD-Slay3R.torrent ./torrent
+mkdir torrent
+
+#server
+#open firewall 22,8081
+java trackerBT.Tracker example_tracker_config.xml
+java jBittorrentAPI.ExampleCreateTorrent torrent/The_Hobbit_5Armies.torrent http://192.168.2.10:8081/announce 256 example/client1/The.Hobbit.The.Battle.of.the.Five.Armies.2014.FRENCH.BRRip.XviD-Slay3R.avi .. "Lighta" "LOG735 test dist vid"
+java jBittorrentAPI.ExamplePublish torrent/The_Hobbit_5Armies.torrent http://localhost:8081/upload none none "LOG735 dist vid"
+java jBittorrentAPI.ExampleShareFiles torrent/The_Hobbit_5Armies.torrent example/client1/
+
+
+#client
+java jBittorrentAPI.ExampleDownloadFiles torrent/The_Hobbit_5Armies.torrent

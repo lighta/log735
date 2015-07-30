@@ -1,0 +1,18 @@
+Exception in thread "Thread-7" java.lang.OutOfMemoryError: Java heap space
+	at jBittorrentAPI.Utils.concat(Utils.java:284)
+	at jBittorrentAPI.Piece.data(Piece.java:137)
+	at jBittorrentAPI.Piece.verify(Piece.java:147)
+	at jBittorrentAPI.DownloadTask.changeState(DownloadTask.java:480)
+	at jBittorrentAPI.DownloadTask.messageReceived(DownloadTask.java:426)
+	at jBittorrentAPI.MessageReceiver.fireMessageReceived(MessageReceiver.java:255)
+	at jBittorrentAPI.MessageReceiver.run(MessageReceiver.java:230)
+Exception in thread "Thread-10" java.lang.OutOfMemoryError: Java heap space
+	at jBittorrentAPI.Utils.concat(Utils.java:284)
+	at jBittorrentAPI.Piece.data(Piece.java:137)
+	at jBittorrentAPI.Piece.verify(Piece.java:147)
+	at jBittorrentAPI.DownloadTask.changeState(DownloadTask.java:480)
+	at jBittorrentAPI.DownloadTask.messageReceived(DownloadTask.java:426)
+	at jBittorrentAPI.MessageReceiver.fireMessageReceived(MessageReceiver.java:255)
+	at jBittorrentAPI.MessageReceiver.run(MessageReceiver.java:230)
+Exception in thread "Thread-4" java.lang.OutOfMemoryError: Java heap space
+	at jBittorrentAPI.MessageReceiver.run(MessageReceiver.java:198)

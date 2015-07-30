@@ -32,7 +32,7 @@ If that is not the case, you only need to substitute "localhost" by the IP of th
 1. Download jbittorrentapi-v1.0.zip
 2. Unzip it
 3. Go to the console
-4. Set the CLASSPARTH
+4. Set the CLASSPATH
    . ./env.sh (or execute env.bat if using MS Windows)
 
 5. We will share the file example/client1/funvideo05.wmv (only 3.8Mb long)
