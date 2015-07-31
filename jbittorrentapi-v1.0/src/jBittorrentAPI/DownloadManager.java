@@ -650,14 +650,14 @@ public class DownloadManager implements DTListener, PeerUpdateListener,
         int piece2request = -1;
         // int piece2request = this.choosePiece2Download(peerID);
         
-        if(masterID == null || masterID == clientID) //we are the master
+        if(masterID == null || masterID == clientID){ //we are the master
         	piece2request = this.choosePiece2Download(peerID);
+        	if (piece2request != -1)
+            this.task.get(peerID).requestPiece(this.pieceList[piece2request]);
+        }	
         else  {
         	this.task.get(masterID).askPiece(this.pieceList);
         }
-      
-        if (piece2request != -1)
-            this.task.get(peerID).requestPiece(this.pieceList[piece2request]);
     }
 
     /**

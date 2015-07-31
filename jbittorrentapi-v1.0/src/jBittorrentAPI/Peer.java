@@ -51,7 +51,7 @@ public class Peer {
     private boolean choked = true;
     private boolean interesting = false;
     private boolean choking = true;
-    private BitSet hasPiece;
+    private BitSet hasPiece, wantPiece;
     private int downloaded = 0;
     private float dlrate = 0;
     private long lastDL = 0;
@@ -273,6 +273,12 @@ public class Peer {
         boolean[] b = Utils.byteArray2BitArray(bitfield);
         for(int i = 0; i < b.length; i++)
             this.hasPiece.set(i,b[i]);
+    }
+    
+    public void setWantPiece(byte[] bitfield){
+        boolean[] b = Utils.byteArray2BitArray(bitfield);
+        for(int i = 0; i < b.length; i++)
+            this.wantPiece.set(i,b[i]);
     }
 
     /**

@@ -232,7 +232,7 @@ public class DownloadTask extends Thread implements IncomingListener,
     public synchronized void requestPiece(Piece p) {
         synchronized (this) {
             this.downloadPiece = p;
-            if (this.state == this.READY_2_DL)
+            if (this.state == this.READY_2_DL || this.state == this.WAIT_SYNC)
                 this.changeState(this.DOWNLOADING);
         }
     }
@@ -436,7 +436,15 @@ public class DownloadTask extends Thread implements IncomingListener,
                 break;
                 
             case PeerProtocol.ASK_PIECE:
+            	this.peer.setWantPiece(message.getPayload());
+            	Piece p = null;
+            	this.ms.addMessageToQueue(new Message_PP(PeerProtocol.DO_PIECE,p.getIndex()));
             	//receive a id piece to dwln from server
+            	break;
+            case PeerProtocol.DO_PIECE:
+            	Utils.byteArrayToInt(message.getPayload());
+            	
+            //	this.get(peerID).requestPiece(this.pieceList[piece2request]);
             	break;
             }
             message = null;
@@ -455,8 +463,8 @@ public class DownloadTask extends Thread implements IncomingListener,
         this.state = newState;
         switch (newState) {
 
-        case WAIT_SYNC:
-        	this.changeState(this.DOWNLOADING);
+        case WAIT_SYNC: 
+        	//waiting for server answer  	
         	break;
         case WAIT_BLOCK:
             /**
@@ -680,9 +688,9 @@ public class DownloadTask extends Thread implements IncomingListener,
      */
 	public synchronized void askPiece(Piece[] pieceList) {
         synchronized (this) {
-            if (this.state == this.READY_2_DL)
-                this.changeState(this.WAIT_SYNC);
+            this.changeState(this.WAIT_SYNC);
         }
+
        // byte[] payload;
        // for(Piece cur_piece : pieceList){
        // 	payload  cur_piece.data();
