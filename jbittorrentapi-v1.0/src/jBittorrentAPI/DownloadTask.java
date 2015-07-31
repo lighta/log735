@@ -56,6 +56,7 @@ public class DownloadTask extends Thread implements IncomingListener,
     private static final int READY_2_DL = 5;
     private static final int DOWNLOADING = 6;
     private static final int WAIT_BLOCK = 7;
+    private static final int WAIT_SYNC = 8;
 
     public static final int TASK_COMPLETED = 0;
     public static final int UNKNOWN_HOST = 1;
@@ -433,6 +434,10 @@ public class DownloadTask extends Thread implements IncomingListener,
             case PeerProtocol.PORT:
                 // TODO: Still to implement the port message. Not used here
                 break;
+                
+            case PeerProtocol.ASK_PIECE:
+            	//receive a id piece to dwln from server
+            	break;
             }
             message = null;
         }
@@ -450,6 +455,9 @@ public class DownloadTask extends Thread implements IncomingListener,
         this.state = newState;
         switch (newState) {
 
+        case WAIT_SYNC:
+        	this.changeState(this.DOWNLOADING);
+        	break;
         case WAIT_BLOCK:
             /**
              * Keep a certain number of unanswered requests, for performance.
@@ -665,5 +673,22 @@ public class DownloadTask extends Thread implements IncomingListener,
             }
         }
     }
+
+    /**
+     * Request wich piece to download to sync_serv
+     * @param pieceList
+     */
+	public synchronized void askPiece(Piece[] pieceList) {
+        synchronized (this) {
+            if (this.state == this.READY_2_DL)
+                this.changeState(this.WAIT_SYNC);
+        }
+       // byte[] payload;
+       // for(Piece cur_piece : pieceList){
+       // 	payload  cur_piece.data();
+       // }
+        // Message_PP(int type, byte[] payload, int p
+      //  ms.addMessageToQueue(new Message_PP(PeerProtocol.ASK_PIECE,pieceList,2));
+	}
 
 }

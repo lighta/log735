@@ -67,6 +67,7 @@ public class DownloadManager implements DTListener, PeerUpdateListener,
 
     private PeerUpdater pu = null;
     private ConnectionListener cl = null;
+    private byte[] masterID = null;
 
     private List unchokeList = new LinkedList();
 
@@ -645,7 +646,16 @@ public class DownloadManager implements DTListener, PeerUpdateListener,
         if (System.currentTimeMillis() - this.lastUnchoking > 10000)
             this.unchokePeers();
 
-        int piece2request = this.choosePiece2Download(peerID);
+        
+        int piece2request = -1;
+        // int piece2request = this.choosePiece2Download(peerID);
+        
+        if(masterID == null || masterID == clientID) //we are the master
+        	piece2request = this.choosePiece2Download(peerID);
+        else  {
+        	this.task.get(masterID).askPiece(this.pieceList);
+        }
+      
         if (piece2request != -1)
             this.task.get(peerID).requestPiece(this.pieceList[piece2request]);
     }

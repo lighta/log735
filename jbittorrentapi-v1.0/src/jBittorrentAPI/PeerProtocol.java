@@ -60,6 +60,9 @@ public class PeerProtocol {
     public static final int PIECE = 8;
     public static final int CANCEL = 9;
     public static final int PORT = 10;
+    public static final int DO_PIECE = 11;	//sync_server tell us to download this piece
+    public static final int ASK_PIECE = 12; //ask sync_server what to do
+    
     public static final String[] TYPE = {"Keep_Alive", "Choke", "Unchoke",
                                         "Interested", "Not_Interested", "Have",
                                         "Bitfield", "Request", "Piece",

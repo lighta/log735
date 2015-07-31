@@ -62,7 +62,7 @@ public class
         }
     }
 
-    public static final String CLIENT = "jBittorrentAPI 1.0";
+    public static final String CLIENT = "jBittorrentAPI 2.0";
     public static String SAVEPATH = "downloads/";
 
     public static final String OSName = System.getProperty("os.name");
