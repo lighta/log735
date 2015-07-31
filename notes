@@ -26,16 +26,16 @@ export PATH=$PATH:$JAVA_HOME/bin
 #https://help.ubuntu.com/community/UbuntuTime
 watch -n 0.5 'date +"%H:%M:%S %s"'
 
-#git clone ssh://lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/
-scp lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/torrent/* ./torrent/
-scp lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/*.jar ./
+#git clone ssh://lighta@Lighta_fedo:/home/lighta/Documents/ETS/LOG735/
+scp lighta@Lighta_fedo:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/torrent/* ./torrent/
+scp lighta@Lighta_fedo:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/*.jar ./
 mkdir torrent
 
 #server
 #open firewall 22,8081
 java trackerBT.Tracker example_tracker_config.xml
-java jBittorrentAPI.ExampleCreateTorrent torrent/The_Hobbit_5Armies.torrent http://192.168.2.10:8081/announce 256 example/client1/The.Hobbit.The.Battle.of.the.Five.Armies.2014.FRENCH.BRRip.XviD-Slay3R.avi .. "Lighta" "LOG735 test dist vid"
-java jBittorrentAPI.ExamplePublish torrent/The_Hobbit_5Armies.torrent http://localhost:8081/upload none none "LOG735 dist vid"
+java jBittorrentAPI.ExampleCreateTorrent torrent/The_Hobbit_5Armies.torrent http://Lighta_fedo:8081/announce 256 example/client1/The.Hobbit.The.Battle.of.the.Five.Armies.2014.FRENCH.BRRip.XviD-Slay3R.avi .. "Lighta" "LOG735 test dist vid"
+java jBittorrentAPI.ExamplePublish torrent/The_Hobbit_5Armies.torrent http://Lighta_fedo:8081/upload none none "LOG735 dist vid"
 java jBittorrentAPI.ExampleShareFiles torrent/The_Hobbit_5Armies.torrent example/client1/
 
 
