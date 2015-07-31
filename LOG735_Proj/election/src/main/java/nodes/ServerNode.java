@@ -8,16 +8,23 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Observable;
+import java.util.PriorityQueue;
 import java.util.Properties;
 
 import master.MasterConsole;
 import common.utils;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.lf5.util.DateFormatManager;
 
 import console.ConsoleService;
 import serverAccess.Commande;
@@ -43,26 +50,30 @@ public class ServerNode extends MultiAccesPoint {
 	private final static int MASTER_CONSOLE_INDEX_ARGS = 0;
 	private final static int BIND_ADDRESS_INDEX_ARGS = 1;
 	
-	private String id;
+	private int id;
 	private ConnexionInfo myCInfo;
 	private ConnexionInfo masterConsoleCInfo; 
 	private Tunnel masterConsoleTunnel;
 	
-	private List<ConnexionInfo> neighboursCInfo; 	//list of nodes to connect to
-	private Map<String,Tunnel> neighboursTunnel;	//list de tunnel creer (on est sur d'etre co)
+	private List<Tunnel> neighboursInfo; 	//list of nodes to connect to
+	//private Map<String,Tunnel> neighboursTunnel;	//list de tunnel creer (on est sur d'etre co)
 	
+	private ConsoleService defaultConsoleService = null;
 	
-	public static enum NodeStateElec { prestart,started,chilling }
-	public static enum NodeModeElec { bully,ring }
+	public static enum NodeModeElec { Bully,Bully2,Ring }
 	private List<ConnexionInfo> waitNodesEle;
-	private NodeStateElec state_ele;
-	private NodeModeElec mode_ele;
-	int score = 0; //score for election
+	private NodeModeElec mode_ele = NodeModeElec.Ring;
+	private long score = (new Date()).getTime(); //score for election
+	Long current_ele_timestamp = null;
 	
 	//variable methode anneau
 	int nm1=-1,np1=-1; //noeuds voisin pour methode anneau
 	boolean participant = false;
 	boolean elu = false;
+	/**
+	 * null if me
+	 */
+	Tunnel master_elu = null;
 	
 	/**
 	 * ServerNode constructor
@@ -85,19 +96,29 @@ public class ServerNode extends MultiAccesPoint {
 			masterConsoleTunnel = super.connectTo("masterConsole", masterConsoleInfo);
 			this.masterConsoleCInfo = masterConsoleInfo;
 			
-			this.neighboursCInfo = new ArrayList<>();
-			neighboursTunnel = new HashMap<>();
+			this.neighboursInfo = new ArrayList<>();
+			//neighboursTunnel = new HashMap<>();
 			ConnInfos(neighboursCInfo);
 			
 			askId();
 			startDefaultConsole();
 	}
-
+	
 	private void ConnInfos(List<ConnexionInfo> neighboursCInfo) throws UnknownHostException, IOException{
+		log.debug("Called : ConnInfos " + neighboursCInfo);
 		for (ConnexionInfo connexionInfo : neighboursCInfo) {
 			if(connexionInfo.equals(myCInfo)) continue; //skip self
-			super.connectToWithoutWaiting("neighb" + connexionInfo, connexionInfo);
-			this.neighboursCInfo.add(connexionInfo);
+			Tunnel tun = super.connectTo("neighb" + connexionInfo, connexionInfo);
+			tun.sendCommande(new Commande(ServerCommandeType.ID_NODE, "" + this.id));
+			tun.setDistId(connexionInfo.getId());
+			this.neighboursInfo.add(tun);
+			Collections.sort(this.neighboursInfo, new Comparator<Tunnel>() {
+				@Override
+				public int compare(Tunnel o1, Tunnel o2) {
+					return (new Integer(o1.getDistId())).compareTo(o2.getDistId());
+				}
+			});
+			
 		}
 		ChoixVoisinAnneau();
 	}
@@ -112,58 +133,105 @@ public class ServerNode extends MultiAccesPoint {
 	 * @throws IOException
 	 */
 	private void askId() throws IOException {
-		final Commande c = new Commande(ServerCommandeType.ASKID,""+myCInfo);
+		final Commande c = new Commande(ServerCommandeType.ASKID,"" + myCInfo);
 		masterConsoleTunnel.sendCommande(c);
 	}
 	
 	private void voteHandle(String messageContent) {
+		log.debug("Called : voteHandle " + messageContent);
 		final String[] part = messageContent.split(":");
-		if(part.length < 2) //bad format
+		if(part.length < 3){ //bad format
+			log.debug("Bad Format");
 			return;
-		final int idrec = Integer.parseInt(part[0]);
-		final int scorerec = Integer.parseInt(part[1]);
-		
-		Commande c = null;
-		if(scorerec < score)
-			c = new Commande(ServerCommandeType.ELE_VOTE,id+":"+score);
-		else {
-			c = new Commande(ServerCommandeType.ELE_VOTE,idrec+":"+scorerec);
 		}
+		
+		final long timestamp = Long.parseLong(part[0]);
+		final int idrec = Integer.parseInt(part[1]);
+		final long scorerec = Long.parseLong(part[2]);
+		log.debug("timestamp=" + timestamp + "idrec=" + idrec + "scorerec=" + scorerec);
+		Commande c = null;
+		
+		if(idrec == id){
+			if(scorerec == score){
+				c = new Commande(ServerCommandeType.ELU,timestamp + ":" + id+":"+score);
+				log.info("Je sui l'ELU : " + idrec + scorerec);
+			}else{
+				log.info("Sale con de Hacker: c'est mon id mais pas mon score");
+			}
+		}else if(scorerec < score){
+			c = new Commande(ServerCommandeType.ELE_VOTE,timestamp + ":" + id+":"+score);
+			log.info("Vote for me " + id+":"+score);
+		}else {
+			c = new Commande(ServerCommandeType.ELE_VOTE,timestamp + ":" + idrec+":"+scorerec);
+			log.info("Vote for him :'( " + idrec+":"+scorerec);
+		}
+		
 		sendEleScore(c);
 	}
 	
-	private void sendEleScore(final Commande c) {
+	private void eluHandle(String messageContent) {
+		final String[] part = messageContent.split(":");
+		if(part.length < 3){ //bad format
+			log.debug("Bad Format");
+			return;
+		}
+		final long timestamp = Long.parseLong(part[0]);
+		final int idrec = Integer.parseInt(part[0]);
+		final long scorerec = Long.parseLong(part[1]);
+		
+		Commande c = null;
+		if(idrec != id){
+			c = new Commande(ServerCommandeType.ELU,timestamp + ":" + idrec+":"+scorerec);
+			log.info("ELU : " + idrec + scorerec);			
+			sendEleScore(c);
+		}
+		
+		
+	}
+	
+	private void sendEleScore(final Commande c) {	
 		switch(mode_ele){
-			case bully: //rere
+			case Bully: //rere
+				log.info("Bully send ele score");
 				break;
-			case ring:
-				final ConnexionInfo cnext = neighboursCInfo.get(np1); //recupe l'info du prochain noeud
-				final Tunnel tnext = neighboursTunnel.get(cnext);
+			case Ring:
+				if (np1 == -1)
+					ChoixVoisinAnneau();
+				log.info("Ring send ele score");
+				final Tunnel tnext = neighboursInfo.get(np1); //recupe l'info du prochain noeud
+				//final Tunnel tnext = neighboursTunnel.get(cnext);
+				log.info("Send to " + tnext);
 				try {
 					tnext.sendCommande(c);
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
-					log.debug("IOException",e);
+					log.info("IOException",e);
 				}
 				break;
+		case Bully2:
+			log.info("Bully2 send ele score");
+			break;
+		default:
+			log.info("No mode ele selected");
+			break;
 		}
 	}
 	
-	/**
-	 * Fonction servant a chercher quel est notre numero d'index dans notre liste de node
-	 * @return
-	 */
-	private int SearchSelfIndex(){
-		for(int i=0; i<neighboursCInfo.size(); i++){
-			if( neighboursCInfo.get(i).equals(myCInfo))
-				return i;
-		}
-		return -1;
-	}
+//	/**
+//	 * Fonction servant a chercher quel est notre numero d'index dans notre liste de node
+//	 * @return
+//	 */
+//	private int SearchSelfIndex(){
+//		for(int i=0; i<neighboursInfo.size(); i++){
+//			if( neighboursInfo.get(i).equals(myCInfo))
+//				return i;
+//		}
+//		return -1;
+//	}
 	
 	private void ChoixVoisinAnneau(){
-		final int sz = neighboursCInfo.size();
-		final int cur = SearchSelfIndex();
+		final int sz = neighboursInfo.size();
+		final int cur = 0;
 		if(sz >= 2){ //nos voisin sont different
 			nm1 = (sz+cur-1)%sz;
 			np1 = (cur+1)%sz;
@@ -183,13 +251,13 @@ public class ServerNode extends MultiAccesPoint {
 	 */
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
-		this.neighboursTunnel.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(), tun);
+		log.info("Connected : " + tun);
 	}
-
 	
-	private void startingElection(){
+	private void startingElection(String messageContent){
+		log.info("I Start an election : " + messageContent);
 		participant = true;
-		voteHandle("msg");
+		voteHandle(messageContent);
 	}
 	
 	/**
@@ -200,6 +268,7 @@ public class ServerNode extends MultiAccesPoint {
 	@Override
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande awnserc = null; //if we want to respond to tun
+		log.info( "Received : " + comm.getType().name() + " --> { " + comm.getMessageContent() + " }");
 		switch (comm.getType()) {
 			//demandes manuelles
 			case ASKID: 
@@ -216,45 +285,26 @@ public class ServerNode extends MultiAccesPoint {
 					log.debug("IOException",e2);
 				} 
 				break;
-			case ASKELE:
-				if(state_ele == NodeStateElec.started) 
-					break; //already in election mode
-				waitNodesEle = neighboursCInfo;
-				state_ele = NodeStateElec.prestart;
-				log.debug("prestarting election");
-				break;
 			case HELLO:
-				awnserc= new Commande(ServerCommandeType.MESS, "HELLO !!!");
+				awnserc= new Commande(ServerCommandeType.MESS, "HELLO !!! I am " + id );
 				break;
 				
-				
-			case ELE_VOTE: voteHandle(comm.getMessageContent()); break;
-				
+			//ELE	
+			case ASKELE:
+				startingElection(createEleVote());
+				break;
+			case ELE_VOTE: 
+				voteHandle(comm.getMessageContent()); 
+				log.info("I have voted for " + comm.getMessageContent());
+				break;
+			case ELU: 
+				eluHandle(comm.getMessageContent()); 
+				break;
 			case ST_ELE:
-				if(state_ele == NodeStateElec.started)
-					break;
-				state_ele = NodeStateElec.started;
-				if(state_ele == NodeStateElec.prestart){
-					waitNodesEle = null; //no more waiting, an election is already ongoing	
-				}
-				log.debug("voting to election");
 				voteHandle(comm.getMessageContent()); //next step of election
 				break;
-			case ALIVE: //keep alive
-				if(state_ele == NodeStateElec.prestart){
-					ConnexionInfo cid = tun.getcInfoDist(); //doubt is the good one
-					log.debug("cid="+cid);
-					if(waitNodesEle.contains(cid)){
-						waitNodesEle.remove(cid);
-						if(waitNodesEle.isEmpty()){ //nomore node to wait, we can launch election
-							state_ele = NodeStateElec.started;
-							log.debug("starting election");
-							startingElection(); //start election
-						}
-					}
-				}
-				break;			
-
+				
+			//SERVER
 			case RESTART:		
 				break;
 			case STATE:
@@ -264,7 +314,7 @@ public class ServerNode extends MultiAccesPoint {
 			case EN_TUN:
 				break;				
 			case ID:
-				this.id = comm.getMessageContent();
+				this.id = Integer.parseInt(comm.getMessageContent());
 				try {
 					askList();
 				} catch (IOException e1) {
@@ -272,11 +322,28 @@ public class ServerNode extends MultiAccesPoint {
 					log.debug("IOException",e1);
 				}
 				break;
+			case ID_NODE:
+				tun.setDistId(Integer.parseInt(comm.getMessageContent()));
+				this.neighboursInfo.add(tun);
+				Collections.sort(this.neighboursInfo, new Comparator<Tunnel>() {
+
+					@Override
+					public int compare(Tunnel o1, Tunnel o2) {
+						return (new Integer(o1.getDistId())).compareTo(o2.getDistId());
+					}
+				});
+				ChoixVoisinAnneau();
+				log.info("NeighboursInfo : " + neighboursInfo);
+				
+				break;
 			case LIST:
 				log.debug("List received: "+comm.getMessageContent());
 				List<ConnexionInfo> conList = parsenList(comm.getMessageContent());
 				try {
 					ConnInfos(conList);
+					
+					log.info("NeighboursInfo : " + neighboursInfo);
+					
 				} catch (UnknownHostException e1) {
 					// TODO Auto-generated catch block
 					log.debug("UnknownHostException",e1);
@@ -292,15 +359,39 @@ public class ServerNode extends MultiAccesPoint {
 		
 		if(awnserc != null){
 			try {
-				tun.sendCommande(awnserc);
+				if(tun != null)
+					tun.sendCommande(awnserc);
+				else
+					this.defaultConsoleService.print(awnserc.getMessageContent());
+
 			} catch (IOException e) {
 				log.debug("IOException", e);
 			}
 		}
 	}
+	
+	private String createEleVote() {
+		Long d = (new Date()).getTime();
+		String vote = d + ":" + Integer.MIN_VALUE + ":" + 0;
+		return vote;
+	}
 
+	@Override
+	protected void broken(Tunnel tun) {
+		
+		log.info("remove tunnel " + tun);
+		
+		neighboursInfo.remove(tun);
+		
+		//this.neighboursTunnel.remove(tun.getcInfoDist().getHostname());
+		
+		ChoixVoisinAnneau();
+		
+				
+	}
+	
 	private List<ConnexionInfo> parsenList(String messageContent) {
-		String nodeinfos[] = messageContent.split("#");
+		String nodeinfos[] = messageContent.split("\\|");
 		List<ConnexionInfo> listConInfo = new ArrayList<>();
 		for(String conInfo : nodeinfos){
 			ConnexionInfo con = utils.parseBindAddress(conInfo,":");
@@ -314,7 +405,7 @@ public class ServerNode extends MultiAccesPoint {
 	 * Fonction to start a DefaultConsole as a deamon
 	 */
 	private void startDefaultConsole() {
-		Service defaultConsoleService = new ConsoleService("Console for me");
+		defaultConsoleService = new ConsoleService("Console for me");
 		defaultConsoleService.addObserver(this);
 			try {
 				Service.startService(defaultConsoleService);
@@ -324,7 +415,19 @@ public class ServerNode extends MultiAccesPoint {
 			}
 
 	}
-
+	
+	@Override
+	public void update(Observable obj, Object arg) {
+		if(obj instanceof ConsoleService){
+			ConsoleService cs = (ConsoleService) obj;		
+				if(arg instanceof Commande){
+					Commande c = (Commande) arg;
+					commandeReceiveFrom(c, null);
+				}
+		}else{
+			super.update(obj, arg);
+		}
+	}
 
 	/**
 	 * ServerNode Entry point
@@ -404,6 +507,31 @@ public class ServerNode extends MultiAccesPoint {
 	}
 	
 
+	private class WaitAndStartElection extends Service{
+		
+		public WaitAndStartElection(String serviceName) {
+			super(serviceName);
+			// TODO Auto-generated constructor stub
+		}
+
+		@Override
+		public void loopAction() {
+			
+			long timeout = (long) (Math.random()*10000+100);
+			
+			synchronized (this) {
+				try {
+					this.wait(timeout);
+				} catch (InterruptedException e) {
+					log.debug("InterruptedException",e);
+				}
+			}
+			Date d = new Date();
+			Commande c = new Commande(ServerCommandeType.ELE_VOTE,d.getTime()+":"+id+":"+score);
+			startingElection(c.getMessageContent());
+		}
+		
+	}
 
 
 

@@ -23,7 +23,11 @@ public class ConsoleService extends Service {
 		super(serviceName);
 		// TODO Auto-generated constructor stub
 	}
-
+	
+	public void print(String mess){
+		log.info(mess);
+	}
+	
 	/* (non-Javadoc)
 	 * @see service.Service#loopAction()
 	 */

@@ -20,11 +20,14 @@ public abstract class Service extends Observable {
 	private static final Logger log = Logger.getLogger(Service.class);
 	
 	private static Map<String,Service> serviceMap = null;
+	private static Map<String,Thread> serviceThread = null;
 	
 	static {
 		synchronized(Service.class){
 			if(serviceMap == null)
 				serviceMap = new HashMap<String,Service>();
+			if(serviceThread == null)
+				serviceThread = new HashMap<String,Thread>();
 		}
 	}
 	
@@ -41,7 +44,11 @@ public abstract class Service extends Observable {
 		if(serviceMap.containsKey(s.getName()) && 
 				(s.getCurrentState() == ServiceState.ENDED || s.getCurrentState() == ServiceState.NOT_STARTED )){
 			s.setCurrentState(ServiceState.STARTING);
-			(new Thread(s.serviceLoopAction)).start();
+			Thread th = new Thread(s.serviceLoopAction);
+			th.start();
+			synchronized (serviceThread) {
+				serviceThread.put(s.serviceName, th);
+			}
 			log.debug("starting service ( " + s.serviceName + " )");
 		}
 		else{
@@ -59,7 +66,7 @@ public abstract class Service extends Observable {
 		log.debug("Stopping service ( " + s.serviceName + " )");
 		s.setCurrentState(ServiceState.ENDING);
 	}
-	
+		
 	/**
 	 * Available type for a service
 	 * @author MisterTim
@@ -161,6 +168,6 @@ public abstract class Service extends Observable {
 		
 	}
 	
-
+	
 	
 }

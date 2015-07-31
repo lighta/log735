@@ -19,6 +19,8 @@ public class Tunnel extends Observable implements Observer{
 	private static Logger log = Logger.getLogger(Tunnel.class);
 	
 	private final static int SOCKET_TIMEOUT = 5000;
+
+	public static final String BROKEN = "BROKEN";
 	
 	private final BufferedOutputStream out;
 	private final InputStream in;
@@ -26,6 +28,7 @@ public class Tunnel extends Observable implements Observer{
 	private final ConnexionInfo cInfoLocal;
 	private final ConnexionInfo cInfoDist;
 	private String name_id = "";
+	private int dist_id = 0;
 	
 	private WaitMessageService wMessService = null;
 	private AliveService aliveService = null;
@@ -59,6 +62,8 @@ public class Tunnel extends Observable implements Observer{
 		try {
 			log.debug("Try start service ( " + wMessService.getName() + " )");
 			Service.startService(wMessService);
+			log.debug("Try start service ( " + aliveService.getName() + " )");
+			Service.startService(aliveService);
 		} catch (AlreadyStartException e) {
 			// TODO Auto-generated catch block
 			//e.printStackTrace();
@@ -82,6 +87,13 @@ public class Tunnel extends Observable implements Observer{
 		return new ConnexionInfo(cInfoLocal);
 	}
 	
+	public int getDistId() {
+		return this.dist_id;
+	}
+	
+	public void setDistId(int id){
+		this.dist_id = id;
+	}
 	
 	public String getNameId() {
 		return name_id;
@@ -124,7 +136,7 @@ public class Tunnel extends Observable implements Observer{
 			out.flush();
 			log.debug("Commande send : " + comm );	
 		} catch (IOException e) {
-			log.debug("Connection lost", e);
+			log.debug("Connection reset");
 			closeSocket();
 			throw e;
 		}
@@ -181,24 +193,27 @@ public class Tunnel extends Observable implements Observer{
 						}
 						else
 						{
-							//if(!c.getType().equals(internalCommandType.ALIVE)){
+							if(!c.getType().equals(ServerCommandeType.ALIVE)){
 								log.debug("Notify new commande : " + c );
 								setChanged();
 								notifyObservers(c);							
-							//}
+							}
 						}
 					}
 					
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					log.debug("Stream closed");
+					closeSocket();
+					Service.stopService(this);
+					notifybroken();
 				}catch (Exception ex) {
 	               log.debug("", ex);
-	               closeSocket();
+	               
 	            }
 
 			}
 		}
+		
 		
 		
 	}
@@ -220,18 +235,47 @@ public class Tunnel extends Observable implements Observer{
 		public void loopAction() {
 			while(super.getCurrentState() != ServiceState.ENDING)
 			{
-				try {	
-					super.wait(WAKEUP_TIMEOUT);
+				try {
+					synchronized (this) {
+						this.wait(WAKEUP_TIMEOUT);
+					}
 					this.tun.sendCommande(new Commande(ServerCommandeType.ALIVE, ""));
 				} catch (InterruptedException e) {
 					log.debug("InterruptedException", e);
 				} catch (IOException e) {
-					log.debug("IOException", e);
+					log.debug("Connection reset");
 					Service.stopService(this);
+					notifybroken();
 				}
 			}
 		}
-		
-		
 	}
+	
+	private void notifybroken() {
+		setChanged();
+		notifyObservers(Tunnel.BROKEN);	
+	}
+
+	
+	@Override
+	public boolean equals(Object obj) {
+		
+		if(super.equals(obj))
+			return true;
+		
+		if(obj != null)
+			return false;
+		
+		if(!(obj instanceof Tunnel))
+			return false;
+		
+		Tunnel o = (Tunnel) obj;
+		
+		if(this.getcInfoDist().getHostname().equalsIgnoreCase(o.getcInfoDist().getHostname()))
+			if(this.getcInfoDist().getPort() == o.getcInfoDist().getPort())
+				return true;
+		
+		return false;
+	}
+
 }

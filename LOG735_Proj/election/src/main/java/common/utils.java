@@ -36,10 +36,20 @@ public class utils {
 	 */
 	public static ConnexionInfo parseBindAddress(String s, String delimiter) {
 		String[] info = s.split(delimiter);
+		int id = -1;
 		int port;
 		String hostname;
-		if(info.length != 2 || info[0].isEmpty() || info[1].isEmpty())
+		if(info.length < 2 || info[0].isEmpty() || info[1].isEmpty())
 			return null; //not enough info
+		
+		if(info.length == 3)
+			try {
+				id = Integer.parseInt(info[2]);
+			} catch (NumberFormatException e) {
+				System.out.println("Bad input number for port");
+				return null;
+			}
+		
 		try {
             InetAddress.getByName(info[0]);  //perhaps save as Inet
             hostname = info[0];
@@ -53,7 +63,11 @@ public class utils {
 			System.out.println("Bad input number for port");
 			return null;
 		}
-		return new ConnexionInfo(hostname, port);
+		
+		ConnexionInfo cInfo = new ConnexionInfo(hostname, port);
+		cInfo.setId(id);
+		
+		return cInfo;
 		
 	}
 }

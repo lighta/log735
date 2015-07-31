@@ -5,6 +5,7 @@ public class ConnexionInfo {
 	protected final String hostname;
 	protected final int port;
 	
+	private int id;
 	
 	public ConnexionInfo(String hostname, int port) {
 		super();
@@ -25,7 +26,14 @@ public class ConnexionInfo {
 		return port;
 	}
 	
-	
+	public int getId() {
+		return id;
+	}
+
+	public void setId(int id) {
+		this.id = id;
+	}
+
 	@Override
 	public boolean equals(Object obj) {
 		

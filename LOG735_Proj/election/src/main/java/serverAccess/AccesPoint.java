@@ -58,7 +58,7 @@ public class AccesPoint extends Observable implements Observer {
 		acceptServ = new AcceptConnexionService(name, localcInfo.getHostname(), localcInfo.getPort());
 		acceptServ.addObserver(this);
 		try {
-			log.debug("Try to start service ( " + acceptServ.getName() + " )");
+			log.info("Try to start service ( " + acceptServ.getName() + " )");
 			Service.startService(acceptServ);
 		} catch (AlreadyStartException e) {
 			log.debug("", e);
@@ -72,12 +72,13 @@ public class AccesPoint extends Observable implements Observer {
 		Socket clientSocket = new Socket(cInfo.getHostname(), cInfo.getPort());
 		log.debug("Connected to " + cInfo);
 		Tunnel t = new Tunnel("@tun-"+Math.random(),(Socket) clientSocket);
-		log.debug("Tunnel communication created ( " + t + " )");
+		log.info("Tunnel communication created ( " + t + " )");
 		return t;
 	}
 	
 	public void connectToWithoutWaiting(ConnexionInfo cInfo) throws IOException
 	{
+		log.debug("called : connectToWithoutWaiting");
 		CreateConnexionService createConn = new CreateConnexionService(cInfo.getHostname(),cInfo.getPort());
 		createConn.addObserver(this);
 		this.createConnServices.add(createConn);
@@ -124,6 +125,7 @@ public class AccesPoint extends Observable implements Observer {
 		
 		@Override
 		public void loopAction() {
+			log.info(this.getName());
 			while(super.getCurrentState() != ServiceState.ENDING)
 			{
 				try {

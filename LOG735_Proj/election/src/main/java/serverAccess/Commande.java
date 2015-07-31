@@ -56,6 +56,7 @@ public class Commande {
 		 *  
 		 */
 		ID,
+		ID_NODE,
 		LIST,
 		ALIVE, 
 		/**
@@ -63,7 +64,8 @@ public class Commande {
 		 */
 		ASKELE,
 		ST_ELE,
-		ELE_VOTE
+		ELE_VOTE,
+		ELU
 	}
 	
 	

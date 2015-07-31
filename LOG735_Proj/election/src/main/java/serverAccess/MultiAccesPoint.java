@@ -75,6 +75,7 @@ public abstract class MultiAccesPoint implements Observer {
 	
 	
 	public void connectToWithoutWaiting(String name_id,ConnexionInfo cInfo) throws UnknownHostException, IOException{
+		log.debug("called : connectToWithoutWaiting");
 		AccesPoint ap = new AccesPoint(name_id,cInfo);
 		ap.addObserver(this);
 		ap.connectToWithoutWaiting(cInfo);
@@ -83,7 +84,7 @@ public abstract class MultiAccesPoint implements Observer {
 	
 	@Override
 	public void update(Observable obj, Object arg) {
-		
+		log.debug("Notify receive : Observable=" + obj + " ; arg=" + arg); 
 		if(obj instanceof AccesPoint){
 			AccesPoint ap = (AccesPoint) obj;
 			
@@ -109,12 +110,19 @@ public abstract class MultiAccesPoint implements Observer {
 				Commande comm = (Commande) arg;
 				commandeReceiveFrom(comm,tun);
 			}
+			if(arg instanceof String){
+				log.debug("String " + arg + " receive from tunnel" + tun);
+				String str = (String) arg;
+				if(str.equalsIgnoreCase(Tunnel.BROKEN))
+					broken(tun);
+			}
 		}
 		
 	}
 	
 	protected abstract void newTunnelCreated(Tunnel tun);
 	protected abstract void commandeReceiveFrom(Commande comm,Tunnel tun);
+	protected abstract void broken(Tunnel tun);
 	
 //	protected Tunnel getTunnelByNameId(String tunnelNameId){
 //		return _tunnels.get(tunnelNameId);

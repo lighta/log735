@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,11 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	private static int currentNodeId = 0;
 	private ConnexionInfo myCInfo;
 	private Map<String,Tunnel> nodesTunnel;
-	private List<String> nodesCon;
+	private Map<String,String> nodesCon;
+	private Map<Integer,Tunnel> nodesIdTunnel;
+	private Map<Tunnel,Integer> nodesTunnelId;
+	
+	private ConsoleService defaultConsoleService = null;
 	
 	/**
 	 * @param masterConsoleInfo : Information de connection de masterConsole 
@@ -61,7 +66,9 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		this.myCInfo = masterConsoleInfo;
 		
 		this.nodesTunnel = new HashMap<>();
-		this.nodesCon = new ArrayList<>();
+		this.nodesCon = new HashMap<>();
+		this.nodesIdTunnel = new HashMap<>();
+		this.nodesTunnelId = new HashMap<>();
 		
 		startDefaultConsole();
 		
@@ -72,7 +79,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	 */
 	private void startDefaultConsole() {
 		try {
-			Service defaultConsoleService = new ConsoleService("Console for me");
+			defaultConsoleService = new ConsoleService("Console for me");
 			defaultConsoleService.addObserver(this);
 			Service.startService(defaultConsoleService);
 		} catch (AlreadyStartException e) {
@@ -92,10 +99,38 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 					Commande c = (Commande) arg;
 					String[] content = c.getMessageContent().split(":");
 					
-					if(content[0].equals("0"))
-						commandeReceiveFrom(c, null);
+					Integer idToSend = null;
+					try{
+						idToSend = Integer.parseInt(content[0]);
+					}catch(NumberFormatException nfe){
+						//nothing to do
+					}
+					if(idToSend != null){
+						if(idToSend == 0)
+							commandeReceiveFrom(c, null);
+						else{
+							try {
+								Tunnel tun = null;
+								tun = nodesIdTunnel.get(idToSend);
+								if(tun != null){
+									log.info("Send : " + c + " to " + tun.getcInfoDist().getHostname() + ":" + tun.getcInfoDist().getPort());
+									tun.sendCommande(c);
+								}else
+									log.info("This id is not register\n"
+											+ "\t\tRegistered Ids : " + this.nodesIdTunnel.keySet());
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								log.debug("IOException",e);
+							}
+							
+						}
+					}
 					else{
-						log.debug("starting to broadcast ... ");
+						if(!this.nodesTunnel.isEmpty())
+							log.info("starting to broadcast ... : " + c);
+						else
+							log.info("Nothing to broadcast");
+						
 						for (Entry<String, Tunnel> tunn : this.nodesTunnel.entrySet()) {
 							try {
 								log.debug("Sending to : " + tunn.getKey());
@@ -117,8 +152,10 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	 */
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
-		log.debug("put new node tunnel : " + tun.getcInfoDist().getHostname());
 		this.nodesTunnel.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(), tun);
+		log.info("Add node Tunnel : " + tun);
+		log.info("Connected : " + tun);
+		
 	}
 
 	/**
@@ -127,6 +164,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	@Override
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande c = null;
+		log.info("Received : " + comm.getType().name() + " --> { " + comm.getMessageContent() + " }");
 		switch (comm.getType()) {
 			case HELLO:
 				c= new Commande(ServerCommandeType.MESS, "HELLO !!!");
@@ -145,44 +183,74 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				break;
 			case ASKID:
 				log.debug("reply ID");
-				nodesCon.add(comm.getMessageContent());
-				c = new Commande(ServerCommandeType.ID, generateID());
+				Integer id = generateID();
+				nodesCon.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(),comm.getMessageContent() + ":" + id);
+				log.info("Add node con : " + tun);
+				this.nodesIdTunnel.put(id, tun);
+				this.nodesTunnelId.put(tun,id);
+				log.info("Add node ID tun : " + id + " for " + tun);
+				c = new Commande(ServerCommandeType.ID, "" + id);
 				break;
 			case ASKLIST:
 				log.debug("reply LIST");
 				c = new Commande(ServerCommandeType.LIST, generateLIST());
+				log.info(c);
 				break;
 			default:
-				System.out.println(comm.getType().name());
+				log.debug(comm.getType().name());
 				break;
 		}
 		
 		if(c != null){
 			try {
-				tun.sendCommande(c);
+				if(tun != null)
+					tun.sendCommande(c);
+				else
+					this.defaultConsoleService.print(c.getMessageContent());
+					
 			} catch (IOException e) {
 				log.debug("IOException", e);
 			}
 		}
 	}
+	
+	@Override
+	protected void broken(Tunnel tun) {
 		
+		log.info("remove tunnel " + tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort());
+		
+		this.nodesTunnel.remove(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort());
+		this.nodesCon.remove(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort());
+		this.nodesIdTunnel.remove(this.nodesTunnelId.get(tun));
+		this.nodesTunnelId.remove(tun);
+		log.debug("new map : " + this.nodesTunnel);
+		log.debug("new list : " + this.nodesCon);
+		
+		
+		
+	}
+	
+	
 	//private Map<String,Tunnel> nodesTunnel;
 	//tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort()
+	
+	
 	private String generateLIST() {
 		StringBuilder _sb = new StringBuilder();
-		for ( String curkey : this.nodesCon  ) {
-			_sb.append(curkey+"#");
+		log.info(this.nodesCon.values());
+		for ( Entry<String,String> curkey : this.nodesCon.entrySet()  ) {
+			_sb.append(curkey.getValue()+"|");
 		}	
 		return _sb.toString();
 	}
-
+	
 	/**
 	 * Genere un ID unique, et le retourne sous forme de string
 	 * @FIXME srsly a string ??...
 	 * @return
 	 */
-	private String generateID() {
-		return "" + ++MasterConsole.currentNodeId ;
+	private int generateID() {
+		return ++MasterConsole.currentNodeId ;
 	}
 
 	/**
