@@ -108,21 +108,16 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 					if(idToSend != null){
 						if(idToSend == 0)
 							commandeReceiveFrom(c, null);
-						else{
-							try {
-								Tunnel tun = null;
-								tun = nodesIdTunnel.get(idToSend);
-								if(tun != null){
-									log.info("Send : " + c + " to " + tun.getcInfoDist().getHostname() + ":" + tun.getcInfoDist().getPort());
-									tun.sendCommande(c);
-								}else
-									log.info("This id is not register\n"
-											+ "\t\tRegistered Ids : " + this.nodesIdTunnel.keySet());
-							} catch (IOException e) {
-								// TODO Auto-generated catch block
-								log.debug("IOException",e);
-							}
-							
+					else{
+							Tunnel tun = null;
+							tun = nodesIdTunnel.get(idToSend);
+							if(tun != null){
+								log.info("Send : " + c + " to " + tun.getcInfoDist().getHostname() + ":" + tun.getcInfoDist().getPort());
+								sendTo(tun,c);
+							}else
+								log.info("This id is not register\n"
+										+ "\t\tRegistered Ids : " + this.nodesIdTunnel.keySet());
+						
 						}
 					}
 					else{
@@ -147,13 +142,23 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 		}
 	}
 	
+	
+	private void sendTo(Tunnel tun,Commande c){
+		try {
+			tun.sendCommande(c);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.debug("IOException",e);
+		}
+	}
+	
 	/**
 	 * Ajoute le tunnel dans la liste des nodetunnels
 	 */
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		this.nodesTunnel.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(), tun);
-		log.info("Add node Tunnel : " + tun);
+		log.debug("Add node Tunnel : " + tun);
 		log.info("Connected : " + tun);
 		
 	}
@@ -164,7 +169,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	@Override
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande c = null;
-		log.info("Received : " + comm.getType().name() + " --> { " + comm.getMessageContent() + " }");
+		log.debug("Received : " + comm.getType().name() + " --> { " + comm.getMessageContent() + " }");
 		switch (comm.getType()) {
 			case HELLO:
 				c= new Commande(ServerCommandeType.MESS, "HELLO !!!");
@@ -185,32 +190,29 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 				log.debug("reply ID");
 				Integer id = generateID();
 				nodesCon.put(tun.getcInfoDist().getHostname()+":"+tun.getcInfoDist().getPort(),comm.getMessageContent() + ":" + id);
-				log.info("Add node con : " + tun);
+				log.debug("Add node con : " + tun);
 				this.nodesIdTunnel.put(id, tun);
 				this.nodesTunnelId.put(tun,id);
-				log.info("Add node ID tun : " + id + " for " + tun);
+				log.debug("Add node ID tun : " + id + " for " + tun);
 				c = new Commande(ServerCommandeType.ID, "" + id);
 				break;
 			case ASKLIST:
 				log.debug("reply LIST");
 				c = new Commande(ServerCommandeType.LIST, generateLIST());
-				log.info(c);
+				log.debug(c);
 				break;
+			case MESS :
+				log.info(comm.getMessageContent());
 			default:
 				log.debug(comm.getType().name());
 				break;
 		}
 		
 		if(c != null){
-			try {
-				if(tun != null)
-					tun.sendCommande(c);
-				else
-					this.defaultConsoleService.print(c.getMessageContent());
-					
-			} catch (IOException e) {
-				log.debug("IOException", e);
-			}
+			if(tun != null)
+				sendTo(tun,c);
+			else
+				this.defaultConsoleService.print(c.getMessageContent());
 		}
 	}
 	
@@ -237,7 +239,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 	
 	private String generateLIST() {
 		StringBuilder _sb = new StringBuilder();
-		log.info(this.nodesCon.values());
+		log.debug(this.nodesCon.values());
 		for ( Entry<String,String> curkey : this.nodesCon.entrySet()  ) {
 			_sb.append(curkey.getValue()+"|");
 		}	
@@ -287,7 +289,7 @@ private final static Logger log = Logger.getLogger(ServerNode.class);
 			new MasterConsole(masterConsoleInfo);
 		} catch (IOException e) {
 			log.debug("IOException", e);
-			log.info("something went wrong, need to terminate");
+			log.error("something went wrong, need to terminate");
 			System.exit(CANNOT_OPEN_ALL_CONNEXION_EXIT_CODE);
 		}
 		

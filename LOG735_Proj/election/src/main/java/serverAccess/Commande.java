@@ -65,7 +65,7 @@ public class Commande {
 		ASKELE,
 		ST_ELE,
 		ELE_VOTE,
-		ELU
+		ELU, ELE_TYPE
 	}
 	
 	

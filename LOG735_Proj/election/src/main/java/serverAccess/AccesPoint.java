@@ -58,7 +58,7 @@ public class AccesPoint extends Observable implements Observer {
 		acceptServ = new AcceptConnexionService(name, localcInfo.getHostname(), localcInfo.getPort());
 		acceptServ.addObserver(this);
 		try {
-			log.info("Try to start service ( " + acceptServ.getName() + " )");
+			log.debug("Try to start service ( " + acceptServ.getName() + " )");
 			Service.startService(acceptServ);
 		} catch (AlreadyStartException e) {
 			log.debug("", e);

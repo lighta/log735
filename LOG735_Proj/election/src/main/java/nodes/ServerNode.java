@@ -104,12 +104,24 @@ public class ServerNode extends MultiAccesPoint {
 			startDefaultConsole();
 	}
 	
+	
+	private void sendTo(Tunnel tun,Commande c){
+		try {
+			tun.sendCommande(c);
+			if(!masterConsoleTunnel.equals(tun))
+				masterConsoleTunnel.sendCommande(new Commande(ServerCommandeType.MESS, (new Date()) + " from " + this.id + " - Send    --> " + "{ " + c.getType().name() + " = " + c.getMessageContent() + " }"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.debug("IOException",e);
+		}
+	}
+	
 	private void ConnInfos(List<ConnexionInfo> neighboursCInfo) throws UnknownHostException, IOException{
 		log.debug("Called : ConnInfos " + neighboursCInfo);
 		for (ConnexionInfo connexionInfo : neighboursCInfo) {
 			if(connexionInfo.equals(myCInfo)) continue; //skip self
 			Tunnel tun = super.connectTo("neighb" + connexionInfo, connexionInfo);
-			tun.sendCommande(new Commande(ServerCommandeType.ID_NODE, "" + this.id));
+			sendTo(tun,new Commande(ServerCommandeType.ID_NODE, "" + this.id));
 			tun.setDistId(connexionInfo.getId());
 			this.neighboursInfo.add(tun);
 			Collections.sort(this.neighboursInfo, new Comparator<Tunnel>() {
@@ -184,12 +196,27 @@ public class ServerNode extends MultiAccesPoint {
 			c = new Commande(ServerCommandeType.ELU,timestamp + ":" + idrec+":"+scorerec);
 			log.info("ELU : " + idrec + scorerec);			
 			sendEleScore(c);
-		}else
+			master_elu = findTunnelFor(id);
+			elu = false;
+		}else{
 			log.info("I'm the ELU !!! And everyone know it.");
-		
-		
+			master_elu = null;
+			elu = true;
+		}
+		this.current_ele_timestamp = null;
 	}
 	
+	private Tunnel findTunnelFor(int id) {
+		
+		for(Tunnel tun : this.neighboursInfo){
+			if(tun.getDistId() == id)
+				return tun;
+		}
+		
+		return null;
+	}
+
+
 	private void sendEleScore(final Commande c) {	
 		switch(mode_ele){
 			case Bully: //rere
@@ -202,12 +229,7 @@ public class ServerNode extends MultiAccesPoint {
 				final Tunnel tnext = neighboursInfo.get(np1); //recupe l'info du prochain noeud
 				//final Tunnel tnext = neighboursTunnel.get(cnext);
 				log.info("Send to " + tnext);
-				try {
-					tnext.sendCommande(c);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					log.info("IOException",e);
-				}
+				this.sendTo(tnext, c);
 				break;
 		case Bully2:
 			log.info("Bully2 send ele score");
@@ -253,12 +275,28 @@ public class ServerNode extends MultiAccesPoint {
 	@Override
 	protected void newTunnelCreated(Tunnel tun) {
 		log.info("Connected : " + tun);
+		
+		try {
+			Service.startService(new WaitAndStartElection("start ele " + (new Date()).getTime()));
+		} catch (AlreadyStartException e) {
+			// TODO Auto-generated catch block
+			log.debug("AlreadyStartException",e);
+		}
+	
 	}
 	
-	private void startingElection(String messageContent){
-		log.info("I Start an election : " + messageContent);
-		participant = true;
-		voteHandle(messageContent);
+	private void startingElection(){
+		
+		if(current_ele_timestamp != null)
+		{
+			log.info("I Start an election");
+			Long d = (new Date()).getTime();
+			String vote = d + ":" + Integer.MIN_VALUE + ":" + 0;
+			participant = true;
+			voteHandle(vote);
+		}else{
+			//already in election
+		}
 	}
 	
 	/**
@@ -270,6 +308,13 @@ public class ServerNode extends MultiAccesPoint {
 	protected void commandeReceiveFrom(Commande comm, Tunnel tun) {
 		Commande awnserc = null; //if we want to respond to tun
 		log.info( "Received : " + comm.getType().name() + " --> { " + comm.getMessageContent() + " }");
+		try {
+			if(!masterConsoleTunnel.equals(tun))
+				masterConsoleTunnel.sendCommande(new Commande(ServerCommandeType.MESS, (new Date()) + " from " + this.id + " : Receive --> { " + comm.getType().name() + " = " + comm.getMessageContent() + " }"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			log.debug("IOException",e);
+		}
 		switch (comm.getType()) {
 			//demandes manuelles
 			case ASKID: 
@@ -292,7 +337,7 @@ public class ServerNode extends MultiAccesPoint {
 				
 			//ELE	
 			case ASKELE:
-				startingElection(createEleVote());
+				startingElection();
 				break;
 			case ELE_VOTE: 
 				log.info("Vote receive from " + tun.getDistId() + " : " + comm.getMessageContent());
@@ -306,7 +351,9 @@ public class ServerNode extends MultiAccesPoint {
 			case ST_ELE:
 				voteHandle(comm.getMessageContent()); //next step of election
 				break;
-				
+			case ELE_TYPE:
+				handleEleType(comm.getMessageContent());
+				break;
 			//SERVER
 			case RESTART:		
 				break;
@@ -365,23 +412,30 @@ public class ServerNode extends MultiAccesPoint {
 		}
 		
 		if(awnserc != null){
-			try {
-				if(tun != null)
-					tun.sendCommande(awnserc);
-				else
-					this.defaultConsoleService.print(awnserc.getMessageContent());
-
-			} catch (IOException e) {
-				log.debug("IOException", e);
-			}
+			if(tun != null)
+				sendTo(tun, awnserc);
+			else
+				this.defaultConsoleService.print(awnserc.getMessageContent());
 		}
 	}
 	
-	private String createEleVote() {
-		Long d = (new Date()).getTime();
-		String vote = d + ":" + Integer.MIN_VALUE + ":" + 0;
-		return vote;
+	private void handleEleType(String messageContent) {
+		switch(messageContent){
+		 	case "Bully":
+		 		this.mode_ele = NodeModeElec.Bully;
+		 		log.info("Bully selected");
+		 		break;
+		 	case "Bully2":
+		 		this.mode_ele = NodeModeElec.Bully2;
+		 		log.info("Bully2 selected");
+		 		break;
+		 	case "Ring":
+		 		this.mode_ele = NodeModeElec.Ring;
+		 		log.info("Ring selected");
+		 		break;
+		}
 	}
+
 
 	@Override
 	protected void broken(Tunnel tun) {
@@ -390,9 +444,20 @@ public class ServerNode extends MultiAccesPoint {
 		
 		neighboursInfo.remove(tun);
 		
+		if(tun.equals(master_elu))
+			master_elu = null;
+		
 		//this.neighboursTunnel.remove(tun.getcInfoDist().getHostname());
 		
 		ChoixVoisinAnneau();
+		
+		if(master_elu == null && !masterConsoleTunnel.equals(tun))
+			try {
+				Service.startService(new WaitAndStartElection("start ele " + (new Date()).getTime()));
+			} catch (AlreadyStartException e) {
+				// TODO Auto-generated catch block
+				log.debug("AlreadyStartException",e);
+			}
 		
 				
 	}
@@ -528,14 +593,13 @@ public class ServerNode extends MultiAccesPoint {
 			
 			synchronized (this) {
 				try {
+					log.info("wait "+ timeout + "ms to start election");
 					this.wait(timeout);
 				} catch (InterruptedException e) {
 					log.debug("InterruptedException",e);
 				}
 			}
-			Date d = new Date();
-			Commande c = new Commande(ServerCommandeType.ELE_VOTE,d.getTime()+":"+id+":"+score);
-			startingElection(c.getMessageContent());
+			startingElection();
 		}
 		
 	}
