@@ -154,7 +154,7 @@ public class ServerNode extends MultiAccesPoint {
 		if(idrec == id){
 			if(scorerec == score){
 				c = new Commande(ServerCommandeType.ELU,timestamp + ":" + id+":"+score);
-				log.info("Je sui l'ELU : " + idrec + scorerec);
+				log.info("Je sui l'ELU : " + idrec +":"+ scorerec + " !!!");
 			}else{
 				log.info("Sale con de Hacker: c'est mon id mais pas mon score");
 			}
@@ -176,15 +176,16 @@ public class ServerNode extends MultiAccesPoint {
 			return;
 		}
 		final long timestamp = Long.parseLong(part[0]);
-		final int idrec = Integer.parseInt(part[0]);
-		final long scorerec = Long.parseLong(part[1]);
+		final int idrec = Integer.parseInt(part[1]);
+		final long scorerec = Long.parseLong(part[2]);
 		
 		Commande c = null;
 		if(idrec != id){
 			c = new Commande(ServerCommandeType.ELU,timestamp + ":" + idrec+":"+scorerec);
 			log.info("ELU : " + idrec + scorerec);			
 			sendEleScore(c);
-		}
+		}else
+			log.info("I'm the ELU !!! And everyone know it.");
 		
 		
 	}
@@ -217,21 +218,21 @@ public class ServerNode extends MultiAccesPoint {
 		}
 	}
 	
-//	/**
-//	 * Fonction servant a chercher quel est notre numero d'index dans notre liste de node
-//	 * @return
-//	 */
-//	private int SearchSelfIndex(){
-//		for(int i=0; i<neighboursInfo.size(); i++){
-//			if( neighboursInfo.get(i).equals(myCInfo))
-//				return i;
-//		}
-//		return -1;
-//	}
+	/**
+	 * Fonction servant a chercher quel est notre numero d'index dans notre liste de node
+	 * @return
+	 */
+	private int SearchSelfIndex(){
+		for(int i=0; i<neighboursInfo.size(); i++){
+			if( neighboursInfo.get(i).equals(new Tunnel()))
+				return i;
+		}
+		return -1;
+	}
 	
 	private void ChoixVoisinAnneau(){
 		final int sz = neighboursInfo.size();
-		final int cur = 0;
+		final int cur = SearchSelfIndex();
 		if(sz >= 2){ //nos voisin sont different
 			nm1 = (sz+cur-1)%sz;
 			np1 = (cur+1)%sz;
@@ -294,10 +295,12 @@ public class ServerNode extends MultiAccesPoint {
 				startingElection(createEleVote());
 				break;
 			case ELE_VOTE: 
+				log.info("Vote receive from " + tun.getDistId() + " : " + comm.getMessageContent());
 				voteHandle(comm.getMessageContent()); 
-				log.info("I have voted for " + comm.getMessageContent());
+				//log.info("I have voted for " + comm.getMessageContent());
 				break;
-			case ELU: 
+			case ELU:
+				log.info("Elu Message receive");
 				eluHandle(comm.getMessageContent()); 
 				break;
 			case ST_ELE:
@@ -315,6 +318,10 @@ public class ServerNode extends MultiAccesPoint {
 				break;				
 			case ID:
 				this.id = Integer.parseInt(comm.getMessageContent());
+				
+				Tunnel mytun = new Tunnel();
+				mytun.setDistId(id);
+				this.neighboursInfo.add(mytun );
 				try {
 					askList();
 				} catch (IOException e1) {

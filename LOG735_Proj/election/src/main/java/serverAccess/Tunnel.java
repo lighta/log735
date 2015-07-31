@@ -22,16 +22,20 @@ public class Tunnel extends Observable implements Observer{
 
 	public static final String BROKEN = "BROKEN";
 	
-	private final BufferedOutputStream out;
-	private final InputStream in;
-	private final Socket socket;
-	private final ConnexionInfo cInfoLocal;
-	private final ConnexionInfo cInfoDist;
+	private BufferedOutputStream out;
+	private InputStream in;
+	private Socket socket;
+	private ConnexionInfo cInfoLocal;
+	private ConnexionInfo cInfoDist;
 	private String name_id = "";
 	private int dist_id = 0;
 	
 	private WaitMessageService wMessService = null;
 	private AliveService aliveService = null;
+	
+	public Tunnel(){
+	
+	}
 	
 	/**
 	 * constructeur pour receiver
@@ -132,6 +136,10 @@ public class Tunnel extends Observable implements Observer{
 		//log.message("Try to send commande : " + comm);
 
 		try {
+			if(comm == null){
+				log.info("null commande");
+				return;
+			}
 			out.write(comm.getBytes());
 			out.flush();
 			log.debug("Commande send : " + comm );	
@@ -146,8 +154,9 @@ public class Tunnel extends Observable implements Observer{
 	
 	@Override
 	public String toString() {
-		
-		return  cInfoLocal.toString() + " <==> " + cInfoDist.toString();
+		if(cInfoLocal != null && cInfoDist != null)
+			return  cInfoLocal.toString() + " <==> " + cInfoDist.toString();
+		return "me";
 	}
 	
 	@Override
@@ -207,7 +216,7 @@ public class Tunnel extends Observable implements Observer{
 					Service.stopService(this);
 					notifybroken();
 				}catch (Exception ex) {
-	               log.debug("", ex);
+	               log.info("", ex);
 	               
 	            }
 
@@ -263,13 +272,18 @@ public class Tunnel extends Observable implements Observer{
 		if(super.equals(obj))
 			return true;
 		
-		if(obj != null)
+		if(obj == null)
 			return false;
 		
 		if(!(obj instanceof Tunnel))
 			return false;
 		
 		Tunnel o = (Tunnel) obj;
+		
+		if(this.cInfoDist==null && o.cInfoDist == null)
+				return true;
+		else if(this.cInfoDist==null || o.cInfoDist == null)
+			return false;
 		
 		if(this.getcInfoDist().getHostname().equalsIgnoreCase(o.getcInfoDist().getHostname()))
 			if(this.getcInfoDist().getPort() == o.getcInfoDist().getPort())
