@@ -183,6 +183,13 @@ public class Message_PP extends Message {
             toString += "<id=" + (int)this.id[0] + ">";
             if (length > 1) {
                 switch(this.id[0]+1){
+                case PeerProtocol.DO_PIECE:
+                    toString += "<index=" + Utils.byteArrayToInt(this.payload) +
+                            ">";
+                    break;
+                case PeerProtocol.ASK_PIECE:
+                    toString += "<bitfield="+(new Bits(this.payload))+">";
+                    break;
                 case PeerProtocol.HAVE:
                     toString += "<index=" + Utils.byteArrayToInt(this.payload) +
                             ">";
