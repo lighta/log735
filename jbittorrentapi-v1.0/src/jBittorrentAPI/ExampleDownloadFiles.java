@@ -37,6 +37,8 @@
 
 package jBittorrentAPI;
 
+import jBittorrentAPI.Server.ServerTCP;
+
 /**
  * Simple example to show how it is possible to download files using bittorrent
  * protocol with a given .torrent file
@@ -58,6 +60,10 @@ class ExampleDownloadFiles {
             TorrentFile t = tp.getTorrentFile(tp.parseTorrent(args[0]));
             if(args.length > 1)
                 Constants.SAVEPATH = args[1];
+            //stat server
+           // Server ServerTcp = new Server();
+            
+            
             if (t != null) {
                 DownloadManager dm = new DownloadManager(t, Utils.generateID());
                 dm.startListening(6881, 6889);
@@ -79,6 +85,7 @@ class ExampleDownloadFiles {
         }
 
     }
+    
     public static void main(String[] args) {
         new ExampleDownloadFiles(args);
     }
