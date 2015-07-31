@@ -343,7 +343,7 @@ public class PeerUpdater extends Thread {
 
             // Decode the tracker bencoded response
             Map m = BDecoder.decode(bis);
-            System.out.println(m);
+            System.out.println("M decoded="+m);
             bis.close();
             is.close();
 

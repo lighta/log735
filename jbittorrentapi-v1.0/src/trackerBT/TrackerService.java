@@ -64,6 +64,8 @@ public class TrackerService extends Service {
     private static final int MISSING_EVENT = 8;
     private static final int INTERNAL_ERROR = 9;
     private static final int MALFORMED_REQUEST = 10;
+    
+    private static final int CLEAN_LIST_TO = 5;
 
     private static final String[] MESSAGE = {
                                             "The requested torrent is not listed on this tracker",
@@ -171,12 +173,12 @@ public class TrackerService extends Service {
         try {
             switch (err) {
             case 0:
-                ans.put("interval", new Integer(300));
+                ans.put("interval", new Integer(CLEAN_LIST_TO));
                 ArrayList peers = new ArrayList(l.size());
                 for (Iterator it = l.iterator(); it.hasNext(); ) {
                     Element e = (Element) it.next();
                     TreeMap peer = new TreeMap();
-                    peer.put("ip", e.getChild("ip").getText());
+                    peer.put("ip", e.getChild("ip").getText().toString());
                     String s = URLDecoder.decode(Utils.byteStringToByteArray(e.getChild("id").getText()),
                                                 Constants.BYTE_ENCODING);
                     peer.put("peer_id", s);
@@ -223,7 +225,7 @@ public class TrackerService extends Service {
                            it.hasNext(); ) {
             Element e = (Element) it.next();
             long l = new Long(e.getChildText("updated")).longValue();
-            if (System.currentTimeMillis() - l > 300000) {
+            if (System.currentTimeMillis() - l > CLEAN_LIST_TO*10000) {
                 it.remove();
             }
         }
