@@ -19,6 +19,13 @@ example
 
 7 directories, 9 files
 
+
+export JAVA_HOME=/opt/jdk1.8.0_51/
+export PATH=$PATH:$JAVA_HOME/bin
+
+#https://help.ubuntu.com/community/UbuntuTime
+watch -n 0.5 'date +"%H:%M:%S %s"'
+
 #git clone ssh://lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/
 scp lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/*.jar ./
 scp lighta@192.168.2.10:/home/lighta/Documents/ETS/LOG735/jbittorrentapi-v1.0/example/client1/The.Hobbit.The.Battle.of.the.Five.Armies.2014.FRENCH.BRRip.XviD-Slay3R.torrent ./torrent
